@@ -1,0 +1,39 @@
+/* These styles handle the specific appearance of the data lines and the scrollbar.
+    All general layout and color/spacing rules are handled by Tailwind CSS classes 
+    in the index.html file.
+*/
+
+/* Style for each line item in the dataset scrollbox */
+.dataset-line {
+    /* Fixed height for consistent look */
+    height: 30px; 
+    /* The separating line */
+    border-bottom: 1px solid #C0D0E0; 
+    /* Spacing and cursor change */
+    padding: 0 10px;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+/* Hover effect on dataset lines */
+.dataset-line:hover {
+    background-color: #DDEEFC;
+}
+
+/* --- Custom Scrollbar Styles (WebKit based) --- */
+
+/* Width of the scrollbar */
+#dataset-list-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+/* Style for the scrollbar thumb (the movable part) */
+#dataset-list-box::-webkit-scrollbar-thumb {
+    background-color: #B0C4DE;
+    border-radius: 4px;
+}
+
+/* Style for the scrollbar track (the background area) */
+#dataset-list-box::-webkit-scrollbar-track {
+    background-color: #E6F0F8;
+}

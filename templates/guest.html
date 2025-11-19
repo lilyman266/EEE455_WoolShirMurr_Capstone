@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Viewer Interface</title>
+    <!-- Load Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    // Set 'Inter' as the default font
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        // Custom colors to match the image's aesthetic
+                        'ui-bg': '#D3DCE5', // Light blue-gray for the page background
+                        'box-bg': '#E6F0F8', // Very light blue for the list box background
+                        'dark-border': '#5A6A78', // Dark border color
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles to mimic the line pattern in the data box */
+        .dataset-line {
+            height: 30px;
+            border-bottom: 1px solid #C0D0E0; /* Light line color */
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .dataset-line:hover {
+            background-color: #DDEEFC;
+        }
+        /* Custom scrollbar style to keep the aesthetics clean */
+        #dataset-list-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        #dataset-list-box::-webkit-scrollbar-thumb {
+            background-color: #B0C4DE;
+            border-radius: 4px;
+        }
+        #dataset-list-box::-webkit-scrollbar-track {
+            background-color: #E6F0F8;
+        }
+    </style>
+</head>
+<body class="bg-ui-bg min-h-screen p-4 sm:p-8 font-sans">
+
+    <!-- Main Content Area -->
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- Header Section: Logo and Top Right Buttons -->
+        <header class="flex justify-between items-start mb-6">
+            
+            <!-- Logo/Title Area -->
+            <div class="flex items-center space-x-3">
+                <!-- Placeholder for the logo/image from the original sketch -->
+                <div class="w-16 h-16 bg-gray-300 rounded-full border border-dark-border flex items-center justify-center">
+                    <span class="text-xs text-dark-border font-bold text-center leading-tight">PROJECT LOGO</span>
+                </div>
+                <div class="hidden sm:block">
+                    <h1 class="text-2xl font-extrabold text-gray-700">DATA PLATFORM</h1>
+                    <p class="text-sm text-gray-500">Visualization & Analysis</p>
+                </div>
+            </div>
+
+            <!-- Buttons Stack (About, Login, Download) -->
+            <div class="flex flex-col items-end space-y-4">
+                
+                <!-- About and Login Buttons -->
+                <div class="flex space-x-4">
+                    <button id="about-btn" class="nav-button">About</button>
+                    <button id="login-btn" class="nav-button">Login</button>
+                </div>
+                
+                <!-- Download Button -->
+                <button id="download-btn" class="action-button">Download Selected Dataset</button>
+            </div>
+        </header>
+
+        <!-- Dataset List Container -->
+        <main class="w-full">
+            <div class="p-1 border-2 border-dark-border rounded-xl shadow-xl bg-box-bg">
+                <!-- Fixed height container with scroll overflow -->
+                <div id="dataset-list-box" class="h-96 overflow-y-auto rounded-lg bg-box-bg border-4 border-white p-2">
+                    <!-- Datasets will be injected here by JavaScript -->
+                    <div id="dataset-list" class="text-sm">
+                        <!-- Placeholder: Header Row -->
+                        <div class="dataset-line font-bold bg-blue-200 sticky top-0 border-b-2 border-dark-border">
+                            <span class="w-1/2">Dataset Name</span>
+                            <span class="w-1/4">Date</span>
+                            <span class="w-1/4">Time</span>
+                        </div>
+                    </div>
+                    <!-- Empty state/padding for aesthetics -->
+                    <div class="h-4"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Reusable Button Classes (Defined using Tailwind) -->
+    <script>
+        // Applying Tailwind classes directly to make buttons look like the image
+        const buttonClasses = {
+            nav: "py-2 px-6 rounded-lg text-lg font-semibold bg-white text-gray-700 border border-dark-border shadow-md transition duration-150 hover:bg-gray-100 active:bg-gray-200",
+            action: "py-3 px-8 rounded-lg text-lg font-semibold bg-blue-200 text-gray-800 border-2 border-dark-border shadow-lg transition duration-150 hover:bg-blue-300 active:bg-blue-400"
+        };
+        
+        // Apply classes to buttons
+        document.querySelectorAll('.nav-button').forEach(btn => btn.className = buttonClasses.nav);
+        document.getElementById('download-btn').className = buttonClasses.action;
+
+        // --- Mock Data and Event Listeners ---
+
+        const mockData = [
+            { name: "Ocean Temperature Survey - Atlantic", date: "2024-10-01", time: "14:30:00" },
+            { name: "Atmospheric Pressure Readings - Zone C", date: "2024-10-02", time: "09:15:00" },
+            { name: "Seismic Activity Log - Pacific Rim", date: "2024-10-03", time: "23:59:00" },
+            { name: "Satellite Imagery Batch 14", date: "2024-10-04", time: "06:00:00" },
+            { name: "Historical Weather Data - 2023 Q4", date: "2024-10-05", time: "11:20:00" },
+            { name: "Deep Sea Current Measurements", date: "2024-10-06", time: "18:45:00" },
+            { name: "Coastal Erosion Report - North East", date: "2024-10-07", time: "05:00:00" },
+            { name: "Tidal Predictions Model v2.1", date: "2024-10-08", time: "15:10:00" },
+            { name: "Glacier Melt Rate Analysis", date: "2024-10-09", time: "00:00:00" },
+            { name: "Coral Reef Health Index - Caribbean", date: "2024-10-10", time: "13:00:00" },
+            // Add more entries to force the scrollbar to appear
+            { name: "Marine Biology Samples A-101", date: "2024-10-11", time: "14:30:00" },
+            { name: "Hydrophone Recordings - Sept 2024", date: "2024-10-12", time: "09:15:00" },
+            { name: "Volcanic Gas Emission Data", date: "2024-10-13", time: "23:59:00" },
+            { name: "Global Circulation Model Output", date: "2024-10-14", time: "06:00:00" },
+            { name: "Deep Ocean Vent Chemical Analysis", date: "2024-10-15", time: "11:20:00" },
+            { name: "Antarctic Ice Core Data", date: "2024-10-16", time: "18:45:00" },
+            { name: "Arctic Sea Ice Thickness", date: "2024-10-17", time: "05:00:00" },
+            { name: "Submarine Cable Tension Logs", date: "2024-10-18", time: "15:10:00" },
+            { name: "Near-Earth Asteroid Tracking Log", date: "2024-10-19", time: "00:00:00" },
+            { name: "Space Weather Radiation Levels", date: "2024-10-20", time: "13:00:00" },
+        ];
+
+        let selectedDataset = null;
+        const listContainer = document.getElementById('dataset-list');
+
+        /**
+         * Renders the mock dataset list into the scrollable box.
+         */
+        function renderDatasetList() {
+            mockData.forEach((data, index) => {
+                const line = document.createElement('div');
+                line.className = 'dataset-line flex justify-between items-center';
+                line.dataset.index = index;
+                line.innerHTML = `
+                    <span class="w-1/2 truncate font-medium text-gray-700">${data.name}</span>
+                    <span class="w-1/4 text-gray-500">${data.date}</span>
+                    <span class="w-1/4 text-gray-500">${data.time}</span>
+                `;
+                
+                // Add click listener for selection
+                line.addEventListener('click', () => selectDataset(line, data));
+                listContainer.appendChild(line);
+            });
+        }
+
+        /**
+         * Handles selecting a dataset item.
+         * @param {HTMLElement} element - The clicked list item element.
+         * @param {Object} data - The dataset object.
+         */
+        function selectDataset(element, data) {
+            // Deselect previous
+            document.querySelectorAll('.dataset-line').forEach(line => {
+                line.classList.remove('bg-blue-400', 'text-white', 'font-bold');
+                line.classList.add('bg-box-bg');
+                line.querySelectorAll('span').forEach(span => span.classList.remove('text-white'));
+            });
+
+            // Select current
+            element.classList.remove('bg-box-bg');
+            element.classList.add('bg-blue-400', 'text-white', 'font-bold');
+            element.querySelectorAll('span').forEach(span => span.classList.add('text-white'));
+            
+            selectedDataset = data;
+            console.log("Dataset Selected:", selectedDataset.name);
+        }
+
+        // --- Button Actions ---
+
+        document.getElementById('about-btn').addEventListener('click', () => {
+            // Simulates navigation to /about page
+            window.location.href = '/about'; 
+        });
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            // Simulates navigation to /login page
+            window.location.href = '/login'; 
+        });
+
+        document.getElementById('download-btn').addEventListener('click', () => {
+            if (selectedDataset) {
+                // In a real application, this would trigger a file download
+                alert(`Simulating download of: ${selectedDataset.name}`);
+            } else {
+                alert("Please select a dataset to download first.");
+            }
+        });
+
+        // Initialize the dataset list when the page loads
+        document.addEventListener('DOMContentLoaded', renderDatasetList);
+    </script>
+</body>
+</html>
