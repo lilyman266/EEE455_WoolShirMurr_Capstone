@@ -205,9 +205,9 @@
      TODO:    and "end_date" to the values of that row -->
     <!-- Download Button: -->
     <script defer>
-        const button = document.getElementById("download-button");
+        const download_button = document.getElementById("download-button");
 
-        button.addEventListener("click", async () => {
+        download_button.addEventListener("click", async () => {
             const start_date = input.value.trim()
             const response = await fetch("/data", {
                 method: "POST",
@@ -238,20 +238,20 @@
     </script>
     <!-- Login Button: -->
     <script defer>
-        const button = document.getElementById("about-button");
+        const login_button = document.getElementById("about-button");
 
-        button.addEventListener("click", async () => {
+        login_button.addEventListener("click", async () => {
             const response = await fetch("/login", {
                 method: "GET"
             });
         })
     </script>
-    <!-- Login Button: -->
+    <!-- About Button: -->
     <script defer>
-        const button = document.getElementById("login-button");
+        const about_button = document.getElementById("login-button");
 
-        button.addEventListener("click", async () => {
-            const response = await fetch("/login", {
+        about_button.addEventListener("click", async () => {
+            const response = await fetch("/about", {
                 method: "GET"
             });
         })
