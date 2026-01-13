@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package audimus;
+
+enum SESSION_MODE{
+   ConnectionlessDownlink =0;
+   ConnectedDownlink = 1;
+   ConnectedUplink = 2;
+}
+
+message Application_Message{
+  string message = 1;
+}
+
+message Presentation_Message{
+  int32 key_epoch = 1;
+  int32 session_number = 2;
+  bytes application_message = 3;
+  bytes authentication_tag = 4;
+}
+
+message Session_Message{
+  SESSION_MODE mode = 1;
+  bytes presentation_message = 2;
+}

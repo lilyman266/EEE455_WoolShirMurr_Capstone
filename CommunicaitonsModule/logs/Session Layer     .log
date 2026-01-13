@@ -1,0 +1,133 @@
+2026-01-10 18:07:54 | INFO | Session Layer      | tx b'\x10\x12\x1a\x04\n\x02hi'
+2026-01-10 18:07:54 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 18:07:55 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 18:07:55 | INFO | Session Layer      | tx b'\x10\x13\x1a\x04\n\x02my'
+2026-01-10 18:07:56 | INFO | Session Layer      | tx b'\x10\x13\x1a\x06\n\x04name'
+2026-01-10 18:07:56 | INFO | Session Layer      | State Changed: SessionMode.CONNECTED_UPLINK
+2026-01-10 18:07:56 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 18:07:56 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 18:07:57 | INFO | Session Layer      | tx b'\x10\x13\x1a\x04\n\x02is'
+2026-01-10 18:07:57 | INFO | Session Layer      | State Changed: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 18:07:57 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 18:07:57 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 18:07:58 | INFO | Session Layer      | tx b'\x10\x13\x1a\x05\n\x03ben'
+2026-01-10 18:07:58 | INFO | Session Layer      | State Changed: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 18:07:58 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 18:07:58 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 20:29:59 | INFO | Session Layer      | tx b'\x10\x14\x1a\x04\n\x02hi'
+2026-01-10 20:30:06 | INFO | Session Layer      | tx b'\x10\x14\x1a\x04\n\x02hi'
+2026-01-10 20:30:43 | INFO | Session Layer      | tx b'\x10\x14\x1a\x04\n\x02hi'
+2026-01-10 20:30:43 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:30:44 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:30:45 | INFO | Session Layer      | State Changed: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:30:45 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:30:45 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 20:30:46 | INFO | Session Layer      | State Changed: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:30:46 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:30:46 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 20:30:47 | INFO | Session Layer      | State Changed: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:30:47 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:30:47 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 20:31:07 | INFO | Session Layer      | tx b'\x10\x14\x1a\x04\n\x02hi'
+2026-01-10 20:31:07 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:31:08 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:31:09 | INFO | Session Layer      | State Changed: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:31:09 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:31:09 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 20:31:10 | INFO | Session Layer      | State Changed: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:31:10 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:31:10 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 20:31:11 | INFO | Session Layer      | State Changed: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:31:11 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:31:11 | INFO | Session Layer      | b'\x10\x13\x1a\x0f\n\rstate change!'
+2026-01-10 20:32:59 | INFO | Session Layer      | tx b'\x10\x14\x1a\x04\n\x02hi'
+2026-01-10 20:32:59 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:33:00 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:41:11 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:41:12 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:41:16 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:41:16 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:41:17 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:41:17 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:41:18 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:41:18 | INFO | Session Layer      | b'\x10\x13\x1a\x0c\n\nexit orbit'
+2026-01-10 20:42:06 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:42:06 | INFO | Session Layer      | tx b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:42:07 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:42:11 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:42:11 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:42:12 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:42:12 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:42:13 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:42:13 | INFO | Session Layer      | b'\x10\x13\x1a\x0c\n\nexit orbit'
+2026-01-10 20:42:36 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:42:36 | INFO | Session Layer      | tx b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:42:37 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:42:41 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:42:41 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:42:42 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:42:42 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:42:43 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:42:43 | INFO | Session Layer      | b'\x10\x13\x1a\x0c\n\nexit orbit'
+2026-01-10 20:43:46 | INFO | Session Layer      | tx b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:43:46 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:43:47 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:43:51 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:43:51 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:43:52 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:43:52 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:43:53 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:43:53 | INFO | Session Layer      | b'\x10\x13\x1a\x0c\n\nexit orbit'
+2026-01-10 20:44:23 | INFO | Session Layer      | tx b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:44:23 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:44:24 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:44:28 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:44:28 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:44:29 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:44:29 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:44:31 | INFO | Session Layer      | tx b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:44:31 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:44:32 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:44:36 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:44:36 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:44:37 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:44:37 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:44:38 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:44:38 | INFO | Session Layer      | b'\x10\x13\x1a\x0c\n\nexit orbit'
+2026-01-10 20:45:29 | INFO | Session Layer      | b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:45:29 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:45:30 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:45:34 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:45:34 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:45:35 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:45:35 | INFO | Session Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:45:36 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:45:36 | INFO | Session Layer      | b'\x10\x13\x1a\x0c\n\nexit orbit'
+2026-01-10 20:46:40 | INFO | Session Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:46:40 | INFO | Session Layer      | b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:46:41 | INFO | Session Layer      | b'\x10\x14\x1a\x12\n\x10send health data'
+2026-01-10 20:46:41 | INFO | Session Layer      | b'\x10\x14\x1a\x12\n\x10send health data'
+2026-01-10 20:46:42 | INFO | Session Layer      | b'\x10\x14\x1a\x17\n\x15connected uplink mode'
+2026-01-10 20:46:43 | INFO | Session Layer      | b'\x10\x14\x1a\x19\n\x17connected downlink mode'
+2026-01-10 20:46:44 | INFO | Session Layer      | b'\x10\x14\x1a\x1e\n\x1cconnectionless downlink mode'
+2026-01-10 20:46:45 | INFO | Session Layer      | b'\x10\x14\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:46:45 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-10 20:46:45 | INFO | Session Layer      | b'\x10\x14\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:46:46 | INFO | Session Layer      | b'\x10\x14\x1a\x12\n\x10send health data'
+2026-01-10 20:46:46 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-10 20:46:46 | INFO | Session Layer      | b'\x10\x14\x1a\x12\n\x10send health data'
+2026-01-10 20:46:47 | INFO | Session Layer      | b'\x10\x14\x1a\x0c\n\nexit orbit'
+2026-01-10 20:46:47 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-10 20:46:47 | INFO | Session Layer      | b'\x10\x14\x1a\x0c\n\nexit orbit'
+2026-01-11 14:37:49 | INFO | Session Layer      | b'\x10\x14\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-11 14:37:50 | INFO | Session Layer      | b'\x10\x15\x1a\x12\n\x10send health data'
+2026-01-11 14:37:50 | INFO | Session Layer      | b'\x10\x15\x1a\x12\n\x10send health data'
+2026-01-11 14:37:51 | INFO | Session Layer      | b'\x10\x15\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-11 14:37:52 | INFO | Session Layer      | b'\x10\x15\x1a\x12\n\x10send health data'
+2026-01-11 14:37:53 | INFO | Session Layer      | b'\x10\x15\x1a\x0c\n\nexit orbit'
+2026-01-11 14:37:54 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_UPLINK
+2026-01-11 14:37:54 | INFO | Session Layer      | b'\x10\x15\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-11 14:37:55 | INFO | Session Layer      | state changing to: SessionMode.CONNECTED_DOWNLINK
+2026-01-11 14:37:55 | INFO | Session Layer      | b'\x10\x15\x1a\x12\n\x10send health data'
+2026-01-11 14:37:56 | INFO | Session Layer      | state changing to: SessionMode.CONNECTIONLESS_DOWNLINK
+2026-01-11 14:37:56 | INFO | Session Layer      | b'\x10\x15\x1a\x0c\n\nexit orbit'
