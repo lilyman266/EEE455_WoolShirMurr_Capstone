@@ -94,7 +94,6 @@
             padding: 6px 10px;
             border-bottom: 1px solid #9bb6c9;
             font-size: 14px;
-            cursor: pointer;
         }
 
         .dataset-header {
@@ -118,14 +117,16 @@
         <!-- Logo -->
         <div id="logo-container">
             <!-- Replace src with your static path -->
-            <img src="/static/audimus_logo.png" alt="Audimus Logo">
+            <img src="/static/images/audimus_logo.png" alt="Audimus Logo">
         </div>
 
         <!-- Buttons -->
         <nav id="nav-controls">
-                <button class="nav-button" id="about-button">About</button>
-                <button class="nav-button" id="login-button">Login</button>
-            <button class="nav-button" id="download-button">Download</button>
+            <div class="nav-row">
+                <button class="nav-button">About</button>
+                <button class="nav-button">Login</button>
+            </div>
+            <button class="nav-button">Download</button>
         </nav>
 
     </header>
@@ -165,96 +166,9 @@
             <div class="dataset-row"><div>—</div><div>—</div></div>
 
         </div>
-        <script>
-
-        </script>
     </main>
 
 </div>
-    <!-- Establish global variables needed to make the data functionality work -->
-    <script defer>
 
-    </script>
-    <!-- TODO: make a function which gets all acoustic datasets which have the flag "restricted" set to 0 -->
-
-    <script defer>
-        async function populate_databox() {
-            const response = await fetch("/populate_databox", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    page: "guest",
-                    datalist: "guest"
-                })
-            });
-            const list = document.getElementById("dataset-box");
-            const data = await response.json();
-            data.forEach(item => {
-                const new_set = list.createElement("div");
-                new_set.classList.add("dataset-row");
-                const start_date = new_set.createElement("div");
-                const end_date = new_set.createElement("div");
-                start_date.textContent = item["start_date"];
-                end_date.textContent = item["end_date"];
-            })
-        }
-    </script>
-    <!-- TODO:make each row clickable and when clicked, change global "start_date"
-     TODO:    and "end_date" to the values of that row -->
-    <!-- Download Button: -->
-    <script defer>
-        const button = document.getElementById("download-button");
-
-        button.addEventListener("click", async () => {
-            const start_date = input.value.trim()
-            const response = await fetch("/data", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    start_date: start_date,
-                    end_date: end_date
-                })
-            });
-            const text = await response.text();
-            result.innerHTML = text
-            // 2. Create a Blob (in-memory file)
-            const blob = new Blob([text], { type: 'text/plain' });
-            // 3. Create a temporary object URL
-            const url = URL.createObjectURL(blob);
-            // 4. Create and click a hidden <a>
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'server_data.txt';
-            document.body.appendChild(a);
-            a.click();
-            // 5. Cleanup
-            URL.revokeObjectURL(url);
-            a.remove();
-        })
-    </script>
-    <!-- Login Button: -->
-    <script defer>
-        const button = document.getElementById("about-button");
-
-        button.addEventListener("click", async () => {
-            const response = await fetch("/login", {
-                method: "GET"
-            });
-        })
-    </script>
-    <!-- Login Button: -->
-    <script defer>
-        const button = document.getElementById("login-button");
-
-        button.addEventListener("click", async () => {
-            const response = await fetch("/login", {
-                method: "GET"
-            });
-        })
-    </script>
 </body>
 </html>

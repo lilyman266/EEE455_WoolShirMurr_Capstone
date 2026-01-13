@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Dataset Portal</title>
+
+    <!-- External CSS assumed -->
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+    <!-- App Root -->
+    <div id="app-root">
+
+        <!-- Header / Top Bar -->
+        <header id="top-bar">
+
+            <!-- Logo Area -->
+            <div id="logo-container">
+                <img
+                    id="app-logo"
+                    src="logo.png"
+                    alt="Application Logo"
+                />
+            </div>
+
+            <!-- Navigation Buttons -->
+            <nav id="nav-controls">
+                <button id="btn-about" class="nav-button">About</button>
+                <button id="btn-login" class="nav-button">Login</button>
+                <button id="btn-download" class="nav-button">Download</button>
+            </nav>
+
+        </header>
+
+        <!-- Main Content -->
+        <main id="main-content">
+
+            <!-- Dataset List Container -->
+            <section id="dataset-section">
+
+                <!-- Scrollable Dataset Box -->
+                <div id="dataset-box">
+
+                    <!-- Column Headers -->
+                    <div class="dataset-row dataset-header">
+                        <span class="dataset-col start-time">Start Date / Time</span>
+                        <span class="dataset-col end-time">End Date / Time</span>
+                    </div>
+
+                    <!-- Dataset Rows -->
+                    <div class="dataset-row">
+                        <span class="dataset-col start-time">2026-01-01 12:00</span>
+                        <span class="dataset-col end-time">2026-01-01 14:30</span>
+                    </div>
+
+                    <div class="dataset-row">
+                        <span class="dataset-col start-time">2026-01-02 09:15</span>
+                        <span class="dataset-col end-time">2026-01-02 10:45</span>
+                    </div>
+
+                    <!-- Additional rows go here -->
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</body>
+</html>
