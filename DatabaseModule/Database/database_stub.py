@@ -7,6 +7,7 @@
 
 from abc import ABC, abstractmethod
 import psycopg2
+from datetime import datetime
 
 HOST = "localhost"
 DBNAME = "gs_db"
@@ -28,7 +29,7 @@ class InputNotValidError(Exception):
     pass
 
 class DatabaseStub(ABC):
-    
+
     def __init__(self):
         pass
 
@@ -54,7 +55,7 @@ class DatabaseStub(ABC):
         pass
     #Read acoustic data from the DB
     @abstractmethod
-    def read_acoustic_data(self, start_time=None, end_time=None, id=None):
+    def read_acoustic_data(self, start_time=None, end_time=None, id=None, restricted=None):
         pass
     #Read uplink commands from the DB (not required for this implementation)
     @abstractmethod
@@ -72,7 +73,7 @@ class CommsModDatabaseStub(DatabaseStub):
         self.origin = 'comms_mod'
     
     #Parameters:
-    # type: string: type of log to be inputted. Must be valid in TYPELIST.
+    # type: #string: type of log to be inputted. Must be valid in TYPELIST.
     # data: string: the content of the log. Brevity is key to save database space!
     #Returns:
     # type if there is a TypeNotValidError
@@ -184,7 +185,7 @@ class CommsModDatabaseStub(DatabaseStub):
     def read_log(self, start_time=None, end_time=None, id=None, type=None, origin=None):
         pass
     #Read acoustic data from the DB - NOTE: read_acoustic_data SHOULD NOT BE IMPLEMENTED FOR COMMUNICAITONS MODULE
-    def read_acoustic_data(self, start_time=None, end_time=None, id=None):
+    def read_acoustic_data(self, start_time=None, end_time=None, id=None, restricted=None):
         pass
     #Read uplink commands from the DB  - NOTE: read_uplink_commands SHOULD NOT BE IMPLEMENTED FOR COMMUNICAITONS MODULE
     def read_uplink_commands(self, start_time=None, end_time=None, id=None):
@@ -225,7 +226,7 @@ class WebAppDatabaseStub(DatabaseStub):
     # end_time = string: 'YYYY-MM-DD HH:MM:SS+00'
     # id: not used for this implementation
     #Returns: List of acoustic data entries#
-    def read_acoustic_data(self, start_time=None, end_time=None, id=None):
+    def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, id:int=None, restricted:bool=None):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
         #Function to ensure they are allowed to access the info
@@ -238,15 +239,32 @@ class WebAppDatabaseStub(DatabaseStub):
         cursor.execute("""SELECT pg_input_is_valid(%s, timestamptz);""", (end_time))
         if cursor.fetchone() == 'false':
             raise InputNotValidError(f"end time is not valid! Inputted end time: {end_time}")
-        
-        #reading the database!
-        cursor.execute("""SELECT * FROM acoustic_data WHERE tz >= %s AND tz <= %s;""", (start_time, end_time))
+
+        clauses = []
+        params = {}
+        if start_time is not None:
+            clauses.append("timestamp>=%(start_time)s")
+            params["start_time"] = start_time
+        if end_time is not None:
+            clauses.append("timestamp<=%(end_time)s")
+            params["end_time"] = end_time
+        if id is not None:
+            clauses.append("id=%(id)s")
+            params["id"] = id
+        if restricted is not None:
+            clauses.append("restricted=%(restricted)s")
+            params["restricted"] = restricted
+
+        where = " AND ".join(clauses) if clauses else "FALSE"
+        query = f"""SELECT json_agg(row_to_json(t)) * FROM (select * FROM acoustic_data WHERE {where}) t;"""
+        cursor.execute(query, params)
+        to_return = cursor.fetchall()
 
         #commit changes and close connection
         conn.commit()
         cursor.close()
         conn.close()
-        pass
+        return to_return
     
     #Read uplink commands from the DB
     def read_uplink_commands(self, start_time=None, end_time=None, id=None):

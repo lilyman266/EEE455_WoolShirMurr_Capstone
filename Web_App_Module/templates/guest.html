@@ -97,6 +97,10 @@
             cursor: pointer;
         }
 
+        .dataset-row.active {
+            background: #91b6d2;
+        }
+
         .dataset-header {
             font-weight: bold;
             /*background: rgba(0,0,0,0.05);*/
@@ -135,8 +139,7 @@
         <div id="dataset-box">
 
             <div class="dataset-row dataset-header">
-                <div>Start Date / Time</div>
-                <div>End Date / Time</div>
+                <div>Timestamp</div>
             </div>
 
             <!-- Example rows -->
@@ -166,17 +169,23 @@
 
         </div>
         <script>
+            const list = document.querySelectorAll(".dataset-row");
+            list.forEach(item => {
+                item.addEventListener("click", () => {
+                    list.forEach(item => {item.classList.remove("active")});
+                    item.classList.toggle("active");
+                });
 
+            });
         </script>
     </main>
 
 </div>
     <!-- Establish global variables needed to make the data functionality work -->
     <script defer>
-
+        const clicked_id = null;
     </script>
     <!-- TODO: make a function which gets all acoustic datasets which have the flag "restricted" set to 0 -->
-
     <script defer>
         async function populate_databox() {
             const response = await fetch("/populate_databox", {
@@ -194,10 +203,14 @@
             data.forEach(item => {
                 const new_set = list.createElement("div");
                 new_set.classList.add("dataset-row");
-                const start_date = new_set.createElement("div");
-                const end_date = new_set.createElement("div");
-                start_date.textContent = item["start_date"];
-                end_date.textContent = item["end_date"];
+                const timestamp = new_set.createElement("div");
+                timestamp.textContent = item["timestamp"];
+                <!-- TODO: CHECK THIS -->
+                const timestamp_id = item["id"];
+                <!--TODO: try to add local variable. ALSO! ref GPT - add "when clicked change global var and colour" funcitonality-->
+                new_set.addEventListener("click", () => {
+                    new_set.classList.toggle("active");
+                });
             })
         }
     </script>
@@ -238,22 +251,18 @@
     </script>
     <!-- Login Button: -->
     <script defer>
-        const login_button = document.getElementById("about-button");
+        const login_button = document.getElementById("login-button");
 
         login_button.addEventListener("click", async () => {
-            const response = await fetch("/login", {
-                method: "GET"
-            });
+            window.location.href = "/login";
         })
     </script>
     <!-- About Button: -->
     <script defer>
-        const about_button = document.getElementById("login-button");
+        const about_button = document.getElementById("about-button");
 
         about_button.addEventListener("click", async () => {
-            const response = await fetch("/about", {
-                method: "GET"
-            });
+            window.location.href = "/login";
         })
     </script>
 </body>
