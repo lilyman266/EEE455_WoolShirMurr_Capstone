@@ -1,0 +1,123 @@
+/* Base Styles */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    /* Use a color that contrasts with the layout background */
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+}
+
+/* Main Container (the light grey background in the image) */
+.container {
+    width: 900px;
+    height: 600px;
+    background-color: #c9cdd7; /* Light grey/blue background */
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #555; /* Mimic the dark outline */
+    box-sizing: border-box;
+}
+
+/* Header/Top Section */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+/* Logo and Text Area */
+.logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+}
+
+.small-text {
+    font-size: 10px;
+    font-weight: normal;
+}
+
+/* Button Group Styling */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Align buttons to the right */
+}
+
+.button {
+    /* General button appearance */
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    padding: 10px 30px;
+    margin: 5px 0;
+    width: 120px; /* Fixed width */
+    background-color: #e5e5f0; /* Light blue/grey button background */
+    color: #333;
+    border: 1px solid #333; /* Dark button outline */
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    /* Move Download button down for spacing as in the image */
+    margin-top: 10px;
+}
+
+/* Special grouping for About and Login to put them on the same line */
+.button-group {
+    display: grid;
+    grid-template-areas:
+        "about login"
+        ". download";
+    gap: 10px; /* Space between buttons */
+}
+
+.button:nth-child(1) { grid-area: about; }
+.button:nth-child(2) { grid-area: login; }
+.button:nth-child(3) { grid-area: download; }
+
+/* Main Content Box (the big lined box) */
+.content-box {
+    width: 100%;
+    height: 400px; /* Fixed height to enable scrolling */
+    background-color: #f0f8ff; /* Very light blue background */
+    border: 1px solid #333;
+    padding: 10px;
+    box-sizing: border-box;
+    /* *** This is the key for the scrollbox functionality *** */
+    overflow-y: auto; /* Enable vertical scrolling */
+    /* Add a subtle visual padding to separate the content from the border */
+    position: relative;
+}
+
+/* Entry Line Styling (to create the horizontal lines) */
+.entry {
+    color: transparent; /* Make the text invisible */
+    padding: 8px 0;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #b0c4de; /* The thin horizontal line color */
+    height: 1em; /* Ensures a consistent row height */
+}
+
+/* The first visible entry should not be transparent for demonstration */
+.entry:first-child {
+    color: #333; /* Make the first few entries visible for context */
+    font-size: 12px;
+}
+.entry:nth-child(2) {
+    color: #333;
+    font-size: 12px;
+}
