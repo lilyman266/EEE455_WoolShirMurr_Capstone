@@ -2,10 +2,9 @@ from flask import Flask, render_template, request
 import sys
 from datetime import datetime
 
-from EEE455_WoolShirMurr_Capstone.DatabaseModule.Database.database_stub import WebAppDatabaseStub
+from DatabaseModule.Database.database_stub import WebAppDatabaseStub
 
-sys.path.append('./../DatabaseModule/Database')
-from database_stub import WebAppDatabaseStub
+
 
 # Create the Flask application instance
 app = Flask(__name__)
@@ -45,35 +44,28 @@ def admin_account():
 @app.route('/data', methods=["POST"])
 def data():
     params = request.get_json()
-    start_date = params['start_date']
-    end_date = params['end_date']
-    if type(start_date) is datetime and type(end_date) is datetime:
-        return stub.read_acoustic_data(start_time=start_date, end_time=end_date)
-    #logic to confirm correct params
-    if start_date is None or start_date is "":
-        return f"start date was None"
-    if not start_date.isnumeric():
-        return f"start date must be a number"
-    if int(start_date) <= 3:
-        return f"start date was less than 3"
-    elif int(start_date) >= 5:
-        return f"start date was more than 5"
-    else:
-        return f"start date was 4. Try something less than 3 or more than 5."
+    needed_id = params["id"]
+    if needed_id == None:
+        print("GAHHHHH SOMETHING BROKE")
+    #SECURITY GOES HERE!    
+    data = stub.read_acoustic_data(my_id=needed_id)
+    return data
 
 @app.route('/populate_databox', methods=['POST'])
 def populate_databox():
     params = request.get_json()
     owner=params['page']
     datalist = params['datalist']
-    if owner is None:
+    if owner == None:
         return f"Error: owner is None"
-    if datalist is None:
+    if datalist == None:
         return f"Error: datalist is None"
     #if guest page asking, use the stub to get all acoustic data whose "restricted"
     #value is 0
-    if owner is "guest":
-        return stub.read_acoustic_data(restricted=False)
+    if owner == "guest":
+        data = stub.read_acoustic_data(restricted=True) #NOTE: CHANGE THIS TO FALSE FOR PRODUCTION
+        return data
+
 
 # Run the application
 if __name__ == '__main__':
