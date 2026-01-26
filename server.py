@@ -21,11 +21,17 @@ def about():
 
 @app.route('/user_home', methods=['GET'])
 def user_home():
-    return render_template('user_home.html')
+    # code = json.loads(request.args.get('code'))
+#     # if pswd_stub.is_this_code_right(code) == True:
+#     #     return render_template('user_home.html')
+#     # else:
+#     #     return render_template('guest.html')
+    return render_template('guest.html')
 
 @app.route('/login', methods=['GET'])
 def login():
     return render_template('login.html')
+
 
 @app.route('/login_redirect', methods=['GET'])
 def login_redirect():
@@ -65,6 +71,15 @@ def populate_databox():
     if owner == "guest":
         data = stub.read_acoustic_data(restricted=True) #NOTE: CHANGE THIS TO FALSE FOR PRODUCTION
         return data
+
+@app.route('/password_request', methods=['POST'])
+def password_request():
+    #get params
+    #use stub to ask pwd database to login
+    #return the reply(with code)
+    pass
+
+
 
 
 # Run the application
