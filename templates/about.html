@@ -15,69 +15,194 @@
         <!-- Logo -->
         <div id="logo-container">
             <!-- Replace src with your static path -->
-            <img src="/static/audimus_logo.png" alt="Audimus Logo">
+            <img src="/static/audimus_logo.png" alt="Audimus Logo" id="logo">
         </div>
 
         <!-- Buttons -->
         <nav id="nav-controls">
-                <button class="nav-button" id="about-button">About</button>
+                <button class="nav-button" id="home-button">Home</button>
                 <button class="nav-button" id="login-button">Login</button>
-            <button class="nav-button" id="download-button">Download</button>
         </nav>
 
     </header>
 
         <main class="content-section">
             <div class="content-box">
+                <h1>Audimus Mission</h1>
+                <p>The Audimus Mission is managed by the RMC Space Science Department.
+                    Its goal is to design a 3U CubeSat in-house to serve as a proof of
+                    concept for space-based Arctic surveillance. The satellite will be
+                    placed into a low-Earth orbit at an altitude between 500 and 600
+                    kilometres above sea level, resulting in an orbital period of
+                    approximately 90 minutes. The CubeSat will receive and store data
+                    from a sonobuoy deployed in the Lancaster Sound area[2], then
+                    downlink the data to a ground station located at RMC Kingston. The
+                    project is partially supported by DRDC and is being developed in
+                    parallel with CSA’s CUBICS program[3]. The mission is scheduled for
+                    launch in October 2026. Historically, waterways in the Arctic have
+                    been restricted by ice, preventing the passage of large vessels. As
+                    the polar climate warms, some channels are opening, creating both
+                    scientific and strategic interest. In particular, the opening of
+                    Canadian waters to potential adversaries raises a defence concern.
+                    One method to monitor and study these waterways is the deployment
+                    of sonobuoys, which collect data using hydrophones and transmit it
+                    via VHF monopole antennas. At this stage, the data is primarily
+                    valuable for scientific purposes; the military benefit is derived
+                    from a successful proof of concept. The Audimus mission aims to relay
+                    this data via satellite to RMC Kingston, where infrastructure exists
+                    for storage, analysis, and distribution. The significant latitude
+                    difference between the sonobuoy deployment zones and RMC Kingston
+                    makes direct land-based communication impossible. To bridge this gap,
+                    the mission will launch a CubeSat to act as a relay. Using the selected
+                    technology, the CubeSat will operate in a store-and-forward pattern,
+                    storing hydrophone data for four to five passes and downlinking it during
+                    subsequent passes.</p>
+                <p>The Audimus Mission is managed by the RMC Space Science Department. Its
+                    goal is to design a 3U CubeSat in-house to serve as a proof of concept
+                    for space-based Arctic surveillance. The satellite will be placed into a
+                    low-Earth orbit at an altitude between 500 and 600 kilometres above sea
+                    level, resulting in an orbital period of approximately 90 minutes. The
+                    CubeSat will receive and store data from a sonobuoy deployed in the
+                    Lancaster Sound area[2], then downlink the data to a ground station
+                    located at RMC Kingston. The project is partially supported by DRDC and
+                    is being developed in parallel with CSA’s CUBICS program[3]. The mission
+                    is scheduled for launch in October 2026. Historically, waterways in the
+                    Arctic have been restricted by ice, preventing the passage of large vessels.
+                    As the polar climate warms, some channels are opening, creating both
+                    scientific and strategic interest. In particular, the opening of Canadian
+                    waters to potential adversaries raises a defence concern. One method to
+                    monitor and study these waterways is the deployment of sonobuoys, which
+                    collect data using hydrophones and transmit it via VHF monopole antennas.
+                    At this stage, the data is primarily valuable for scientific purposes; the
+                    military benefit is derived from a successful proof of concept. The Audimus
+                    mission aims to relay this data via satellite to RMC Kingston, where
+                    infrastructure exists for storage, analysis, and distribution. The
+                    significant latitude difference between the sonobuoy deployment zones and
+                    RMC Kingston makes direct land-based communication impossible. To bridge
+                    this gap, the mission will launch a CubeSat to act as a relay. Using the
+                    selected technology, the CubeSat will operate in a store-and-forward pattern,
+                    storing hydrophone data for four to five passes and downlinking it during
+                    subsequent passes.
+                </p>
                 <p>
-Audimus Mission
-
-The Audimus Mission is managed by the RMC Space Science Department. Its goal is to design a 3U CubeSat in-house to serve as a proof of concept for space-based Arctic surveillance. The satellite will be placed into a low-Earth orbit at an altitude between 500 and 600 kilometres above sea level, resulting in an orbital period of approximately 90 minutes. The CubeSat will receive and store data from a sonobuoy deployed in the Lancaster Sound area[2], then downlink the data to a ground station located at RMC Kingston. The project is partially supported by DRDC and is being developed in parallel with CSA’s CUBICS program[3]. The mission is scheduled for launch in October 2026. Historically, waterways in the Arctic have been restricted by ice, preventing the passage of large vessels. As the polar climate warms, some channels are opening, creating both scientific and strategic interest. In particular, the opening of Canadian waters to potential adversaries raises a defence concern. One method to monitor and study these waterways is the deployment of sonobuoys, which collect data using hydrophones and transmit it via VHF monopole antennas. At this stage, the data is primarily valuable for scientific purposes; the military benefit is derived from a successful proof of concept. The Audimus mission aims to relay this data via satellite to RMC Kingston, where infrastructure exists for storage, analysis, and distribution. The significant latitude difference between the sonobuoy deployment zones and RMC Kingston makes direct land-based communication impossible. To bridge this gap, the mission will launch a CubeSat to act as a relay. Using the selected technology, the CubeSat will operate in a store-and-forward pattern, storing hydrophone data for four to five passes and downlinking it during subsequent passes.
-
-
-Two RMC capstone projects from the 2025 Academic year have completed work that will influence the functional requirements for this project.
-1.2.3.1 Audimus Ground Station Capstone -  2025
-Work on the Audimus ground station was initiated by a previous undergraduate group. Their capstone project brought the ground station to a functional state, enabling it to receive data from a separate radio and transmit commands. However, several features intended for the ground station have not yet been implemented. These features are detailed in Section 8.2 of the previous group's Detailed Design Document[3] and are as follows:
-Radio Mode: The previous solution did not specify a protocol for radio communications between the ground station and the satellite. Instead, it used the amateur radio protocol, Amateur X.25 (AX.25), as a placeholder. Since the completion of the previous capstone project, the Audimus Project has acquired a Software Defined Radio (SDR) intended for communication with the satellite.
-Power Loss Management: In the event of a power loss to the ground station, an auxiliary power source should maintain system operation for the duration of a satellite pass. This will allow the ground station to receive any remaining data and shut down safely.
-Remote Access Notification: If an error occurs during autonomous operation, the ground station should be capable of sending a notification to an external computer. This will enable an operator to address the issue promptly and minimize data loss.
-Settings Tab: Currently, ground station settings are configured by modifying a file on the computer. A settings tab within the ground station GUI should allow users to modify settings while the application is running.
-At the time of writing, a rotator upgrade has rendered the satellite tracking module of their solution non-functional.
-1.2.3.2 Audimus Relay-Operating System -  2025
-For the ground station to fulfill its intended purpose, it must be capable of communicating with the satellite’s onboard computer operating system. Previous work on the Audimus Relay-Operating System (AR-OS) used the Amateur X.25 (AX.25) communication protocol as a placeholder for the data link layer. At the time of writing, no solution exists to manage or organize data transmission between the satellite and the ground station.
-1.2.4 Solutions Gap
-Despite the progress made by previous capstone projects, several critical aspects of the Audimus ground station remain incomplete. These gaps prevent the system from achieving full operational capability and meeting the mission’s objectives.  Addressing these deficiencies constitutes the solutions gap that later projects must close.
-1.2.4.1 Communications Protocol
-The ground station must be capable of uplinking commands to the AR-OS and downlinking sonobuoy data.
-Both the ground station and the AR-OS currently use placeholders for their radio communications. A defined set of protocols is required to ensure the safe and reliable transmission of data between the ground station SDR and the CubeSat. The Audimus Satellite’s current trajectory results in more passes over the Arctic sonobuoy than over RMC. Additionally, passes over RMC must accommodate the transmission of satellite commands, health data, and mission data. Together, these factors indicate that downlinking will likely be the bottleneck in data relay, requiring special considerations to maximize throughput.
-As part of this protocol, uplink commands must be encrypted to prevent unauthorized control of the satellite. It should also be noted that broadcasting at the frequency and power levels used by the ground station radio is regulated by law. A trained radio operator is required during uplink operations, whereas no operator is needed for downlink reception.
-1.2.4.2 Data Sharing
-There is currently no solution to share the Sonobuoy Data beyond the ground station computer once it reaches RMC. Some solution is required to share that data with interested parties.
-1.2.4.3 Ground Station SDR Interface and AR-OS SDR Interface.
-At present, no solution enables either the ground station or the AR-OS to communicate via their respective SDRs. Currently, the ground station relies on a manually tuned audio transmitter to test the transmission frontend, which serves only as a placeholder. The final solution will employ an SDR that is automatically controlled by the ground station computer; this SDR has been procured but not yet implemented.
-Similarly, the AR-OS has only been tested using simulated communications, and no effort has been made to interface it with its intended SDR.
-1.3 Aim
-Our project will provide interfacing software which will allow the existing ground station computer to use the SDR to send and receive messages, encapsulated in datagrams formatted based on a suitable protocol. Any data received should be accessible on a human-readable and remote interface.
-1.4 Scope
-In broad terms, the scope of this project is all tasks related to the downlinking and handling of sonobuoy data. This task can be broken into six broad categories relating to some aspects of the solutions gap.
-1.4.1 Ground Station Rotator Compatibility
-As discussed in Section 1.2.3.1, the ground station rotator is currently non-functional due to the existing code. Updating this code is necessary for proper ground station operation and falls within the scope of this project.
-1.4.2 Remaining Ground Station Features
-As discussed in Section 1.2.3.1, several planned features for the ground station remain unfinished. These features were part of the Audimus Mission's original design for the ground station and are included within the scope of this project.
-1.4.3 Communications Protocol
-The unreliable nature of CubeSat radio connections, combined with the downlink bottleneck discussed in Section 1.2.4.1, creates the need for a protocol that ensures reliable and efficient communications.
-1.4.4 Ground Station to SDR Interface
-As discussed in Section 1.2.3.1, the Audimus project has acquired an SDR intended for communication with the satellite. An interface is required between the ground station computer and this SDR. This interface will manage the serialization and deserialization of data, as well as the direct transmission of commands to the SDR.
-It should be noted that the AR-OS SDR interface is not within the scope of this project. However, for the sake of the Audimus mission, we should build our system with the SDR to AR-OS interface in mind.
-1.4.5 Dissemination of Satellite Data
-There is a need to disseminate satellite data to ensure its availability to interested parties. Ideally, this data should be accessible over the internet. However, security and permissions constraints may limit external access. As a result, the development of a web application for data sharing is within the project’s scope. But, enabling internet access to this application is considered optional.
-1.4.6 Simulation
-Since the satellite launch will occur outside the time span of this project, communications testing will require a simulation between the ground station SDR and another SDR.
-1.5 End State
-At the end state, our project will facilitate the transfer of data from the CubeSat to the existing ground station computer. The ground station will be capable of interfacing with the SDR to send and receive messages to the CubeSat. The ground station will be updated to include the features originally intended by the previous project. A web server will provide data access to interested stakeholders.
+                    Two RMC capstone projects from the 2025 Academic year have completed work that
+                    will influence the functional requirements for this project. Work on the Audimus
+                    ground station was initiated by a previous undergraduate group. Their capstone
+                    project brought the ground station to a functional state, enabling it to receive
+                    data from a separate radio and transmit commands. However, several features
+                    intended for the ground station have not yet been implemented. These features are
+                    detailed in Section 8.2 of the previous group's Detailed Design Document[3] and
+                    are as follows: The previous solution did not specify a protocol for radio
+                    communications between the ground station and the satellite. Instead, it used the
+                    amateur radio protocol, Amateur X.25 (AX.25), as a placeholder. Since the
+                    completion of the previous capstone project, the Audimus Project has acquired a
+                    Software Defined Radio (SDR) intended for communication with the satellite. In the
+                    event of a power loss to the ground station, an auxiliary power source should
+                    maintain system operation for the duration of a satellite pass. This will allow
+                    the ground station to receive any remaining data and shut down safely. Remote
+                    Access Notification: If an error occurs during autonomous operation, the ground
+                    station should be capable of sending a notification to an external computer. This
+                    will enable an operator to address the issue promptly and minimize data loss.
+                    Currently, ground station settings are configured by modifying a file on the
+                    computer. A settings tab within the ground station GUI should allow users to
+                    modify settings while the application is running. At the time of writing, a
+                    rotator upgrade has rendered the satellite tracking module of their solution
+                    non-functional. For the ground station to fulfill its intended purpose, it must
+                    be capable of communicating with the satellite’s onboard computer operating system.
+                    Previous work on the Audimus Relay-Operating System (AR-OS) used the Amateur X.25
+                    (AX.25) communication protocol as a placeholder for the data link layer. At the
+                    time of writing, no solution exists to manage or organize data transmission
+                    between the satellite and the ground station.
+                </p>
+                <p>
+                    Despite the progress made by previous capstone projects, several critical aspects
+                    of the Audimus ground station remain incomplete. These gaps prevent the system
+                    from achieving full operational capability and meeting the mission’s objectives.
+                    Addressing these deficiencies constitutes the solutions gap that later projects
+                    must close. The ground station must be capable of uplinking commands to the AR-OS
+                    and downlinking sonobuoy data. Both the ground station and the AR-OS currently use
+                    placeholders for their radio communications. A defined set of protocols is required
+                    to ensure the safe and reliable transmission of data between the ground station
+                    SDR and the CubeSat. The Audimus Satellite’s current trajectory results in more
+                    passes over the Arctic sonobuoy than over RMC. Additionally, passes over RMC must
+                    accommodate the transmission of satellite commands, health data, and mission data.
+                    Together, these factors indicate that downlinking will likely be the bottleneck in
+                    data relay, requiring special considerations to maximize throughput. As part of
+                    this protocol, uplink commands must be encrypted to prevent unauthorized control
+                    of the satellite. It should also be noted that broadcasting at the frequency and
+                    power levels used by the ground station radio is regulated by law. A trained radio
+                    operator is required during uplink operations, whereas no operator is needed for
+                    downlink reception. There is currently no solution to share the Sonobuoy Data
+                    beyond the ground station computer once it reaches RMC. Some solution is required
+                    to share that data with interested parties. At present, no solution enables
+                    either the ground station or the AR-OS to communicate via their respective SDRs.
+                    Currently, the ground station relies on a manually tuned audio transmitter to
+                    test the transmission frontend, which serves only as a placeholder. The final
+                    solution will employ an SDR that is automatically controlled by the ground
+                    station computer; this SDR has been procured but not yet implemented. Similarly,
+                    the AR-OS has only been tested using simulated communications, and no effort has
+                    been made to interface it with its intended SDR.
+                </p>
+                <p>
+                    Our project will provide interfacing software which will allow the existing ground
+                    station computer to use the SDR to send and receive messages, encapsulated in
+                    datagrams formatted based on a suitable protocol. Any data received should be
+                    accessible on a human-readable and remote interface. In broad terms, the scope
+                    of this project is all tasks related to the downlinking and handling of sonobuoy
+                    data. This task can be broken into six broad categories relating to some aspects
+                    of the solutions gap. The ground station rotator is currently non-functional due
+                    to the existing code. Updating this code is necessary for proper ground station
+                    operation and falls within the scope of this project. Several planned features
+                    for the ground station remain unfinished. These features were part of the Audimus
+                    Mission's original design for the ground station and are included within the
+                    scope of this project. The unreliable nature of CubeSat radio connections,
+                    combined with the downlink bottleneck, creates the need for a protocol that
+                    ensures reliable and efficient communications. The Audimus project has acquired
+                    an SDR intended for communication with the satellite. An interface is required
+                    between the ground station computer and this SDR. This interface will manage the
+                    serialization and deserialization of data, as well as the direct transmission of
+                    commands to the SDR. It should be noted that the AR-OS SDR interface is not within
+                    the scope of this project. However, for the sake of the Audimus mission, we should
+                    build our system with the SDR to AR-OS interface in mind. There is a need to
+                    disseminate satellite data to ensure its availability to interested parties.
+                    Ideally, this data should be accessible over the internet. However, security and
+                    permissions constraints may limit external access. As a result, the development
+                    of a web application for data sharing is within the project’s scope. But, enabling
+                    internet access to this application is considered optional. Since the satellite
+                    launch will occur outside the time span of this project, communications testing
+                    will require a simulation between the ground station SDR and another SDR.
+                </p>
+                <p>
+                    At the end state, our project will facilitate the transfer of data from the CubeSat
+                    to the existing ground station computer. The ground station will be capable of
+                    interfacing with the SDR to send and receive messages to the CubeSat. The ground
+                    station will be updated to include the features originally intended by the
+                    previous project. A web server will provide data access to interested stakeholders.
                 </p>
             </div>
         </main>
     </div>
+    <!-- Home Button: -->
+    <script defer>
+        const home_button = document.getElementById("home-button");
+
+        home_button.addEventListener("click", async () => {
+            window.location.href = "/";
+        })
+        const home_logo = document.getElementById("logo");
+
+        home_logo.addEventListener("click", async () => {
+            window.location.href = "/";
+        })
+    </script>
+
+    <!-- Login Button: -->
+    <script defer>
+        const login_button = document.getElementById("login-button");
+
+        login_button.addEventListener("click", async () => {
+            window.location.href = "/login";
+        })
+    </script>
 </body>
 </html>

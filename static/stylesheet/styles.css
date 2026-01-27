@@ -75,10 +75,15 @@ body {
     border-radius: 12px;
     padding: 10px;
     overflow-y: auto;
+    margin: auto;
 }
 
 .content-box.fixed-height {
      height: 350px;
+}
+
+.content-box.fixed-width {
+     width: 500px;
 }
 /* ====== END OF MAIN CONTENT BOX ====== */
 

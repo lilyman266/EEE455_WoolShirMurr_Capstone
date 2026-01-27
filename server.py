@@ -1,15 +1,15 @@
-from flask import Flask, render_template, request
+import requests
+from flask import Flask, render_template, request, redirect
 import sys
 from datetime import datetime
 
 from DatabaseModule.Database.database_stub import WebAppDatabaseStub
 
 
-
+CLIENTID = 6789
 # Create the Flask application instance
 app = Flask(__name__)
 stub = WebAppDatabaseStub()
-
 # ###################### WEBPAGE REDIRECTS ########################################
 @app.route('/', methods=['GET'])
 def guest():
@@ -30,21 +30,46 @@ def user_home():
 
 @app.route('/login', methods=['GET'])
 def login():
-    return render_template('login.html')
-
-
-@app.route('/login_redirect', methods=['GET'])
-def login_redirect():
-    return render_template('login_redirect.html')
+    auth_url = (
+        f"http://localhost:5001/login"
+        f"?response_type=code"
+        f"&redirect_uri=http://127.0.0.1:5000/callback"
+    )
+    return redirect(auth_url)
 
 @app.route('/user_account', methods=['GET'])
 def user_account():
-    return render_template('user_account.html')
+    key = request.args["code"]
+    print(f"server: user_account: {key}")
+    auth_data = None
+    #send a request to auth server to validate code
+    try:
+        response = requests.get(f"http://localhost:5001/validate?code={key}")
+
+        response.raise_for_status()
+        try:
+            auth_data = response.json()
+        except ValueError:
+            print("Invalid response")
+
+    except requests.exceptions.HTTPError as e:
+        return "We encountered an authentication error", 500
+    print(f"server: data: {auth_data}")
+    if auth_data == 1:
+        return render_template('user_account.html')
+    return render_template('guest.html')
 
 @app.route('/admin_account', methods=['GET'])
 def admin_account():
     return render_template('admin_account')
 
+@app.route('/callback', methods=['GET'])
+def callback():
+    #MAKES SURE USER HAS CORRECT PERMISSIONS!
+    #based on the UID (which it verifies is correct with auth server)
+    #based on the page it is trying to reach (based on buttons the user has pressed)
+    #redirects to the page they want
+    pass
 ##################### WEBPAGE FUNCTIONALITY ########################################
 
 @app.route('/data', methods=["POST"])
