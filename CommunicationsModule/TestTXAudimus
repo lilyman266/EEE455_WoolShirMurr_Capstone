@@ -1,5 +1,7 @@
 burn x = 200 y = 200
 send health data
+connected uplink mode
 burn x = 300 y = 400
 send health data
+connected downlink mode
 exit orbit

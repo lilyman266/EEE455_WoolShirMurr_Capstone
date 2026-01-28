@@ -1,5 +1,5 @@
-from CommunicationsProtocol import ProtocolLayer
-import Audimus_pb2
+from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
+import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 
 class ApplicationLayer(ProtocolLayer.ProtocolLayer):

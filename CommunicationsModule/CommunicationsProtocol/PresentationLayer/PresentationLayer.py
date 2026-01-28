@@ -1,5 +1,5 @@
-from CommunicationsProtocol import ProtocolLayer
-import Audimus_pb2
+from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
+import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 import os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from Logger.Logger import LoggerFactory
@@ -73,13 +73,13 @@ class PresentationLayer(ProtocolLayer.ProtocolLayer):
 
 class GroundStationPresentationLayer(PresentationLayer):
     def __init__(self, PL_rx,PL_tx, SL_rx, SL_tx):
-        super().__init__(PL_rx, PL_tx, SL_rx, SL_tx, "CommunicationsProtocol/PresentationLayer/GroundStationData")
+        super().__init__(PL_rx, PL_tx, SL_rx, SL_tx, "CommunicationsModule/CommunicationsProtocol/PresentationLayer/GroundStationData")
 
 
 
 class AudimusPresentationLayer(PresentationLayer):
     def __init__(self, PL_rx,PL_tx, SL_rx, SL_tx):
-        super().__init__(PL_rx, PL_tx, SL_rx, SL_tx, "CommunicationsProtocol/PresentationLayer/AudimusData")
+        super().__init__(PL_rx, PL_tx, SL_rx, SL_tx, "CommunicationsModule/CommunicationsProtocol/PresentationLayer/AudimusData")
 
 
 

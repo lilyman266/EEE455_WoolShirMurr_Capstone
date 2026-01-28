@@ -15,9 +15,10 @@ def read_lines(path):
 async def app_rx(AL_rx):
     while True:
         message = await AL_rx.get()
+        print(message)
 
 async def app_tx(AL_tx, state_change_queue):
-    for line in read_lines("TestTXGroundStation"):
+    for line in read_lines("CommunicationsModule/TestTXGroundStation"):
         match line:
             case "connected uplink mode":
                 await state_change_queue.put(SessionMode.CONNECTED_UPLINK)

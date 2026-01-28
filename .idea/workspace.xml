@@ -5,8 +5,47 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b94c7aa3-5bdc-4029-a806-439f2190b0e2" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/PresentationLayer/GroundStationData" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logger/Errors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/pythonProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pythonProject.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/ACM.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/ACM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/Audimus.proto" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/Audimus.proto" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/Audimus_pb2.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/Audimus_pb2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/ApplicationLayer/ApplicationLayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/ApplicationLayer/ApplicationLayer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/ApplicationLayer/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/ApplicationLayer/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/DataLinkLayer/DataLinkLayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/DataLinkLayer/DataLinkLayer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/DataLinkLayer/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/DataLinkLayer/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/PresentationLayer/AudimusData" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/PresentationLayer/AudimusData" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/PresentationLayer/GroundStationData" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/PresentationLayer/PresentationLayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/PresentationLayer/PresentationLayer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/PresentationLayer/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/PresentationLayer/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/ProtocolLayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/ProtocolLayer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/SessionLayer/Session.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/SessionLayer/Session.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/SessionLayer/SessionLayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/SessionLayer/SessionLayer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/CommunicationsProtocol/SessionLayer/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/CommunicationsProtocol/SessionLayer/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/GSCM.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/GSCM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/Logger/Logger.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/Logger/Logger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/Logger/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/Logger/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/README" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/README" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/TestTXAudimus" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/TestTXAudimus" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/TestTXGroundStation" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/TestTXGroundStation" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/logs/Application Layer .log" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/logs/Application Layer .log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/logs/Data Link Layer     .log" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/logs/Data Link Layer     .log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/logs/Data Link Layer   .log" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/logs/Data Link Layer   .log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/logs/Data Link Layer.log" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/logs/Data Link Layer.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/logs/Presentation Layer.log" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/logs/Presentation Layer.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CommunicaitonsModule/logs/Session Layer     .log" beforeDir="false" afterPath="$PROJECT_DIR$/CommunicationsModule/logs/Session Layer     .log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/Application Layer .log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/Application Layer .log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/Data Link Layer   .log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/Data Link Layer   .log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/Presentation Layer.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/Presentation Layer.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/Session Layer     .log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/Session Layer     .log" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,22 +70,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.ACM.executor": "Run",
-    "Python.GSCM.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "iter1",
-    "last_opened_file_path": "C:/Users/murra/EEE455_WoolShirMurr_Capstone",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.ACM.executor&quot;: &quot;Run&quot;,
+    &quot;Python.GSCM.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;iter1&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/murra/EEE455_WoolShirMurr_Capstone&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\murra\EEE455_WoolShirMurr_Capstone" />
@@ -58,7 +97,7 @@
       <toRun name="GSCM" type="PythonConfigurationType" />
       <method v="2" />
     </configuration>
-    <configuration name="ACM" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+    <configuration name="ACM" type="PythonConfigurationType" factoryName="Python">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -67,13 +106,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="SDK_NAME" value="eee466" />
+      <option name="SDK_NAME" value="C:\Users\murra\miniconda3" />
       <option name="WORKING_DIRECTORY" value="" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/CommunicaitonsModule/ACM.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/CommunicationsModule/ACM.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -82,7 +120,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="GSCM" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+    <configuration name="GSCM" type="PythonConfigurationType" factoryName="Python">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -96,8 +134,7 @@
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/CommunicaitonsModule/GSCM.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/CommunicationsModule/GSCM.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -108,8 +145,8 @@
     </configuration>
     <list>
       <item itemvalue="Compound.Run" />
-      <item itemvalue="Python.ACM" />
       <item itemvalue="Python.GSCM" />
+      <item itemvalue="Python.ACM" />
     </list>
   </component>
   <component name="SharedIndexes">

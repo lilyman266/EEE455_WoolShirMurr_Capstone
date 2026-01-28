@@ -1,4 +1,4 @@
-from CommunicationsProtocol import ProtocolLayer
+from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 from Logger.Logger import LoggerFactory
 
 class DataLinkLayer(ProtocolLayer.ProtocolLayer):

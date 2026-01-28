@@ -1,0 +1,5 @@
+2026-01-21 18:00:42 | INFO | ConnectedUplink | b'\x10\x19\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-21 18:25:18 | INFO | ConnectedUplink | b'\x10\x19\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-21 18:25:19 | INFO | ConnectedUplink | b'\x10\x19\x1a\x12\n\x10send health data'
+2026-01-21 18:26:44 | INFO | ConnectedUplink | b'\x10\x19\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-21 18:26:45 | INFO | ConnectedUplink | b'\x10\x19\x1a\x12\n\x10send health data'

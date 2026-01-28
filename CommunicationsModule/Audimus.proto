@@ -21,5 +21,6 @@ message Presentation_Message{
 
 message Session_Message{
   SESSION_MODE mode = 1;
-  bytes presentation_message = 2;
+  int32 packet_number =2;
+  bytes presentation_message = 3;
 }

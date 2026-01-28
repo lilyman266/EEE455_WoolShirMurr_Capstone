@@ -16,7 +16,7 @@ async def app_rx(AL_rx):
         message = await AL_rx.get()
 
 async def app_tx(AL_tx):
-    for line in read_lines("TestTXAudimus"):
+    for line in read_lines("CommunicationsModule/TestTXAudimus"):
         await AL_tx.put(line)
         await asyncio.sleep(1)
 
