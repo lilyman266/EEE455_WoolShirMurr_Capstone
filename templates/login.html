@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Audimus Ground Station - Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
-
+    <link rel="icon" href="/static/audimus_logo.png">
 </head>
 <body>
 <div id="app-root">
@@ -33,5 +33,20 @@
             </div>
         </div>
     </main>
+</div>
+<!-- Create account and continue as guest buttons: -->
+    <script defer>
+        const create_account_button = document.getElementById("create-account-button");
+
+        create_account_button.addEventListener("click", async () => {
+            window.location.href = "/create_account";
+        })
+
+        const continue_as_guest_button = document.getElementById("continue-as-guest");
+
+        continue_as_guest_button.addEventListener("click", async () => {
+            window.location.href = "/guest";
+        })
+    </script>
 </body>
 </html>

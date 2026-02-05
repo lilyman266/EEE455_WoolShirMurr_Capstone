@@ -227,7 +227,9 @@ class WebAppDatabaseStub(DatabaseStub):
     # end_time = string: 'YYYY-MM-DD HH:MM:SS+00'
     # id: not used for this implementation
     #Returns: List of acoustic data entries#
-    def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, my_id:int=None, restricted:bool=None):
+    #TODO: Make the "user" work. This involves 2 polls. One to user_table, and one to acoustic_data.
+    # NOTE- You need to add user_table to gs_db! ref notes.#
+    def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, my_id:int=None, restricted:bool=None, user:str=None):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
         #Function to ensure they are allowed to access the info

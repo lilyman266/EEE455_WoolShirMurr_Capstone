@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Uh Oh!</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
+    <link rel="icon" href="/static/audimus_logo.png">
+</head>
+<body>
+
+<div id="app-root">
+
+    <!-- Top Bar -->
+    <header id="top-bar">
+
+        <!-- Logo -->
+        <div id="logo-container">
+            <!-- Replace src with your static path -->
+            <img src="/static/audimus_logo.png" alt="Audimus Logo">
+        </div>
+
+        <!-- Buttons -->
+        <nav id="nav-controls">
+                <button class="nav-button" id="back-button">Go Back</button>
+        </nav>
+
+    </header>
+
+    <!-- Dataset List -->
+    <main class="content-section">
+        <h1>Sorry! Something went wrong! (Error 404)</h1>
+         <img src="/static/audimus_logo.png" alt="Access Denied">
+    </main>
+</div>
+<script defer>
+    const about_button = document.getElementById("back-button");
+
+            about_button.addEventListener("click", async () => {
+                window.location.href = "/";
+            })
+</script>
+</body>
+</html>
