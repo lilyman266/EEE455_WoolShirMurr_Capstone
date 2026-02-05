@@ -8,6 +8,7 @@
 from abc import ABC, abstractmethod
 import psycopg2
 from datetime import datetime
+import json
 
 HOST = "localhost"
 DBNAME = "gs_db"
@@ -226,45 +227,48 @@ class WebAppDatabaseStub(DatabaseStub):
     # end_time = string: 'YYYY-MM-DD HH:MM:SS+00'
     # id: not used for this implementation
     #Returns: List of acoustic data entries#
-    def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, id:int=None, restricted:bool=None):
+    def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, my_id:int=None, restricted:bool=None):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
         #Function to ensure they are allowed to access the info
         
         #Function to ensure the fields are the right data type
-        cursor.execute("""SELECT pg_input_is_valid(%s, timestamptz);""", (start_time))
-        if cursor.fetchone() == 'false':
-            raise InputNotValidError(f"start time is not valid! Inputted start time: {start_time}")
-    
-        cursor.execute("""SELECT pg_input_is_valid(%s, timestamptz);""", (end_time))
-        if cursor.fetchone() == 'false':
-            raise InputNotValidError(f"end time is not valid! Inputted end time: {end_time}")
+        if start_time != None:
+            cursor.execute("""SELECT pg_input_is_valid(%s, timestamptz);""", (start_time))
+            if cursor.fetchone() == 'false':
+                raise InputNotValidError(f"start time is not valid! Inputted start time: {start_time}")
+        
+        if end_time != None:
+            cursor.execute("""SELECT pg_input_is_valid(%s, timestamptz);""", (end_time))
+            if cursor.fetchone() == 'false':
+                raise InputNotValidError(f"end time is not valid! Inputted end time: {end_time}")
 
         clauses = []
         params = {}
-        if start_time is not None:
+        if start_time != None:
             clauses.append("timestamp>=%(start_time)s")
             params["start_time"] = start_time
-        if end_time is not None:
+        if end_time != None:
             clauses.append("timestamp<=%(end_time)s")
             params["end_time"] = end_time
-        if id is not None:
+        if my_id != None:
             clauses.append("id=%(id)s")
-            params["id"] = id
-        if restricted is not None:
+            params["id"] = my_id
+        if restricted != None:
             clauses.append("restricted=%(restricted)s")
             params["restricted"] = restricted
 
         where = " AND ".join(clauses) if clauses else "FALSE"
-        query = f"""SELECT json_agg(row_to_json(t)) * FROM (select * FROM acoustic_data WHERE {where}) t;"""
+        query = f"""SELECT json_agg(row_to_json(t)) FROM (select * FROM acoustic_data WHERE {where}) t;"""
         cursor.execute(query, params)
         to_return = cursor.fetchall()
+        to_return = to_return[0][0]
 
         #commit changes and close connection
         conn.commit()
         cursor.close()
         conn.close()
-        return to_return
+        return json.dumps(to_return)
     
     #Read uplink commands from the DB
     def read_uplink_commands(self, start_time=None, end_time=None, id=None):

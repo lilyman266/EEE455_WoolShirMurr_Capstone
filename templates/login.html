@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audimus Ground Station - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
+
+</head>
+<body>
+<div id="app-root">
+
+    <!-- Top Bar -->
+    <header id="top-bar">
+
+        <!-- Logo -->
+        <div id="logo-container">
+            <!-- Replace src with your static path -->
+            <img src="/static/audimus_logo.png" alt="Audimus Logo">
+        </div>
+
+    </header>
+
+    <main class="content-section">
+        <div class="content-box fixed-height fixed-width">
+            <form  id="login-form" action="/login_test" method="POST">
+                <input id="username" name="username" type="text" placeholder="Username">
+                <input id="password" name="password" type="password" placeholder="Password">
+                <input id="submit" name="submit" type="submit" value="Login">
+            </form>
+            <div>
+            <button id="create-account-button">Create Account</button>
+            <button id="continue-as-guest">Continue as Guest</button>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
