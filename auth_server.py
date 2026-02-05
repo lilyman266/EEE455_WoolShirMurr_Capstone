@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, jsonify
 import sys
 from datetime import datetime
 from auth_stub import AuthDbStubTest
@@ -27,17 +27,19 @@ def login_redirect():
 def login_test():
     uname = request.form['username']
     password = request.form['password']
+
+    if not uname or not password:
+        return redirect("/login_redirect")
+
     if stub.login_test(uname, password) == 1:
-        #TODO: when you create a key it changes the "password" section of the
-        #TODO: database. This makes all other login attempts fail.
         return_url = (
-            f"http://localhost:5000/user_account"
+            f"http://localhost:5000/callback"
             f"?code={stub.create_key(uname, password)}"
+            f"&account={uname}"
             f"&redirect_uri=http://127.0.0.1:5000/callback"
         )
         return redirect(return_url)
     else:
-        #TODO: CHANGE THIS TO REDIRECT TO THE login_redirect() PAGE
         return_url = (
             f"http://localhost:5001/login_redirect"
         )
@@ -53,7 +55,15 @@ def create_acount():
 @app.route('/validate', methods=['GET'])
 def validate():
     code = request.args['code']
-    return str(stub.validate_key(code))
+    username = request.args['username']
+    return jsonify({"valid": stub.validate_key(code, username) })
+
+@app.route('/guest', methods=['GET'])
+def guest():
+    return_url = (
+                f"http://localhost:5000"
+            )
+    return redirect(return_url)
 
 
 

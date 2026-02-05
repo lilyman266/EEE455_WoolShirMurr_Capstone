@@ -23,37 +23,58 @@ class AuthStub(ABC):
         pass
 
     @abstractmethod
-    def validate_key(self, key):
+    def validate_key(self, key, account):
         pass
 
 class AuthDbStubTest(AuthStub):
     def __init__(self):
         super().__init__()
         self.test_user_accounts = {
-            "hi": "bye"
+            "hi": ["bye", 0],
+            "admin": ["admin", 0]
         }
 
     def login_test(self, uname, password):
         if uname in self.test_user_accounts:
-            if password == self.test_user_accounts[uname]:
+            if password == self.test_user_accounts[uname][0]:
+                print("login_test passed")
                 return 1
+            print("login_test failed")
             return 0
+        print("login_test failed")
         return 0
 
     def create_key(self, username, password):
-        key = random.randint(100000, 999999)
-        self.test_user_accounts[username] = f"{self.test_user_accounts[username]}:{key}"
-        print(f"AuthStub: create_key: {key}")
+        account = self.test_user_accounts[username]
+        print(account)
+        if not account:
+            return 0
+        if account[0] != password:
+            return 0
+        #if key hasn't been made, then create one
+        if self.test_user_accounts[username][1] == 0:
+            key = random.randint(100000, 999999)
+            self.test_user_accounts[username][1] = key
+            print(f"AuthStub: create_key: {key}")
+        #if key has been made, make a new key
+        else:
+            key = self.test_user_accounts[username][1] = random.randint(100000, 999999)
         return key
 
     def create_account(self, username, password):
         pass
 
-    def validate_key(self, key):
+    def validate_key(self, key, account):
         print(f"AuthStub: validate_key: {key}")
-        for user in self.test_user_accounts:
-            if key == self.test_user_accounts[user].split(":")[1]:
-                return 1
+        test_account = self.test_user_accounts.get(account)
+        print(f"test account is: {test_account}")
+        if test_account is None:
+            print("returning here")
+            return 0
+        if int(key) == int(test_account[1]):
+            print("AuthStub: valid key")
+            return 1
+        print("AuthStub: invalid key")
         return 0
 
     def logout(self):

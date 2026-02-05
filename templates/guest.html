@@ -4,9 +4,54 @@
     <meta charset="UTF-8">
     <title>Audimus Ground Station</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
+    <link rel="icon" href="/static/audimus_logo.png">
     <!-- Establish global variables needed to make the data functionality work -->
     <script>
         let clicked_id = null;
+        /*function to reach out to the database:
+        params:
+            key: the local key
+            page: the page requesting
+            datalist: the list they are requesting from*/
+        async function populate_databox({page=null, datalist=null} = {}) {
+            const box = document.getElementById("dataset-box");
+            let response;
+            try { response = await fetch("/populate_databox", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    page: page,
+                    datalist: datalist
+                })
+            });} catch (error) {
+                box.textContent = "Error: Could not reach server.";
+            }
+            const data = await response.json();
+            data.forEach(item => {
+                //create new thing
+                const new_set = document.createElement("div");
+                new_set.classList.add("dataset-row");
+                //TODO:add the timestamp as words in the div
+                new_set.textContent = item["timestamp"];
+                //TODO:add vriable local to this div
+                const timestamp_id = item["id"];
+                new_set.addEventListener("click", () => {
+                    const currentlyActive = document.querySelector(".dataset-row.active");
+
+                    if (currentlyActive && currentlyActive !== new_set) {
+                        currentlyActive.classList.remove("active");
+                    }
+
+                    new_set.classList.add("active");
+                    clicked_id = timestamp_id;
+                    //TODO change global var to this div's local var
+                });
+                //append it to the list
+                box.appendChild(new_set);
+                })
+            }
     </script>
 </head>
 
@@ -41,45 +86,8 @@
             </div>
             <!-- TODO: make a function which gets all acoustic datasets which have the flag "restricted" set to 0 -->
         <script>
-            async function populate_databox() {
-                const response = await fetch("/populate_databox", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        page: "guest",
-                        datalist: "guest"
-                    })
-                });
-                const box = document.getElementById("dataset-box");
-                const data = await response.json();
-                data.forEach(item => {
-                    //create new thing
-                    const new_set = document.createElement("div");
-                    new_set.classList.add("dataset-row");
-                    //TODO:add the timestamp as words in the div
-                    new_set.textContent = item["timestamp"];
-                    //TODO:add vriable local to this div
-                    const timestamp_id = item["id"];
-                    new_set.addEventListener("click", () => {
-                        const currentlyActive = document.querySelector(".dataset-row.active");
-
-                        if (currentlyActive && currentlyActive !== new_set) {
-                            currentlyActive.classList.remove("active");
-                        }
-
-                        new_set.classList.add("active");
-                        clicked_id = timestamp_id;
-                        //TODO change global var to this div's local var
-                    });
-                    //append it to the list
-                    box.appendChild(new_set);
-                })
-            }
-            populate_databox();
+            populate_databox({page : "guest", datalist : "guest"});
         </script>
-
         </div>
     </main>
 

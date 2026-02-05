@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audimus Ground Station</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
+    <link rel="icon" href="/static/audimus_logo.png">
+    <script>
+        //establish the id of the log they clicked (for downloading later)
+        let clicked_id = null;
+        //get the local code - this is used for authentication later
+        /*function to reach out to the database:
+        params:
+            key: the local key
+            page: the page requesting
+            datalist: the list they are requesting from*/
+         async function populate_databox({page=null, datalist=null} = {}) {
+                const box = document.getElementById(id);
+                let response;
+                try { response = await fetch("/populate_databox", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        page: page,
+                        datalist: datalist
+                    })
+                });} catch (error) {
+                    box.textContent = "Error: Could not reach server.";
+                }
+                const data = await response.json();
+                data.forEach(item => {
+                    //create new thing
+                    const new_set = document.createElement("div");
+                    new_set.classList.add("dataset-row");
+                    //TODO:add the timestamp as words in the div
+                    new_set.textContent = item["timestamp"];
+                    //TODO:add vriable local to this div
+                    const timestamp_id = item["id"];
+                    new_set.addEventListener("click", () => {
+                        const currentlyActive = document.querySelector(".dataset-row.active");
+
+                        if (currentlyActive && currentlyActive !== new_set) {
+                            currentlyActive.classList.remove("active");
+                        }
+
+                        new_set.classList.add("active");
+                        clicked_id = timestamp_id;
+                        //TODO change global var to this div's local var
+                    });
+                    //append it to the list
+                    box.appendChild(new_set);
+                })
+            }
+    </script>
+
+<body>
+
+<div id="app-root">
+
+    <!-- Top Bar -->
+    <header id="top-bar">
+
+        <!-- Logo -->
+        <div id="logo-container">
+            <!-- Replace src with your static path -->
+            <img src="/static/audimus_logo.png" alt="Audimus Logo">
+        </div>
+
+        <!-- Buttons -->
+        <nav id="nav-controls">
+            <button class="nav-button" id="about-button">About</button>
+            <button class="nav-button" id="user-home-button">Go Home</button>
+            <button class="nav-button" id="download-button">Download</button>
+        </nav>
+
+    </header>
+
+    <!-- Dataset List -->
+    <main class="content-section">
+        <div class="content-box fixed-height" id="guest-data">
+            <div class="dataset-header">
+                <div>Non-Restricted Datasets:</div>
+            </div>
+        <script>
+            populate_databox({page:"user_home", datalist:"guest"});
+        </script>
+        </div>
+
+        <br>
+        <br>
+
+
+         <div class="content-box fixed-height" id="user-data">
+            <div class="dataset-header">
+                <div>My Restricted Dataset:</div>
+            </div>
+             <script>
+            populate_databox({page:"user_home", datalist:account});
+        </script>
+         </div>
+    </main>
+
+    </div>
+    <!-- Download Button: -->
+    <script defer>
+        const download_button = document.getElementById("download-button");
+        download_button.addEventListener("click", async () => {
+            if (clicked_id !== null) {
+                const response = await fetch("/data", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        id: clicked_id
+                    })
+                });
+                const data = await response.json();
+                // 2. Create a Blob (in-memory file)
+                const blob = new Blob([data[0]["raw_data"]], { type: 'text/plain' });
+                // 3. Create a temporary object URL
+                const url = URL.createObjectURL(blob);
+                // 4. Create and click a hidden <a>
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'server_data.txt';
+                document.body.appendChild(a);
+                a.click();
+                // 5. Cleanup
+                URL.revokeObjectURL(url);
+                a.remove();
+            } else {
+                console.warn("Please select a dataset!")
+            }
+        })
+    </script>
+
+    <!-- User Home Button: -->
+    <script defer>
+        const user_home_button = document.getElementById("user-home-button");
+
+        user_home_button.addEventListener("click", async () => {
+            window.location.href = "/user_home";
+        })
+    </script>
+
+    <!-- About Button: -->
+    <script defer>
+        const about_button = document.getElementById("about-button");
+
+        about_button.addEventListener("click", async () => {
+            window.location.href = "/about";
+        })
+    </script>
+</body>
+</html>
