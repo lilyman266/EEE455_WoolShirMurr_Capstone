@@ -6,51 +6,52 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
     <link rel="icon" href="/static/audimus_logo.png">
     <script>
-        //establish the id of the log they clicked (for downloading later)
         let clicked_id = null;
-        //get the local code - this is used for authentication later
         /*function to reach out to the database:
         params:
             key: the local key
             page: the page requesting
             datalist: the list they are requesting from*/
-         async function populate_databox({page=null, datalist=null} = {}) {
-                const box = document.getElementById(id);
-                let response;
-                try { response = await fetch("/populate_databox", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        page: page,
-                        datalist: datalist
-                    })
-                });} catch (error) {
-                    box.textContent = "Error: Could not reach server.";
-                }
-                const data = await response.json();
-                data.forEach(item => {
-                    //create new thing
-                    const new_set = document.createElement("div");
-                    new_set.classList.add("dataset-row");
-                    //TODO:add the timestamp as words in the div
-                    new_set.textContent = item["timestamp"];
-                    //TODO:add vriable local to this div
-                    const timestamp_id = item["id"];
-                    new_set.addEventListener("click", () => {
-                        const currentlyActive = document.querySelector(".dataset-row.active");
+        async function populate_databox({id=null, page=null, datalist=null} = {}) {
+            const box = document.getElementById(id);
+            let response;
+            try { response = await fetch("/populate_databox", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    page: page,
+                    datalist: datalist
+                })
+            });} catch (error) {
+                box.textContent = "Error: Could not reach server.";
+                return;
+            }
+            const data = await response.json();
+            data.forEach((item) => {
+                //create new thing
+                const new_set = document.createElement("div");
+                new_set.classList.add("dataset-row");
+                //TODO:add the timestamp as words in the div
+                new_set.textContent = item["timestamp"] ?? "No timestamp";
+                //TODO:add vriable local to this div
+                
+                //new_set.dataset.datasetId = item.id;
+                const my_id = item["id"];
+                
+                new_set.addEventListener("click", () => {
+                    const currentlyActive = document.querySelector(".dataset-row.active");
 
-                        if (currentlyActive && currentlyActive !== new_set) {
-                            currentlyActive.classList.remove("active");
-                        }
+                    if (currentlyActive && currentlyActive !== new_set) {
+                        currentlyActive.classList.remove("active");
+                    }
 
-                        new_set.classList.add("active");
-                        clicked_id = timestamp_id;
-                        //TODO change global var to this div's local var
-                    });
-                    //append it to the list
-                    box.appendChild(new_set);
+                    new_set.classList.add("active");
+                    clicked_id = my_id;
+                });
+                //append it to the list
+                box.appendChild(new_set);
                 })
             }
     </script>
@@ -84,7 +85,7 @@
                 <div>Non-Restricted Datasets:</div>
             </div>
         <script>
-            populate_databox({page:"user_home", datalist:"guest"});
+            populate_databox({id:"guest-data", page:"user_home", datalist:"guest"});
         </script>
         </div>
 
@@ -97,7 +98,7 @@
                 <div>My Restricted Dataset:</div>
             </div>
              <script>
-            populate_databox({page:"user_home", datalist:account});
+            populate_databox({id:"user-data", page:"user_home", datalist:account});
         </script>
          </div>
     </main>

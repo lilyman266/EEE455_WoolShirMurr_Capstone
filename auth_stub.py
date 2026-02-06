@@ -25,6 +25,13 @@ class AuthStub(ABC):
     @abstractmethod
     def validate_key(self, key, account):
         pass
+    
+class AuthStubUserTable(AuthStub):
+    def __init__(self):
+        super().__init__()
+        
+    def login_test(self, username, password):
+        
 
 class AuthDbStubTest(AuthStub):
     def __init__(self):

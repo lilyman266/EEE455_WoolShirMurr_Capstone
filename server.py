@@ -1,5 +1,5 @@
 import requests
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 import sys
 from datetime import datetime
 import os
@@ -93,12 +93,12 @@ def check_logged_in():
 @app.route('/data', methods=["POST"])
 def data():
     params = request.get_json()
+    print(params)
     needed_id = params["id"]
     if needed_id is None:
         print("GAHHHHH SOMETHING BROKE")
     #SECURITY GOES HERE!    
-    received_data = stub.read_acoustic_data(my_id=needed_id)
-    return received_data
+    return stub.read_acoustic_data(my_id=needed_id)
 
 @app.route('/populate_databox', methods=['POST'])
 def populate_databox():
@@ -119,6 +119,7 @@ def populate_databox():
     #value is 0
     if owner == "guest" and datalist == "guest":
         received_data = stub.read_acoustic_data(restricted=True) #TODO: CHANGE THIS TO FALSE FOR PRODUCTION
+        print(f"I am returning: {received_data}")
         return received_data
 
     #everything but the guest page loading requires authentication
@@ -128,13 +129,14 @@ def populate_databox():
     #user_home guest dataset:
     if owner == "user_home" and datalist == "guest":
         received_data = stub.read_acoustic_data(restricted=True)  # TODO: CHANGE THIS TO FALSE FOR PRODUCTION
-        return received_data
+        return jsonify(received_data)
 
     #user_home restricted dataset
-    #TODO: is "datalist != "guest" " secure enough?
     if owner == "user_home" and datalist == session["account"]:
-        received_data = stub.read_acoustic_data(user=datalist) # TODO: DatabaseStub needs to be updated with this functionality!
-        return received_data
+
+        received_data = stub.read_user_data(user=session["user"])
+        #stub.read_acoustic_data(user=datalist) # TODO: DatabaseStub needs to be updated with this functionality!
+        return jsonify(received_data)
 
 
     return {"error": "invalid database queries"}, 400

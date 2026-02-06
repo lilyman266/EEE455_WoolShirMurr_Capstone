@@ -14,7 +14,7 @@
             page: the page requesting
             datalist: the list they are requesting from*/
         async function populate_databox({page=null, datalist=null} = {}) {
-            const box = document.getElementById("dataset-box");
+            const box = document.getElementById("content-capture");
             let response;
             try { response = await fetch("/populate_databox", {
                 method: "POST",
@@ -27,16 +27,20 @@
                 })
             });} catch (error) {
                 box.textContent = "Error: Could not reach server.";
+                return;
             }
             const data = await response.json();
-            data.forEach(item => {
+            data.forEach((item) => {
                 //create new thing
                 const new_set = document.createElement("div");
                 new_set.classList.add("dataset-row");
                 //TODO:add the timestamp as words in the div
-                new_set.textContent = item["timestamp"];
+                new_set.textContent = item["timestamp"] ?? "No timestamp";
                 //TODO:add vriable local to this div
-                const timestamp_id = item["id"];
+                
+                //new_set.dataset.datasetId = item.id;
+                const my_id = item["id"];
+                
                 new_set.addEventListener("click", () => {
                     const currentlyActive = document.querySelector(".dataset-row.active");
 
@@ -45,8 +49,7 @@
                     }
 
                     new_set.classList.add("active");
-                    clicked_id = timestamp_id;
-                    //TODO change global var to this div's local var
+                    clicked_id = my_id;
                 });
                 //append it to the list
                 box.appendChild(new_set);
@@ -79,7 +82,7 @@
 
     <!-- Dataset List -->
     <main class="content-section">
-        <div class="content-box fixed-height">
+        <div class="content-box fixed-height" id="content-capture">
 
             <div class="dataset-header">
                 <div>Timestamp</div>

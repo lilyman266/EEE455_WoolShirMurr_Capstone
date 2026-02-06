@@ -50,6 +50,9 @@ class DatabaseStub(ABC):
     @abstractmethod
     def add_command_response(self):
         pass
+    #Add a user request to user_requests table
+    @abstractmethod
+    
     #Read a log from the DB
     @abstractmethod
     def read_log(self, start_time=None, end_time=None, id=None, type=None, origin=None):
@@ -221,6 +224,26 @@ class WebAppDatabaseStub(DatabaseStub):
     def read_log(self, start_time=None, end_time=None, id=None, type=None, origin=None):
         pass
     
+    
+    #Read data from a specific user
+    def read_user_data(self, user=None):
+        if user is None:
+            return
+        
+        conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COALESCE(
+                json_agg(to_jsonb(a)),
+                '[]'::json) AS rows
+            FROM user_link l
+            JOIN acoustic_data a ON a.id = l.acoustic_id
+            WHERE l.username = %s;
+        """, (user,))
+        to_return = cursor.fetchone()[0] 
+        cursor.close()
+        
+        return to_return
     #Read acoustic data from the DB
     #Parameters: 
     # start_time = string: 'YYYY-MM-DD HH:MM:SS+00'
@@ -270,7 +293,7 @@ class WebAppDatabaseStub(DatabaseStub):
         conn.commit()
         cursor.close()
         conn.close()
-        return json.dumps(to_return)
+        return to_return
     
     #Read uplink commands from the DB
     def read_uplink_commands(self, start_time=None, end_time=None, id=None):
