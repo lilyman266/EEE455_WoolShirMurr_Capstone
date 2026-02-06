@@ -10,7 +10,8 @@ from DatabaseModule.Database.database_stub import WebAppDatabaseStub
 
 # Create the Flask application instance
 app = Flask(__name__)
-stub = AuthStubUserTable()
+# stub = AuthStubUserTable()    #NOTE: COMMENT ONE OF THESE AT A TIME
+stub = AuthDbStubTest()
 
 # ###################### AUTH SERVER REDIRECTS ########################################
 @app.route('/', methods=['GET'])

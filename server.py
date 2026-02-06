@@ -141,12 +141,17 @@ def populate_databox():
 
     return {"error": "invalid database queries"}, 400
 
-@app.route('/password_request', methods=['POST'])
-def password_request():
-    #get params
-    #use stub to ask pwd database to login
-    #return the reply(with code)
-    pass
+@app.route('/request_data_auth', methods=['POST'])
+def request_data_auth():
+    params = request.get_json()
+    start_time = params["start_time"]
+    end_time = params["end_time"]
+    username = session["username"]
+
+    print("START =", start_time)
+    print("END =", end_time)
+    stub.add_user_request(username, start_time, end_time)
+    return {"Response": "Input received"}
 
 # function to check if the given key is valid.
 # params:
