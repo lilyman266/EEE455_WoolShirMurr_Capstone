@@ -118,7 +118,7 @@ def populate_databox():
     #if guest page asking, use the stub to get all acoustic data whose "restricted"
     #value is 0
     if owner == "guest" and datalist == "guest":
-        received_data = stub.read_acoustic_data(restricted=True) #TODO: CHANGE THIS TO FALSE FOR PRODUCTION
+        received_data = stub.read_acoustic_data(restricted=False) #TODO: CHANGE THIS TO FALSE FOR PRODUCTION
         print(f"I am returning: {received_data}")
         return received_data
 
@@ -134,7 +134,7 @@ def populate_databox():
     #user_home restricted dataset
     if owner == "user_home" and datalist == session["account"]:
 
-        received_data = stub.read_user_data(user=session["user"])
+        received_data = stub.read_user_data(user=session["account"])
         #stub.read_acoustic_data(user=datalist) # TODO: DatabaseStub needs to be updated with this functionality!
         return jsonify(received_data)
 
@@ -146,7 +146,7 @@ def request_data_auth():
     params = request.get_json()
     start_time = params["start_time"]
     end_time = params["end_time"]
-    username = session["username"]
+    username = session["account"]
 
     print("START =", start_time)
     print("END =", end_time)

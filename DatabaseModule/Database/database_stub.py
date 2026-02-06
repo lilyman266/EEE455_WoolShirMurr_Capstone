@@ -329,13 +329,13 @@ class WebAppDatabaseStub(DatabaseStub):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
 
-        cursor.execute("""SELECT id FROM acoustic_data WHERE start_time >= %s AND end_time <= %s;""", (start_time, end_time))
+        cursor.execute("""SELECT id FROM acoustic_data WHERE timestamp BETWEEN %s AND %s;""", (start_time, end_time))
         ids = [r[0] for r in cursor.fetchall()]
 
         for data_id in ids:
-            cursor.execute("""INSERT INTO user_requests (username, acousitc_id) 
+            cursor.execute("""INSERT INTO user_requests (username, acoustic_id) 
                               VALUES (%s, %s)
-                              ON CONFLICT DO NOTHING;)""",
+                              ON CONFLICT DO NOTHING""",
                            (user, data_id))
 
         # commit changes and close connection
