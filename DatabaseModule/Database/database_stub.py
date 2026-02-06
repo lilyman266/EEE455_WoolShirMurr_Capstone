@@ -8,7 +8,6 @@
 from abc import ABC, abstractmethod
 import psycopg2
 from datetime import datetime
-import json
 
 HOST = "localhost"
 DBNAME = "gs_db"
@@ -350,7 +349,17 @@ class WebAppDatabaseStub(DatabaseStub):
 
     # ADMIN ONLY: read all user requests. Returns in json format.
     def read_user_requests(self):
-        pass
+        conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
+        cursor = conn.cursor()
+
+        cursor.execute("""SELECT * FROM user_requests;""")
+        to_return = cursor.fetchall()
+
+        # commit changes and close connection
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return
 
     def get_user_info(self, user:str, passwd:str):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
@@ -358,16 +367,16 @@ class WebAppDatabaseStub(DatabaseStub):
 
         cursor.execute("""SELECT 1 FROM users WHERE username = %s AND password = %s;""", (user, passwd))
         row = cursor.fetchone()
-        if row == None:
-            return 0
-        else:
-            return 1
 
         # commit changes and close connection
         conn.commit()
         cursor.close()
         conn.close()
-        return to_return
+
+        if row == None:
+            return 0
+        else:
+            return 1
     
         
 # #For each function:
