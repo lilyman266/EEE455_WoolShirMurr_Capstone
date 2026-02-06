@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, jsonify
 import sys
 from datetime import datetime
 
-from EEE455_WoolShirMurr_Capstone.auth_stub import AuthStubUserTable
 from auth_stub import AuthDbStubTest, AuthStubUserTable
 
 from DatabaseModule.Database.database_stub import WebAppDatabaseStub
