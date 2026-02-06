@@ -52,7 +52,19 @@ class DatabaseStub(ABC):
         pass
     #Add a user request to user_requests table
     @abstractmethod
-    
+    def add_user_request(self, user:str, start_time:str, end_time:str):
+        pass
+    #ADMIN ONLY: Accept a user request
+    @abstractmethod
+    def accept_user_request(self, user:str, request_id):
+        pass
+    #ADMIN ONLY: read all user requests. Returns in json format.
+    @abstractmethod
+    def read_user_requests(self):
+        pass
+    @abstractmethod
+    def get_user_info(self, user:str, passwd:str):
+        pass
     #Read a log from the DB
     @abstractmethod
     def read_log(self, start_time=None, end_time=None, id=None, type=None, origin=None):
@@ -197,6 +209,16 @@ class CommsModDatabaseStub(DatabaseStub):
     #Read command responses from the DB  - NOTE: read_command_responses SHOULD NOT BE IMPLEMENTED FOR COMMUNICAITONS MODULE
     def read_command_responses(self, start_time=None, end_time=None, id=None):
         pass
+    def add_user_request(self, user: str, start_time: str, end_time: str):
+        pass
+    # ADMIN ONLY: Accept a user request
+    def accept_user_request(self, user: str, request_id):
+        pass
+    # ADMIN ONLY: read all user requests. Returns in json format.
+    def read_user_requests(self):
+        pass
+    def get_user_info(self, user:str, passwd:str):
+        pass
         
 class WebAppDatabaseStub(DatabaseStub):
     
@@ -302,6 +324,34 @@ class WebAppDatabaseStub(DatabaseStub):
     #Read command responses from the DB
     def read_command_responses(self, start_time=None, end_time=None, id=None):
         pass
+
+    def add_user_request(self, user: str, start_time: str, end_time: str):
+        pass
+
+    # ADMIN ONLY: Accept a user request
+    def accept_user_request(self, user: str, request_id):
+        pass
+
+    # ADMIN ONLY: read all user requests. Returns in json format.
+    def read_user_requests(self):
+        pass
+
+    def get_user_info(self, user:str, passwd:str):
+        conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
+        cursor = conn.cursor()
+
+        cursor.execute("""SELECT 1 FROM users WHERE username = %s AND password = %s;""", (user, passwd))
+        row = cursor.fetchone()
+        if row == None:
+            return 0
+        else:
+            return 1
+
+        # commit changes and close connection
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return to_return
     
         
 # #For each function:

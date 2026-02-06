@@ -88,10 +88,13 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS user_requests(
     acoustic_id bigint NOT NULL REFERENCES acoustic_data(id) ON DELETE CASCADE,
     PRIMARY KEY (username, acoustic_id)
     )""");
-# Only 2 methods needed: create and add user requests.
+# Only 3 methods needed: create, read and add user requests.
 # 
 # the format for creating user requests will be:
-# 1. add requested dataset to user_requests#
+# 1. add requested dataset to user_requests
+#
+# the format for reading user requests will be:
+# 1. read all requests. Return in JSON format.
 # 
 # the format for accepting user requests will be: 
 # 1. add the reference from user_requests to user_link

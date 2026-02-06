@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, redirect, jsonify
 import sys
 from datetime import datetime
-from auth_stub import AuthDbStubTest
+
+from EEE455_WoolShirMurr_Capstone.auth_stub import AuthStubUserTable
+from auth_stub import AuthDbStubTest, AuthStubUserTable
 
 from DatabaseModule.Database.database_stub import WebAppDatabaseStub
 
@@ -9,7 +11,7 @@ from DatabaseModule.Database.database_stub import WebAppDatabaseStub
 
 # Create the Flask application instance
 app = Flask(__name__)
-stub = AuthDbStubTest()
+stub = AuthStubUserTable()
 
 # ###################### AUTH SERVER REDIRECTS ########################################
 @app.route('/', methods=['GET'])
@@ -47,7 +49,7 @@ def login_test():
 
 
 @app.route('/create_acount', methods=['POST'])
-def create_acount():
+def create_account():
     uname = request.form['username']
     password = request.form['password']
     print(uname, password)
