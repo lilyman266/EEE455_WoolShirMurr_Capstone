@@ -65,7 +65,17 @@ class AuthStubUserTable(AuthStub):
         return key
 
     def validate_key(self, key, account):
-        pass
+        print(f"AuthStub: validate_key: {key}")
+        test_account = self.user_accounts.get(account)
+        print(f"test account is: {test_account}")
+        if test_account is None:
+            print("returning here")
+            return 0
+        if int(key) == int(test_account[1]):
+            print("AuthStub: valid key")
+            return 1
+        print("AuthStub: invalid key")
+        return 0
 
 class AuthDbStubTest(AuthStub):
     def __init__(self):
