@@ -79,6 +79,8 @@ def callback():
     session["logged_in"] = True
     session["account"] = account
 
+    if session["account"] == "admin":
+        return redirect(url_for("admin_account"))
     return redirect(url_for("user_home"))
 
 def check_logged_in():
