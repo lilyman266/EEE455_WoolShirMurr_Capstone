@@ -55,6 +55,8 @@ def user_account():
 
 @app.route('/admin_account', methods=['GET'])
 def admin_account():
+    if not check_logged_in():
+        return render_template("login_redirect.html"), 401
     return render_template('admin_account.html')
 
 @app.route('/callback', methods=['GET'])
@@ -65,7 +67,7 @@ def callback():
     #redirects to the page they
     code = request.args.get("code")
     account = request.args.get("account")
-
+    print(f"code: {code}, account: {account}")
     if not code or not account:
         return render_template("login_redirect.html")
 
@@ -118,9 +120,9 @@ def populate_databox():
     #if guest page asking, use the stub to get all acoustic data whose "restricted"
     #value is 0
     if owner == "guest" and datalist == "guest":
-        received_data = stub.read_acoustic_data(restricted=False) #TODO: CHANGE THIS TO FALSE FOR PRODUCTION
+        received_data = stub.read_acoustic_data(restricted=False)
         print(f"I am returning: {received_data}")
-        return received_data
+        return jsonify(received_data)
 
     #everything but the guest page loading requires authentication
     if not check_logged_in():
@@ -128,14 +130,14 @@ def populate_databox():
 
     #user_home guest dataset:
     if owner == "user_home" and datalist == "guest":
-        received_data = stub.read_acoustic_data(restricted=True)  # TODO: CHANGE THIS TO FALSE FOR PRODUCTION
+        received_data = stub.read_acoustic_data(restricted=False)
         return jsonify(received_data)
 
     #user_home restricted dataset
     if owner == "user_home" and datalist == session["account"]:
 
         received_data = stub.read_user_data(user=session["account"])
-        #stub.read_acoustic_data(user=datalist) # TODO: DatabaseStub needs to be updated with this functionality!
+         # TODO: DatabaseStub needs to be updated with this functionality!
         return jsonify(received_data)
 
 
@@ -153,14 +155,16 @@ def get_all_data():
         return {f"Error": "datalist is None"}, 400
 
     if owner == "admin" and datalist == "acoustic_data":
-        received_data = stub.read_acoustic_data()
+        received_data = stub.read_acoustic_data(my_id="admin", restricted="admin")
+        print(received_data)
         return jsonify(received_data)
 
     return {"error": "invalid database queries"}, 400
 
 @app.route('/get_user_requests', methods=['POST'])
-def get_all_data():
-    received_data = stub.read_acoustic_data()
+def get_user_requests():
+    received_data = stub.read_user_requests()
+    print(f"user requests received:   {received_data}")
     return jsonify(received_data)
 
 @app.route('/request_data_auth', methods=['POST'])

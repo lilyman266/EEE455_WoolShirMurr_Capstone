@@ -288,27 +288,31 @@ class WebAppDatabaseStub(DatabaseStub):
             cursor.execute("""SELECT pg_input_is_valid(%s, timestamptz);""", (end_time))
             if cursor.fetchone() == 'false':
                 raise InputNotValidError(f"end time is not valid! Inputted end time: {end_time}")
+        if my_id == "admin" and restricted == "admin":
+            cursor.execute("""SELECT * FROM acoustic_data;""")
+            to_return = cursor.fetchall()
+            #commit changes and close connection
+        else:
+            clauses = []
+            params = {}
+            if start_time != None:
+                clauses.append("timestamp>=%(start_time)s")
+                params["start_time"] = start_time
+            if end_time != None:
+                clauses.append("timestamp<=%(end_time)s")
+                params["end_time"] = end_time
+            if my_id != None:
+                clauses.append("id=%(id)s")
+                params["id"] = my_id
+            if restricted != None:
+                clauses.append("restricted=%(restricted)s")
+                params["restricted"] = restricted
 
-        clauses = []
-        params = {}
-        if start_time != None:
-            clauses.append("timestamp>=%(start_time)s")
-            params["start_time"] = start_time
-        if end_time != None:
-            clauses.append("timestamp<=%(end_time)s")
-            params["end_time"] = end_time
-        if my_id != None:
-            clauses.append("id=%(id)s")
-            params["id"] = my_id
-        if restricted != None:
-            clauses.append("restricted=%(restricted)s")
-            params["restricted"] = restricted
-
-        where = " AND ".join(clauses) if clauses else "FALSE"
-        query = f"""SELECT json_agg(row_to_json(t)) FROM (select * FROM acoustic_data WHERE {where}) t;"""
-        cursor.execute(query, params)
-        to_return = cursor.fetchall()
-        to_return = to_return[0][0]
+            where = " AND ".join(clauses) if clauses else "FALSE"
+            query = f"""SELECT json_agg(row_to_json(t)) FROM (select * FROM acoustic_data WHERE {where}) t;"""
+            cursor.execute(query, params)
+            to_return = cursor.fetchall()
+            to_return = to_return[0][0]
 
         #commit changes and close connection
         conn.commit()
@@ -359,7 +363,7 @@ class WebAppDatabaseStub(DatabaseStub):
         conn.commit()
         cursor.close()
         conn.close()
-        return
+        return to_return
 
     def get_user_info(self, user:str, passwd:str):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)

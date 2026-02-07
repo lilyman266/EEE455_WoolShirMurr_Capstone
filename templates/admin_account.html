@@ -57,15 +57,11 @@
         async function get_requests() {
         const box = document.getElementById("requests");
         let response;
-        try { response = await fetch("/get_all_data", {
+        try { response = await fetch("/get_user_requests", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                page: "admin",
-                datalist: "acoustic_data"
-            })
         });} catch (error) {
             box.textContent = "Error: Could not reach server.";
             return;
@@ -75,7 +71,8 @@
             //create new thing
             const new_set = document.createElement("div");
             new_set.classList.add("dataset-row");
-            new_set.textContent = item["timestamp"] ?? "No timestamp" + " : " + item["restricted"] + " : " +  item["raw_data"];
+            //TODO: figure out how to get the CORRESPONDING ROW, not just the ID
+            new_set.textContent = "user" + item[0] + item["timestamp"] ?? "No timestamp" + " : " + item["restricted"] + " : " +  item["raw_data"];
 
             //new_set.dataset.datasetId = item.id;
             const my_id = item["id"];
@@ -111,8 +108,8 @@
 
         <!-- Buttons -->
         <nav id="nav-controls">
-            <button class="nav-button" id="about-button">About</button>
-            <button class="nav-button" id="user-home-button">Go Home</button>
+            <button class="nav-button" id="logout-button">Logout</button>
+            <button class="nav-button" id="data-accept-button">Accept Data Request</button>
             <button class="nav-button" id="download-button">Download</button>
         </nav>
 
@@ -180,19 +177,18 @@
 
     <!-- User Home Button: -->
     <script defer>
-        const user_home_button = document.getElementById("user-home-button");
-
+        const user_home_button = document.getElementById("accept-user-button");
+        //TODO: Make this accept user request! Should be layer 3 in process.
         user_home_button.addEventListener("click", async () => {
-            window.location.href = "/user_home";
+            // *__*
         })
     </script>
-
-    <!-- About Button: -->
+    <!-- Logout Button: -->
     <script defer>
-        const about_button = document.getElementById("about-button");
+        const logout_button = document.getElementById("logout-button");
 
-        about_button.addEventListener("click", async () => {
-            window.location.href = "/about";
+        logout_button.addEventListener("click", async () => {
+            window.location.href = "/logout";
         })
     </script>
 </body>
