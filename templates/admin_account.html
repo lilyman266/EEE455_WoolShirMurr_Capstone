@@ -7,7 +7,8 @@
     <link rel="icon" href="/static/audimus_logo.png">
     <script>
         let clicked_id = null;
-        let clicked_set = null;
+        let clicked_user = null;
+        let clicked_req_id = null;
         /*function to reach out to the database:
         params:
             key: the local key
@@ -51,9 +52,10 @@
                 });
                 //append it to the list
                 box.appendChild(new_set);
-                })
-            }
+            })
+        }
 
+        
         async function get_requests() {
         const box = document.getElementById("requests");
         let response;
@@ -75,7 +77,7 @@
             new_set.textContent = "user" + item[0] + item["timestamp"] ?? "No timestamp" + " : " + item["restricted"] + " : " +  item["raw_data"];
 
             //new_set.dataset.datasetId = item.id;
-            const my_id = item["id"];
+            const my_id = item[1];
 
             new_set.addEventListener("click", () => {
                 const currentlyActive = document.querySelector(".dataset-row.active");
@@ -85,7 +87,8 @@
                 }
 
                 new_set.classList.add("active");
-                clicked_set = my_id;
+                clicked_user = item[0]
+                clicked_req_id = my_id;
             });
             //append it to the list
             box.appendChild(new_set);
@@ -177,10 +180,25 @@
 
     <!-- User Home Button: -->
     <script defer>
-        const user_home_button = document.getElementById("accept-user-button");
+        const data_accept_button = document.getElementById("data-accept-button");
         //TODO: Make this accept user request! Should be layer 3 in process.
-        user_home_button.addEventListener("click", async () => {
-            // *__*
+        data_accept_button.addEventListener("click", async () => {
+            const response = await fetch("/accept_data_request", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        user: clicked_user,
+                        request_id: clicked_req_id
+                    })
+                });
+            const status = await response.json()
+            if (status == 1) {
+                alert("Request accepted!");
+            } else {
+                alert("Something went wrong.");
+            }
         })
     </script>
     <!-- Logout Button: -->

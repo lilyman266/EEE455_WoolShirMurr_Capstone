@@ -84,7 +84,7 @@ class AuthDbStubTest(AuthStub):
             "hi": ["bye", 0],
             "admin": ["admin", 0]
         }
-    #TODO: MAKE THIS WORK WITH DATABASE_STUB!
+        
     def login_test(self, uname, password):
         if uname in self.test_user_accounts:
             if password == self.test_user_accounts[uname][0]:

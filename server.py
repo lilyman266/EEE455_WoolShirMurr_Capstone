@@ -179,6 +179,14 @@ def request_data_auth():
     stub.add_user_request(username, start_time, end_time)
     return {"Response": "Input received"}
 
+@app.route('/accept_data_request', methods=['POST'])
+def accept_data_request():
+    params= request.get_json()
+    user = params["user"]
+    request_id = params["request_id"]
+    
+    return jsonify(stub.accept_user_request(user=user, request_id=request_id))
+
 # function to check if the given key is valid.
 # params:
 #   key: the key received from the request

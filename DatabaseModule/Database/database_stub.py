@@ -2,8 +2,7 @@
 # comms module
 # web app
 # ground station app ? 
-# admin 
-# TODO: implement permissions levels for acoustic data#
+# admin #
 
 from abc import ABC, abstractmethod
 import psycopg2
@@ -261,8 +260,11 @@ class WebAppDatabaseStub(DatabaseStub):
             JOIN acoustic_data a ON a.id = l.acoustic_id
             WHERE l.username = %s;
         """, (user,))
-        to_return = cursor.fetchone()[0] 
+        to_return = cursor.fetchall() 
+        conn.commit()
         cursor.close()
+        conn.close()
+        print(f"database stub says : {to_return}")
         
         return to_return
     #Read acoustic data from the DB
@@ -271,8 +273,6 @@ class WebAppDatabaseStub(DatabaseStub):
     # end_time = string: 'YYYY-MM-DD HH:MM:SS+00'
     # id: not used for this implementation
     #Returns: List of acoustic data entries#
-    #TODO: Make the "user" work. This involves 2 polls. One to user_table, and one to acoustic_data.
-    # NOTE- You need to add user_table to gs_db! ref notes.#
     def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, my_id:int=None, restricted:bool=None, user:str=None):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
@@ -349,7 +349,33 @@ class WebAppDatabaseStub(DatabaseStub):
 
     # ADMIN ONLY: Accept a user request
     def accept_user_request(self, user: str, request_id):
-        pass
+        conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
+        cursor = conn.cursor()
+
+        cursor.execute("""INSERT INTO user_link (username, acoustic_id)
+                    SELECT username, acoustic_id
+                    FROM user_requests
+                    WHERE username = %s AND acoustic_id = %s
+                    ON CONFLICT DO NOTHING
+                    RETURNING username, acoustic_id;""", (user, request_id))
+        row = cursor.fetchone()
+
+        print(row)
+        if row is not None:
+            cursor.execute("""DELETE FROM user_requests
+                        WHERE username = %s AND acoustic_id = %s;""", (user, request_id))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return 1  # accepted!
+
+        # commit changes and close connection
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return 0
 
     # ADMIN ONLY: read all user requests. Returns in json format.
     def read_user_requests(self):
