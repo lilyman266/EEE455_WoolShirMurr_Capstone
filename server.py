@@ -1,7 +1,5 @@
 import requests
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
-import sys
-from datetime import datetime
 import os
 
 from DatabaseModule.Database.database_stub import WebAppDatabaseStub
@@ -142,6 +140,28 @@ def populate_databox():
 
 
     return {"error": "invalid database queries"}, 400
+
+@app.route('/get_all_data', methods=['POST'])
+def get_all_data():
+    params = request.get_json()
+    owner = params['page']
+    datalist = params['datalist']
+
+    if owner is None:
+        return {f"Error": "owner is None"}, 400
+    if datalist is None:
+        return {f"Error": "datalist is None"}, 400
+
+    if owner == "admin" and datalist == "acoustic_data":
+        received_data = stub.read_acoustic_data()
+        return jsonify(received_data)
+
+    return {"error": "invalid database queries"}, 400
+
+@app.route('/get_user_requests', methods=['POST'])
+def get_all_data():
+    received_data = stub.read_acoustic_data()
+    return jsonify(received_data)
 
 @app.route('/request_data_auth', methods=['POST'])
 def request_data_auth():
