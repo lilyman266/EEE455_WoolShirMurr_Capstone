@@ -10,3 +10,8 @@ class InvalidReceiveError(Exception):
     def __init__(self, session, message=""):
         self.session = session
         super().__init__(message)
+
+class StateChangeError(Exception):
+    #state not changed
+    def __init__(self, message=""):
+        super().__init__(message)

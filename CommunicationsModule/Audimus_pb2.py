@@ -24,17 +24,19 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rAudimus.proto\x12\x07\x61udimus\"&\n\x13\x41pplication_Message\x12\x0f\n\x07message\x18\x01 \x01(\t\"z\n\x14Presentation_Message\x12\x11\n\tkey_epoch\x18\x01 \x01(\x05\x12\x16\n\x0esession_number\x18\x02 \x01(\x05\x12\x1b\n\x13\x61pplication_message\x18\x03 \x01(\x0c\x12\x1a\n\x12\x61uthentication_tag\x18\x04 \x01(\x0c\"\x0e\n\x0cSession_Datab\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rAudimus.proto\x12\x07\x61udimus\"&\n\x13\x41pplication_Message\x12\x0f\n\x07message\x18\x01 \x01(\t\"z\n\x14Presentation_Message\x12\x11\n\tkey_epoch\x18\x01 \x01(\x05\x12\x16\n\x0esession_number\x18\x02 \x01(\x05\x12\x1b\n\x13\x61pplication_message\x18\x03 \x01(\x0c\x12\x1a\n\x12\x61uthentication_tag\x18\x04 \x01(\x0c\"k\n\x0fSession_Message\x12#\n\x04mode\x18\x01 \x01(\x0e\x32\x15.audimus.SESSION_MODE\x12\x15\n\rpacket_number\x18\x02 \x01(\x05\x12\x1c\n\x14presentation_message\x18\x03 \x01(\x0c*V\n\x0cSESSION_MODE\x12\x1a\n\x16\x43onnectionlessDownlink\x10\x00\x12\x15\n\x11\x43onnectedDownlink\x10\x01\x12\x13\n\x0f\x43onnectedUplink\x10\x02\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'Audimus_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
+  _globals['_SESSION_MODE']._serialized_start=299
+  _globals['_SESSION_MODE']._serialized_end=385
   _globals['_APPLICATION_MESSAGE']._serialized_start=26
   _globals['_APPLICATION_MESSAGE']._serialized_end=64
   _globals['_PRESENTATION_MESSAGE']._serialized_start=66
   _globals['_PRESENTATION_MESSAGE']._serialized_end=188
-  _globals['_SESSION_DATA']._serialized_start=190
-  _globals['_SESSION_DATA']._serialized_end=204
+  _globals['_SESSION_MESSAGE']._serialized_start=190
+  _globals['_SESSION_MESSAGE']._serialized_end=297
 # @@protoc_insertion_point(module_scope)

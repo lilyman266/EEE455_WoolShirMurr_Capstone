@@ -175,3 +175,72 @@
 2026-01-21 18:26:45 | INFO | ConnectionlessDownlink | b'\x10\x18\x1a\x12\n\x10send health data'
 2026-01-21 18:26:46 | INFO | ConnectionlessDownlink | b'\x10\x18\x1a\x19\n\x17connected downlink mode'
 2026-01-21 18:26:47 | INFO | ConnectionlessDownlink | b'\x10\x18\x1a\x0c\n\nexit orbit'
+2026-02-06 23:06:50 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-06 23:06:50 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-06 23:06:50 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-06 23:08:21 | INFO | ConnectionlessDownlink | dropped packet number 4
+2026-02-06 23:08:21 | INFO | ConnectionlessDownlink | dropped packet number 4
+2026-02-06 23:11:35 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 1
+2026-02-06 23:11:38 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 4
+2026-02-06 23:11:39 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 5
+2026-02-06 23:17:14 | INFO | ConnectionlessDownlink | connecitonless donwlink online
+2026-02-06 23:17:14 | INFO | ConnectionlessDownlink | connecitonless donwlink online
+2026-02-06 23:17:14 | INFO | ConnectionlessDownlink | connecitonless donwlink online
+2026-02-06 23:17:15 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 1
+2026-02-06 23:17:17 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 3
+2026-02-06 23:17:18 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 4
+2026-02-06 23:17:31 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 0
+2026-02-06 23:17:32 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 1
+2026-02-06 23:17:33 | INFO | ConnectionlessDownlink | out-of-order or duplicate packet 2
+2026-02-06 23:22:54 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-06 23:22:56 | INFO | ConnectionlessDownlink | dropped packet number 4
+2026-02-06 23:31:24 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-06 23:31:24 | INFO | ConnectionlessDownlink | dropped packet number 3
+2026-02-07 10:36:27 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-07 10:36:27 | INFO | ConnectionlessDownlink | dropped packet number 3
+2026-02-07 10:36:27 | INFO | ConnectionlessDownlink | dropped packet number 4
+2026-02-07 10:39:37 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-07 10:39:48 | INFO | ConnectionlessDownlink | dropped packet number 1
+2026-02-07 10:39:50 | INFO | ConnectionlessDownlink | dropped packet number 3
+2026-02-07 10:43:29 | INFO | ConnectionlessDownlink | dropped packet number 4
+2026-02-07 10:46:12 | INFO | ConnectionlessDownlink | dropped packet number 3
+2026-02-07 10:52:33 | INFO | ConnectionlessDownlink | dropped packet number 2
+2026-02-07 10:52:33 | INFO | ConnectionlessDownlink | dropped packet number 3
+2026-02-07 10:52:35 | INFO | ConnectionlessDownlink | dropped packet number 5
+2026-02-07 10:54:09 | INFO | ConnectionlessDownlink | dropped packet number 4
+2026-02-07 10:55:04 | INFO | ConnectionlessDownlink | dropped packet number 1
+2026-02-07 10:56:18 | INFO | ConnectionlessDownlink | dropped packet number 5
+2026-02-07 10:56:40 | INFO | ConnectionlessDownlink | dropped packet number 10
+2026-02-08 13:10:09 | INFO | ConnectionlessDownlink | dropped packet number 15
+2026-02-08 13:10:14 | INFO | ConnectionlessDownlink | dropped packet number 20
+2026-02-08 14:03:32 | INFO | ConnectionlessDownlink | dropped packet number 41
+2026-02-08 14:03:32 | INFO | ConnectionlessDownlink | dropped packet number 42
+2026-02-08 16:09:00 | INFO | ConnectionlessDownlink | dropped packet number 90
+2026-02-08 16:09:03 | INFO | ConnectionlessDownlink | dropped packet number 93
+2026-02-08 16:09:39 | INFO | ConnectionlessDownlink | dropped packet number 99
+2026-02-08 16:11:55 | INFO | ConnectionlessDownlink | dropped packet number 109
+2026-02-08 16:18:52 | INFO | ConnectionlessDownlink | dropped packet number 130
+2026-02-08 16:20:45 | INFO | ConnectionlessDownlink | dropped packet number 137
+2026-02-08 16:22:59 | INFO | ConnectionlessDownlink | dropped packet number 141
+2026-02-08 16:24:28 | INFO | ConnectionlessDownlink | dropped packet number 149
+2026-02-08 16:24:28 | INFO | ConnectionlessDownlink | dropped packet number 150
+2026-02-08 16:44:53 | INFO | ConnectionlessDownlink | dropped packet number 153
+2026-02-08 16:44:55 | INFO | ConnectionlessDownlink | dropped packet number 155
+2026-02-08 16:45:24 | INFO | ConnectionlessDownlink | dropped packet number 163
+2026-02-08 16:48:05 | INFO | ConnectionlessDownlink | dropped packet number 3
+2026-02-10 14:18:15 | INFO | ConnectionlessDownlink | dropped packet number 36
+2026-02-10 14:47:30 | INFO | ConnectionlessDownlink | dropped packet number 65
+2026-02-10 14:47:30 | INFO | ConnectionlessDownlink | dropped packet number 66
+2026-02-10 14:47:30 | INFO | ConnectionlessDownlink | dropped packet number 67
+2026-02-10 14:47:30 | INFO | ConnectionlessDownlink | dropped packet number 68
+2026-02-10 14:47:30 | INFO | ConnectionlessDownlink | dropped packet number 69
+2026-02-10 14:47:32 | INFO | ConnectionlessDownlink | dropped packet number 71
+2026-02-10 14:48:00 | INFO | ConnectionlessDownlink | dropped packet number 79
+2026-02-10 14:48:25 | INFO | ConnectionlessDownlink | dropped packet number 83
+2026-02-10 14:49:57 | INFO | ConnectionlessDownlink | dropped packet number 105
+2026-02-10 14:50:21 | INFO | ConnectionlessDownlink | dropped packet number 109
+2026-02-10 15:00:35 | INFO | ConnectionlessDownlink | dropped packet number 119
+2026-02-10 15:20:45 | INFO | ConnectionlessDownlink | dropped packet number 125
+2026-02-10 15:20:48 | INFO | ConnectionlessDownlink | dropped packet number 128
+2026-02-10 15:21:23 | INFO | ConnectionlessDownlink | dropped packet number 130
+2026-02-10 15:23:00 | INFO | ConnectionlessDownlink | dropped packet number 133

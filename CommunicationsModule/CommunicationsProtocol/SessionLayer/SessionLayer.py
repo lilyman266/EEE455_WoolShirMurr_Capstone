@@ -1,11 +1,13 @@
 from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 from Logger.Logger import LoggerFactory
 from asyncio import QueueEmpty
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import AudimusConnectedUplink, AudimusConnectedDownlink, AudimusConnectionlessDownlink
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import GroundStationConnectedUplink, GroundStationConnectedDownlink, GroundStationConnectionlessDownlink
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectionlessDownlink import  GroundStationConnectionlessDownlink, AudimusConnectionlessDownlink
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectedDownlink import GroundStationConnectedDownlink, AudimusConnectedDownlink
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectedUplink import GroundStationConnectedUplink, AudimusConnectedUplink
 from enum import Enum
-import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 
+
+from CommunicationsModule.Logger.Errors import StateChangeError
 
 
 class SessionMode(Enum):
@@ -17,58 +19,47 @@ class SessionMode(Enum):
 class SessionLayer(ProtocolLayer.ProtocolLayer):
     def __init__(self, SL_rx,SL_tx, DLL_rx, DLL_tx):
         super().__init__(SL_rx,SL_tx, DLL_rx, DLL_tx)
-        self.DLL_rx = DLL_rx
-        self.DLL_tx = DLL_tx
         self.name = "Session Layer     "
         self.logger = LoggerFactory.get_logger(self.name)
-        self.session = GroundStationConnectionlessDownlink(DLL_rx, DLL_tx)
-
-
-        # check state by checking state_change_queue
-
-    async def rx(self):
-        while True:
-
-            # grab message from the below layers rx queue
-            message = await self.below_rx.get()
-
-            # put message into session
-            await self.session.rx()
-
-
-    async def tx(self):
-        while True:
-            # grab the message from this layer's tx queue
-            message = await self.layer_tx.get()
-
-            message = self.process_tx(message)
-
-            # put message into the tx queue of the layer below
-            await self.session.tx(message)
-
 
 class GroundStationSessionLayer(SessionLayer):
     def __init__(self, SL_rx,SL_tx, DLL_rx, DLL_tx, state_change_queue):
         super().__init__(SL_rx,SL_tx, DLL_rx, DLL_tx)
         self.state_change_queue = state_change_queue
+        self.set_state(SessionMode.CONNECTIONLESS_DOWNLINK)
+
+    async def rx(self):
+        while True:
+            message = await self.session.rx()
+            self.logger.info(f"Rx: {str(message)}")
+            await self.layer_rx.put(message)
+
+
+    async def tx(self):
+        while True:
+            message = await self.layer_tx.get()
+            self.logger.info(f"Tx: {str(message)}")
+            message = self.process_tx(message)
+            await self.session.tx(message)
 
     def process_tx(self, message):
         self.check_state()
         self.logger.info(message)
         return message
 
-
-    def change_state(self, state):
+    def set_state(self, state):
         self.logger.info(f"state changing to: {state}")
+
         match state:
             case SessionMode.CONNECTED_UPLINK:
-                self.session = GroundStationConnectedUplink(self.DLL_rx, self.DLL_tx)
+                self.session = GroundStationConnectedUplink(self, self.below_rx, self.below_tx)
             case SessionMode.CONNECTED_DOWNLINK:
-                self.session = GroundStationConnectedDownlink(self.DLL_rx, self.DLL_tx)
+                self.session = GroundStationConnectedDownlink(self, self.below_rx, self.below_tx)
             case SessionMode.CONNECTIONLESS_DOWNLINK:
-                self.session = GroundStationConnectionlessDownlink(self.DLL_rx, self.DLL_tx)
+                self.session = GroundStationConnectionlessDownlink(self, self.below_rx, self.below_tx)
+
             case _ :
-                print("Error!!!! state passing getting fucked up again")
+                raise StateChangeError("Error changing state")
 
 
     def check_state(self):
@@ -76,37 +67,50 @@ class GroundStationSessionLayer(SessionLayer):
             state = self.state_change_queue.get_nowait()
         except QueueEmpty:
             return
-        self.change_state(state)
+        self.set_state(state)
 
 
 class AudimusSessionLayer(SessionLayer):
     def __init__(self, SL_rx,SL_tx, DLL_rx, DLL_tx):
         super().__init__(SL_rx,SL_tx, DLL_rx, DLL_tx)
+        self.set_state(SessionMode.CONNECTIONLESS_DOWNLINK)
 
-    def change_state(self, state):
+    async def rx(self):
+        while True:
+            message = await self.session.rx()
+            self.logger.info(f"Rx: {str(message)}")
+            await self.layer_rx.put(message)
+
+
+    async def tx(self):
+        while True:
+            message = await self.layer_tx.get()
+            self.logger.info(f"Tx: {str(message)}")
+            message = self.process_tx(message)
+            await self.session.tx(message)
+
+
+    def set_state(self, state):
         self.logger.info(f"state changing to: {state}")
         match state:
             case SessionMode.CONNECTED_UPLINK:
-                self.session = AudimusConnectedUplink(self.DLL_rx, self.DLL_tx)
+                self.session = AudimusConnectedUplink(self, self.below_rx, self.below_tx)
             case SessionMode.CONNECTED_DOWNLINK:
-                self.session = AudimusConnectedDownlink(self.DLL_rx, self.DLL_tx)
+                self.session = AudimusConnectedDownlink(self, self.below_rx, self.below_tx)
             case SessionMode.CONNECTIONLESS_DOWNLINK:
-                self.session = AudimusConnectionlessDownlink(self.DLL_rx, self.DLL_tx)
+                self.session = AudimusConnectionlessDownlink(self, self.below_rx, self.below_tx)
             case _ :
-                print("Error!!!! state passing getting fucked up again")
+                raise StateChangeError("Error changing state")
 
 
     def process_tx(self, message):
-        self.logger.info(str(message))
+        self.logger.info(f"Tx: {str(message)}")
         return message
 
     def process_rx(self, message):
-
-
+        self.logger.info(f"Rx: {str(message)}")
         return message
 
-    # check state by examining incoming messages
-    def check_state(self):
-        pass
+
 
 

@@ -1,5 +1,5 @@
 import asyncio
-
+import random
 from CommunicationsProtocol.ApplicationLayer.ApplicationLayer import GroundStationApplicationLayer
 from CommunicationsProtocol.PresentationLayer.PresentationLayer import GroundStationPresentationLayer
 from CommunicationsProtocol.DataLinkLayer.DataLinkLayer import GroundStationDataLinkLayer
@@ -15,9 +15,10 @@ def read_lines(path):
 async def app_rx(AL_rx):
     while True:
         message = await AL_rx.get()
-        print(message)
+
 
 async def app_tx(AL_tx, state_change_queue):
+    await asyncio.sleep(0.5)
     for line in read_lines("CommunicationsModule/TestTXGroundStation"):
         match line:
             case "connected uplink mode":
@@ -42,13 +43,19 @@ async def file_Rx(SDR_rx):
 async def tcp_tx(writer, SDR_tx):
     while True:
         msg = (await SDR_tx.get())
+
         writer.write(msg)          # msg must be bytes
         await writer.drain()
 
 #receives from Audimus with tcp
 async def tcp_rx(reader, SDR_rx):
     while True:
+
+
         msg = await reader.read(1024)
+        if random.randint(0,10) >9 :
+            print("dropped a packet")
+            continue
         if msg == b"":  # connection closed
             break
         await SDR_rx.put(msg)
