@@ -31,20 +31,17 @@ class GroundStationSessionLayer(SessionLayer):
     async def rx(self):
         while True:
             message = await self.session.rx()
-            self.logger.info(f"Rx: {str(message)}")
+            self.logger.info(b"RX: "+ message)
             await self.layer_rx.put(message)
 
 
     async def tx(self):
         while True:
             message = await self.layer_tx.get()
-            self.logger.info(f"Tx: {str(message)}")
             message = self.process_tx(message)
             await self.session.tx(message)
 
     def process_tx(self, message):
-        self.check_state()
-        self.logger.info(message)
         return message
 
     def set_state(self, state):
@@ -62,12 +59,10 @@ class GroundStationSessionLayer(SessionLayer):
                 raise StateChangeError("Error changing state")
 
 
-    def check_state(self):
-        try:
-            state = self.state_change_queue.get_nowait()
-        except QueueEmpty:
-            return
-        self.set_state(state)
+    async def state_watcher(self):
+        while True:
+            state = await self.state_change_queue.get()
+            self.set_state(state)
 
 
 class AudimusSessionLayer(SessionLayer):
@@ -78,14 +73,14 @@ class AudimusSessionLayer(SessionLayer):
     async def rx(self):
         while True:
             message = await self.session.rx()
-            self.logger.info(f"Rx: {str(message)}")
             await self.layer_rx.put(message)
 
 
     async def tx(self):
         while True:
+
             message = await self.layer_tx.get()
-            self.logger.info(f"Tx: {str(message)}")
+            self.logger.info(message)
             message = self.process_tx(message)
             await self.session.tx(message)
 
@@ -104,11 +99,10 @@ class AudimusSessionLayer(SessionLayer):
 
 
     def process_tx(self, message):
-        self.logger.info(f"Tx: {str(message)}")
         return message
 
     def process_rx(self, message):
-        self.logger.info(f"Rx: {str(message)}")
+        self.logger.info(b"rx: ", message)
         return message
 
 

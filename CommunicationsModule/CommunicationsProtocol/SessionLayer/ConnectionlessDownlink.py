@@ -5,7 +5,7 @@ from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Ses
 
 class ConnectionlessDownlink(Session):
     def __init__(self, context, DLL_rx, DLL_tx,packet_number_path ):
-        self.name = "ConnectionlessDownlink"
+        self.name = "ConnectionlessDownlink    "
         self.logger = LoggerFactory.get_logger(self.name)
         self.packet_number = self.read_packet_number()
         super().__init__(context, DLL_rx, DLL_tx, packet_number_path)
@@ -60,7 +60,7 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
         #receive packet
         msg =  await self.below_rx.get()
         message = self.deframe(msg)
-
+        self.logger.info(message)
         return message
 
         #count packet number, if missing, record it
@@ -91,8 +91,12 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
 
     async def rx(self):
         # receive packet
+
+
         msg = await self.below_rx.get()
+        self.logger.info(b"rx: ", msg)
         message = self.deframe(msg)
+        self.logger.info(b"rx: ", message)
         return message
 
     def frame(self, presentation_message):

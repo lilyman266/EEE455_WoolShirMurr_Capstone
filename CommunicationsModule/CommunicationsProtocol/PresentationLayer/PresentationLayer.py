@@ -16,12 +16,10 @@ class PresentationLayer(ProtocolLayer.ProtocolLayer):
 
     def process_rx(self, message):
         message = self.deframe(message)
-        self.logger.info(f"Rx: {message}")
         return message
 
     def process_tx(self, message):
         message = self.frame(message)
-        self.logger.info(self.logger.info(f"Tx: {str(message)}"))
         return message
 
 

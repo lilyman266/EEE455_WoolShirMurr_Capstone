@@ -1,4 +1,6 @@
-burn x = 200 y = 200
-burn x = 300 y = 400
-send health data
-exit orbit
+sonar data: "0000 0000 0000 0000"
+sonar data: "0000 0000 0000 0001"
+sonar data: "0000 0000 0000 0002"
+sonar data: "0000 0000 0000 0003"
+sonar data: "0000 0000 0000 0004"
+sonar data: "0000 0000 0000 0005"

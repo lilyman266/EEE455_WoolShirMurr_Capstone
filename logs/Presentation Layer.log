@@ -2990,3 +2990,29 @@
 2026-02-10 15:23:06 | INFO | Presentation Layer | Tx: b'\x10\x89\x01\x1a\x0c\n\nexit orbit'
 2026-02-10 15:23:06 | INFO | Presentation Layer | None
 2026-02-10 15:23:06 | INFO | Presentation Layer | Rx: b''
+2026-02-23 05:36:49 | INFO | Presentation Layer | Tx: b'\x10\x18\x1a\x16\n\x14burn x = 200 y = 200'
+2026-02-23 05:36:49 | INFO | Presentation Layer | None
+2026-02-23 05:36:50 | INFO | Presentation Layer | Rx: b'\n\x14burn x = 200 y = 200'
+2026-02-23 05:36:50 | INFO | Presentation Layer | Tx: b'\x10\x18\x1a\x16\n\x14burn x = 300 y = 400'
+2026-02-23 05:36:50 | INFO | Presentation Layer | None
+2026-02-23 05:36:51 | INFO | Presentation Layer | Rx: b'\n\x14burn x = 300 y = 400'
+2026-02-23 05:36:51 | INFO | Presentation Layer | Tx: b'\x10\x8a\x01\x1a\x16\n\x14burn x = 200 y = 200'
+2026-02-23 05:36:51 | INFO | Presentation Layer | None
+2026-02-23 05:36:51 | INFO | Presentation Layer | Rx: b''
+2026-02-23 05:36:51 | INFO | Presentation Layer | Tx: b'\x10\x18\x1a\x12\n\x10send health data'
+2026-02-23 05:36:51 | INFO | Presentation Layer | None
+2026-02-23 05:36:52 | INFO | Presentation Layer | Tx: b'\x10\x8a\x01\x1a\x12\n\x10send health data'
+2026-02-23 05:36:52 | INFO | Presentation Layer | None
+2026-02-23 05:36:52 | INFO | Presentation Layer | Rx: b''
+2026-02-23 05:36:53 | INFO | Presentation Layer | Tx: b'\x10\x18\x1a\x0c\n\nexit orbit'
+2026-02-23 05:36:53 | INFO | Presentation Layer | None
+2026-02-23 05:36:53 | INFO | Presentation Layer | Rx: b'\n\nexit orbit'
+2026-02-23 05:36:53 | INFO | Presentation Layer | Tx: b'\x10\x8a\x01\x1a\x16\n\x14burn x = 300 y = 400'
+2026-02-23 05:36:53 | INFO | Presentation Layer | None
+2026-02-23 05:36:53 | INFO | Presentation Layer | Rx: b''
+2026-02-23 05:36:54 | INFO | Presentation Layer | Tx: b'\x10\x8a\x01\x1a\x12\n\x10send health data'
+2026-02-23 05:36:54 | INFO | Presentation Layer | None
+2026-02-23 05:36:54 | INFO | Presentation Layer | Rx: b''
+2026-02-23 05:36:55 | INFO | Presentation Layer | Tx: b'\x10\x8a\x01\x1a\x0c\n\nexit orbit'
+2026-02-23 05:36:55 | INFO | Presentation Layer | None
+2026-02-23 05:36:55 | INFO | Presentation Layer | Rx: b''

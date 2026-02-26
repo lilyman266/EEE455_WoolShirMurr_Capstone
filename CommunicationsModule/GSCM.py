@@ -18,8 +18,19 @@ async def app_rx(AL_rx):
 
 
 async def app_tx(AL_tx, state_change_queue):
-    await asyncio.sleep(0.5)
-    for line in read_lines("CommunicationsModule/TestTXGroundStation"):
+
+  # For reading from the command line
+    loop = asyncio.get_running_loop()
+    print("Enter messages (type 'exit' to quit):")
+    while True:
+        line = await loop.run_in_executor(None,input,"> ")
+        if line.lower() == "exit":
+            break
+        print(line)
+
+
+# For reading from a file
+   #  for line in read_lines("CommunicationsModule/TestTXGroundStation"):
         match line:
             case "connected uplink mode":
                 await state_change_queue.put(SessionMode.CONNECTED_UPLINK)
@@ -29,7 +40,7 @@ async def app_tx(AL_tx, state_change_queue):
                 await state_change_queue.put(SessionMode.CONNECTIONLESS_DOWNLINK)
             case _ :
                 await AL_tx.put(line)
-        await asyncio.sleep(1)
+        #await asyncio.sleep(1)
 
 #write to SDR sending file
 async def file_tx(SDR_tx):
@@ -50,10 +61,8 @@ async def tcp_tx(writer, SDR_tx):
 #receives from Audimus with tcp
 async def tcp_rx(reader, SDR_rx):
     while True:
-
-
         msg = await reader.read(1024)
-        if random.randint(0,10) >9 :
+        if random.randint(0,10) >10 :
             print("dropped a packet")
             continue
         if msg == b"":  # connection closed
@@ -113,6 +122,9 @@ async def handle_client(reader, writer):
     # run session layer coroutines
     sl_tx_handler = asyncio.create_task(sl.tx())
     sl_rx_handler = asyncio.create_task(sl.rx())
+
+    # run state watcher coroutines
+    sl_watcher_handler = asyncio.create_task(sl.state_watcher())
 
     #run data link layer coroutines
     dll_tx_handler = asyncio.create_task(dll.tx())

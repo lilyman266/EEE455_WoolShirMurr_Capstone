@@ -9,12 +9,10 @@ class ApplicationLayer(ProtocolLayer.ProtocolLayer):
         self.logger = LoggerFactory.get_logger(self.name)
 
     def process_tx(self, message):
-        self.logger.info(f"Tx: {message}")
         return self.encode(message)
 
     def process_rx(self, message):
         message =  self.decode(message)
-        self.logger.info(f"Rx: {message}")
         return message
 
     def encode(self, message):

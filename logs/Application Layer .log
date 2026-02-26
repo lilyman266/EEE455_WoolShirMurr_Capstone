@@ -2076,3 +2076,20 @@
 2026-02-10 15:23:05 | INFO | Application Layer  | Rx: 
 2026-02-10 15:23:06 | INFO | Application Layer  | Tx: exit orbit
 2026-02-10 15:23:06 | INFO | Application Layer  | Rx: 
+2026-02-23 05:36:49 | INFO | Application Layer  | Tx: burn x = 200 y = 200
+2026-02-23 05:36:50 | INFO | Application Layer  | Rx: burn x = 200 y = 200
+2026-02-23 05:36:50 | INFO | Application Layer  | Tx: burn x = 300 y = 400
+2026-02-23 05:36:51 | INFO | Application Layer  | Rx: burn x = 300 y = 400
+2026-02-23 05:36:51 | INFO | Application Layer  | Tx: burn x = 200 y = 200
+2026-02-23 05:36:51 | INFO | Application Layer  | Rx: 
+2026-02-23 05:36:51 | INFO | Application Layer  | Tx: send health data
+2026-02-23 05:36:52 | INFO | Application Layer  | Tx: send health data
+2026-02-23 05:36:52 | INFO | Application Layer  | Rx: 
+2026-02-23 05:36:53 | INFO | Application Layer  | Tx: exit orbit
+2026-02-23 05:36:53 | INFO | Application Layer  | Rx: exit orbit
+2026-02-23 05:36:53 | INFO | Application Layer  | Tx: burn x = 300 y = 400
+2026-02-23 05:36:53 | INFO | Application Layer  | Rx: 
+2026-02-23 05:36:54 | INFO | Application Layer  | Tx: send health data
+2026-02-23 05:36:54 | INFO | Application Layer  | Rx: 
+2026-02-23 05:36:55 | INFO | Application Layer  | Tx: exit orbit
+2026-02-23 05:36:55 | INFO | Application Layer  | Rx: 
