@@ -10,6 +10,7 @@ from DatabaseModule.Database.database_stub import WebAppDatabaseStub
 app = Flask(__name__)
 stub = AuthStubUserTable()    #NOTE: COMMENT ONE OF THESE AT A TIME
 #stub = AuthDbStubTest()
+db_stub = WebAppDatabaseStub()
 
 # ###################### AUTH SERVER REDIRECTS ########################################
 @app.route('/', methods=['GET'])
@@ -46,11 +47,16 @@ def login_test():
         return redirect(return_url)
 
 
-@app.route('/create_acount', methods=['POST'])
+@app.route('/create_account', methods=['POST'])
 def create_account():
-    uname = request.form['username']
-    password = request.form['password']
-    print(uname, password)
+    params = request.get_json()
+    uname = params['username']
+    password = params['password']
+    code = db_stub.create_user(user=uname, passwd=password)
+    if code == 0:
+        return jsonify(ok=False, message="Username already exists!")
+    else:
+        return jsonify(ok=True, message="Account created!")
 
 @app.route('/validate', methods=['GET'])
 def validate():

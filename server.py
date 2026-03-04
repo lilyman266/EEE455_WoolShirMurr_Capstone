@@ -84,16 +84,14 @@ def callback():
     return redirect(url_for("user_home"))
 
 def check_logged_in():
-    if not session.get("logged_in"):
-        return False
-    if not session.get("account"):
-        return False
-    return True
+    return bool(session.get("account")) if session.get("logged_in") else False
 
 ##################### WEBPAGE FUNCTIONALITY ########################################
 
 @app.route('/data', methods=["POST"])
 def data():
+    if not check_logged_in():
+        return jsonify("404: Session expired")
     params = request.get_json()
     print(params)
     needed_id = params["id"]
@@ -147,6 +145,8 @@ def populate_databox():
 
 @app.route('/get_all_data', methods=['POST'])
 def get_all_data():
+    if not check_logged_in() or session.get("account") != "admin":
+        return jsonify("404: Session expired")
     params = request.get_json()
     owner = params['page']
     datalist = params['datalist']
@@ -165,12 +165,16 @@ def get_all_data():
 
 @app.route('/get_user_requests', methods=['POST'])
 def get_user_requests():
+    if not check_logged_in() or session.get("account") != "admin":
+        return jsonify("404: Session expired")
     received_data = stub.read_user_requests()
     print(f"user requests received:   {received_data}")
     return received_data
 
 @app.route('/request_data_auth', methods=['POST'])
 def request_data_auth():
+    if not check_logged_in():
+        return jsonify("404: Session expired")
     params = request.get_json()
     start_time = params["start_time"]
     end_time = params["end_time"]
@@ -178,11 +182,13 @@ def request_data_auth():
 
     print("START =", start_time)
     print("END =", end_time)
-    stub.add_user_request(username, start_time, end_time)
-    return {"Response": "Input received"}
+    result = stub.add_user_request(username, start_time, end_time)
+    return jsonify(ok=True, message="Input received!") if result == 0 else jsonify(ok=False, message="Something went wrong...")
 
 @app.route('/accept_data_request', methods=['POST'])
 def accept_data_request():
+    if not check_logged_in() or session.get("account") != "admin":
+        return jsonify("404: Session expired")
     params= request.get_json()
     request_id = params["request_id"]
     user = params["user"]

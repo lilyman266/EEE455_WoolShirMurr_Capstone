@@ -35,18 +35,39 @@
     </main>
 </div>
 <!-- Create account and continue as guest buttons: -->
-    <script defer>
-        const create_account_button = document.getElementById("create-account-button");
+<script defer>
+  const create_account_button = document.getElementById("create-account-button");
 
-        create_account_button.addEventListener("click", async () => {
-            window.location.href = "/create_account";
-        })
+  create_account_button.addEventListener("click", async (e) => {
+    e.preventDefault();
 
-        const continue_as_guest_button = document.getElementById("continue-as-guest");
+    const uname = document.getElementById("username").value.trim();
+    const passwd = document.getElementById("password").value;
 
-        continue_as_guest_button.addEventListener("click", async () => {
-            window.location.href = "/guest";
-        })
-    </script>
+    if (!uname || !passwd) {
+      alert("Username or password field empty!");
+      return;
+    }
+
+    const response = await fetch("/create_account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: uname, password: passwd })
+    });
+
+    const message = await response.json().catch(() => ({}));
+
+    if (response.ok && message.ok) {
+      alert(message.message || "Account created!");
+    } else {
+      alert(message.message || "Failed to create account.");
+    }
+  });
+
+  const continue_as_guest_button = document.getElementById("continue-as-guest");
+  continue_as_guest_button.addEventListener("click", () => {
+    window.location.href = "/guest";
+  });
+</script>
 </body>
 </html>

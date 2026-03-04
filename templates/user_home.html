@@ -61,7 +61,10 @@
                             end_time: end_time
                         })
                         });
-                        const data = await response.json();
+                        const data = await response.json().catch(() => ({}));
+                        if (response.ok && data.ok){
+                            alert(data.message);
+                        }
                     } catch (error) {}
                     })
             </script>
