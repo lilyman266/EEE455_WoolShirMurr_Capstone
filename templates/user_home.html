@@ -41,6 +41,7 @@
             <input class="timestamp_input" id="end-time" type="datetime-local" />
             <button id="submit" type="button">Submit</button>
             <script>
+                //TODO: Make this provide popups (invalid, received, error)
                 const submit_button = document.getElementById("submit")
                 submit_button.addEventListener("click", async () => {
                     const start_time = document.getElementById("start-time").value;

@@ -131,13 +131,15 @@ def populate_databox():
     #user_home guest dataset:
     if owner == "user_home" and datalist == "guest":
         received_data = stub.read_acoustic_data(restricted=False)
+        print(f"I am returning to user: {received_data}")
         return jsonify(received_data)
 
     #user_home restricted dataset
-    if owner == "user_home" and datalist == session["account"]:
+    if owner == "user_home" and datalist == "account":
 
         received_data = stub.read_user_data(user=session["account"])
          # TODO: DatabaseStub needs to be updated with this functionality!
+        print(f"restricted setsI am returning to user: {received_data}")
         return jsonify(received_data)
 
 
@@ -157,7 +159,7 @@ def get_all_data():
     if owner == "admin" and datalist == "acoustic_data":
         received_data = stub.read_acoustic_data(my_id="admin", restricted="admin")
         print(received_data)
-        return jsonify(received_data)
+        return received_data
 
     return {"error": "invalid database queries"}, 400
 
@@ -165,7 +167,7 @@ def get_all_data():
 def get_user_requests():
     received_data = stub.read_user_requests()
     print(f"user requests received:   {received_data}")
-    return jsonify(received_data)
+    return received_data
 
 @app.route('/request_data_auth', methods=['POST'])
 def request_data_auth():
@@ -182,8 +184,8 @@ def request_data_auth():
 @app.route('/accept_data_request', methods=['POST'])
 def accept_data_request():
     params= request.get_json()
-    user = params["user"]
     request_id = params["request_id"]
+    user = params["user"]
     
     return jsonify(stub.accept_user_request(user=user, request_id=request_id))
 

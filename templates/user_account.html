@@ -1,3 +1,6 @@
+<!--TODO: Add titles for each of the pages-->
+<!--TODO: Add a "My Requested Datasets" Page-->
+<!--TODO: Check Security of app! (For each account type (guest, user, admin), make sure that user can ONLY do that user's things).-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,9 +36,7 @@
                 //create new thing
                 const new_set = document.createElement("div");
                 new_set.classList.add("dataset-row");
-                //TODO:add the timestamp as words in the div
                 new_set.textContent = item["timestamp"] ?? "No timestamp";
-                //TODO:add vriable local to this div
                 
                 //new_set.dataset.datasetId = item.id;
                 const my_id = item["id"];
@@ -95,10 +96,10 @@
 
          <div class="content-box fixed-height" id="user-data">
             <div class="dataset-header">
-                <div>My Restricted Dataset:</div>
+                <div>My Restricted Datasets:</div>
             </div>
              <script>
-            populate_databox({id:"user-data", page:"user_home", datalist:account});
+            populate_databox({id:"user-data", page:"user_home", datalist:"account"});
         </script>
          </div>
     </main>

@@ -260,7 +260,7 @@ class WebAppDatabaseStub(DatabaseStub):
             JOIN acoustic_data a ON a.id = l.acoustic_id
             WHERE l.username = %s;
         """, (user,))
-        to_return = cursor.fetchall() 
+        to_return = cursor.fetchall()[0][0] 
         conn.commit()
         cursor.close()
         conn.close()
@@ -288,9 +288,10 @@ class WebAppDatabaseStub(DatabaseStub):
             cursor.execute("""SELECT pg_input_is_valid(%s, timestamptz);""", (end_time))
             if cursor.fetchone() == 'false':
                 raise InputNotValidError(f"end time is not valid! Inputted end time: {end_time}")
+
         if my_id == "admin" and restricted == "admin":
-            cursor.execute("""SELECT * FROM acoustic_data;""")
-            to_return = cursor.fetchall()
+            print("Got here")
+            cursor.execute("""SELECT json_agg(row_to_json(t)) FROM (SELECT * FROM acoustic_data) t;""")
             #commit changes and close connection
         else:
             clauses = []
@@ -311,9 +312,9 @@ class WebAppDatabaseStub(DatabaseStub):
             where = " AND ".join(clauses) if clauses else "FALSE"
             query = f"""SELECT json_agg(row_to_json(t)) FROM (select * FROM acoustic_data WHERE {where}) t;"""
             cursor.execute(query, params)
-            to_return = cursor.fetchall()
-            to_return = to_return[0][0]
 
+        to_return = cursor.fetchall()
+        to_return = to_return[0][0]
         #commit changes and close connection
         conn.commit()
         cursor.close()
@@ -332,7 +333,7 @@ class WebAppDatabaseStub(DatabaseStub):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
 
-        cursor.execute("""SELECT id FROM acoustic_data WHERE timestamp BETWEEN %s AND %s;""", (start_time, end_time))
+        cursor.execute("""SELECT id FROM acoustic_data WHERE timestamp BETWEEN %s AND %s AND restricted = True;""", (start_time, end_time))
         ids = [r[0] for r in cursor.fetchall()]
 
         for data_id in ids:
@@ -382,8 +383,9 @@ class WebAppDatabaseStub(DatabaseStub):
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
 
-        cursor.execute("""SELECT * FROM user_requests;""")
-        to_return = cursor.fetchall()
+        cursor.execute("""SELECT json_agg(row_to_json(t)) FROM (SELECT * FROM user_requests) t;""")
+        to_return = cursor.fetchall()[0][0]
+        print(to_return)
 
         # commit changes and close connection
         conn.commit()
@@ -403,12 +405,23 @@ class WebAppDatabaseStub(DatabaseStub):
         cursor.close()
         conn.close()
 
-        if row == None:
-            return 0
-        else:
-            return 1
+        return 0 if row is None else 1
     
-        
+    def create_user(self, user:str, passwd:str):
+        conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
+        cursor = conn.cursor()
+
+        cursor.execute("""SELECT 1 FROM users WHERE username = %s;""", (user,))
+        row = cursor.fetchone()
+        if row is None:
+            cursor.execute("""INSERT INTO users (username, password) VALUES (%s,%s)""", (user, passwd))
+    
+        # commit changes and close connection
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return 0 if row is not None else 1
 # #For each function:
 # conn = psycopg2.connect(host="localhost", dbname="gs_db", user="postgres", password="1234", port=5432)
 

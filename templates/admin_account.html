@@ -35,7 +35,10 @@
                 //create new thing
                 const new_set = document.createElement("div");
                 new_set.classList.add("dataset-row");
-                new_set.textContent = item["timestamp"] ?? "No timestamp" + " : " + item["restricted"] + " : " +  item["raw_data"];
+                new_set.textContent = "Id : " + item["id"]
+                + "; Timestamp : " + (item["timestamp"] ?? "No timestamp") 
+                + "; Restricted : " + (item["restricted"] ?? "Unknown") 
+                + "; Data : " +  (item["raw_data"] ?? "No Data");
 
                 //new_set.dataset.datasetId = item.id;
                 const my_id = item["id"];
@@ -72,22 +75,22 @@
         data.forEach((item) => {
             //create new thing
             const new_set = document.createElement("div");
-            new_set.classList.add("dataset-row");
+            new_set.classList.add("dataset-row-requests");
             //TODO: figure out how to get the CORRESPONDING ROW, not just the ID
-            new_set.textContent = "user" + item[0] + item["timestamp"] ?? "No timestamp" + " : " + item["restricted"] + " : " +  item["raw_data"];
+            new_set.textContent = "user " + item['username'] + " with id " + item["acoustic_id"]
 
             //new_set.dataset.datasetId = item.id;
-            const my_id = item[1];
+            const my_id = item["acoustic_id"];
 
             new_set.addEventListener("click", () => {
-                const currentlyActive = document.querySelector(".dataset-row.active");
+                const currentlyActive = document.querySelector(".dataset-row-requests.active");
 
                 if (currentlyActive && currentlyActive !== new_set) {
                     currentlyActive.classList.remove("active");
                 }
 
                 new_set.classList.add("active");
-                clicked_user = item[0]
+                clicked_user = item['username']
                 clicked_req_id = my_id;
             });
             //append it to the list
@@ -173,7 +176,7 @@
                 URL.revokeObjectURL(url);
                 a.remove();
             } else {
-                console.warn("Please select a dataset!")
+                alert("Please select a dataset!")
             }
         })
     </script>
@@ -196,11 +199,13 @@
             const status = await response.json()
             if (status == 1) {
                 alert("Request accepted!");
+                //TODO: Reload page after this (to get most up-to-date info)
             } else {
                 alert("Something went wrong.");
             }
         })
     </script>
+    
     <!-- Logout Button: -->
     <script defer>
         const logout_button = document.getElementById("logout-button");
