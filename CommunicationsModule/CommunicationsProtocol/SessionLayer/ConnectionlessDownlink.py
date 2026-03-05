@@ -1,21 +1,21 @@
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 from CommunicationsModule.Logger.Errors import InvalidSendError
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session, SessionMode
 
 class ConnectionlessDownlink(Session):
-    def __init__(self, context, DLL_rx, DLL_tx,packet_number_path ):
+    def __init__(self,DLL_rx, DLL_tx,packet_number_path ):
         self.name = "ConnectionlessDownlink    "
         self.logger = LoggerFactory.get_logger(self.name)
         self.packet_number = self.read_packet_number()
-        super().__init__(context, DLL_rx, DLL_tx, packet_number_path)
+        super().__init__(DLL_rx, DLL_tx, packet_number_path)
 
 
 class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
-    def __init__(self, context, DLL_rx, DLL_tx):
+    def __init__(self, DLL_rx, DLL_tx):
         self.packet_number_path = "CommunicationsModule/CommunicationsProtocol/SessionLayer/GroundStationCurrentPacketNumber" #tracks current packet number
-        super().__init__(context, DLL_rx, DLL_tx, self.packet_number_path)
-        self.context = context
+        super().__init__( DLL_rx, DLL_tx, self.packet_number_path)
+
 
     def frame(self, presentation_message):
         msg = Audimus_pb2.Session_Message()
@@ -71,14 +71,13 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
 
 class AudimusConnectionlessDownlink(ConnectionlessDownlink):
-    def __init__(self, context, DLL_rx, DLL_tx):
+    def __init__(self,  DLL_rx, DLL_tx, session_queue):
         self.packet_number_path = "CommunicationsModule/CommunicationsProtocol/SessionLayer/AudimusCurrentPacketNumber" #tracks current packet number
-        super().__init__(context, DLL_rx, DLL_tx, self.packet_number_path)
-        self.context = context
+        self.session_queue = session_queue
+        super().__init__( DLL_rx, DLL_tx, self.packet_number_path)
+
 
     async def tx(self, message):
-
-
         # store the packet until later
         await self.packet_store.store_packet(self.packet_number, message)
 
@@ -91,18 +90,15 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
 
     async def rx(self):
         # receive packet
-
-
         msg = await self.below_rx.get()
-        self.logger.info(b"rx: ", msg)
-        message = self.deframe(msg)
-        self.logger.info(b"rx: ", message)
+        self.logger.info(b"rx: "+ msg)
+        message = await self.deframe(msg)
+        self.logger.info(b"rx: " + message)
         return message
 
     def frame(self, presentation_message):
         # increment packet number
         self.packet_number += 1
-
         msg = Audimus_pb2.Session_Message()
         msg.presentation_message = presentation_message
         msg.mode = Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
@@ -110,12 +106,16 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
         self.write_packet_number(self.packet_number)
         return msg.SerializeToString()
 
-    def deframe(self, data_link_message):
+    async def deframe(self, data_link_message):
         message = Audimus_pb2.Session_Message()
         message.ParseFromString(data_link_message)
-        if message.mode != Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-            self.context.set_state(message.mode)
 
-        return message.presentation_message
-
-
+        if message.SYN == True:
+            match message.mode:
+                case 1:
+                    await self.session_queue.put(SessionMode.CONNECTED_DOWNLINK)
+                case 2:
+                    await self.session_queue.put(SessionMode.CONNECTED_UPLINK)
+                case _:
+                    pass
+        return message

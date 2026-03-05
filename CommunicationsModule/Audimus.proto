@@ -21,6 +21,11 @@ message Presentation_Message{
 
 message Session_Message{
   SESSION_MODE mode = 1;
-  int32 packet_number =2;
+  optional int32 packet_number =2;
   bytes presentation_message = 3;
+  optional bool SYN = 4 ;
+  optional bool SYNACK = 5;
+  optional bool ACK = 6;
+  optional bool DATA = 7;
+  optional bool DATAREQ= 8;
 }

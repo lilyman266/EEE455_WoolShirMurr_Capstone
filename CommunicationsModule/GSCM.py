@@ -1,9 +1,9 @@
 import asyncio
 import random
-from CommunicationsProtocol.ApplicationLayer.ApplicationLayer import GroundStationApplicationLayer
-from CommunicationsProtocol.PresentationLayer.PresentationLayer import GroundStationPresentationLayer
-from CommunicationsProtocol.DataLinkLayer.DataLinkLayer import GroundStationDataLinkLayer
-from CommunicationsProtocol.SessionLayer.SessionLayer import GroundStationSessionLayer, SessionMode
+from CommunicationsModule.CommunicationsProtocol.ApplicationLayer.ApplicationLayer import GroundStationApplicationLayer
+from CommunicationsModule.CommunicationsProtocol.PresentationLayer.PresentationLayer import GroundStationPresentationLayer
+from CommunicationsModule.CommunicationsProtocol.DataLinkLayer.DataLinkLayer import GroundStationDataLinkLayer
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.SessionLayer import GroundStationSessionLayer, SessionMode
 
 
 def read_lines(path):
@@ -80,9 +80,11 @@ async def handle_client(reader, writer):
     PL_rx = asyncio.Queue()
     PL_tx = asyncio.Queue()
 
-    #session layer queues
+    #session layer queues + state change queue
     SL_rx = asyncio.Queue()
     SL_tx = asyncio.Queue()
+    SL_SC = asyncio.Queue()
+
 
     #data link layer queues
     DLL_rx = asyncio.Queue()
@@ -92,15 +94,10 @@ async def handle_client(reader, writer):
     SDR_rx = asyncio.Queue()
     SDR_tx = asyncio.Queue()
 
-    #state change queue
-    state_change_queue = asyncio.Queue()
-
-
-
     #create instances of each layer, pass each layer its own queue and the queue of the level beneath it
     al = GroundStationApplicationLayer(AL_rx, AL_tx, PL_rx, PL_tx)
     pl = GroundStationPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
-    sl = GroundStationSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, state_change_queue)
+    sl = GroundStationSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SL_SC)
     dll = GroundStationDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx)
 
     #run tcp rx and tx coroutines
@@ -109,7 +106,7 @@ async def handle_client(reader, writer):
 
     # run application rx and tx coroutines
     AL_rx = asyncio.create_task(app_rx(AL_rx))
-    AL_tx = asyncio.create_task(app_tx(AL_tx,state_change_queue))
+    AL_tx = asyncio.create_task(app_tx(AL_tx,SL_SC))
 
     #run application layer coroutines
     al_tx_handler = asyncio.create_task(al.tx())

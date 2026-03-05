@@ -1,9 +1,9 @@
 import asyncio
 
-from CommunicationsProtocol.ApplicationLayer.ApplicationLayer import AudimusApplicationLayer
-from CommunicationsProtocol.PresentationLayer.PresentationLayer import AudimusPresentationLayer
-from CommunicationsProtocol.DataLinkLayer.DataLinkLayer import AudimusDataLinkLayer
-from CommunicationsProtocol.SessionLayer.SessionLayer import AudimusSessionLayer
+from CommunicationsModule.CommunicationsProtocol.ApplicationLayer.ApplicationLayer import AudimusApplicationLayer
+from CommunicationsModule.CommunicationsProtocol.PresentationLayer.PresentationLayer import AudimusPresentationLayer
+from CommunicationsModule.CommunicationsProtocol.DataLinkLayer.DataLinkLayer import AudimusDataLinkLayer
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.SessionLayer import AudimusSessionLayer, SessionMode
 
 
 def read_lines(path):
@@ -21,7 +21,6 @@ async def app_tx(AL_tx):
         await asyncio.sleep(1)
 
 
-
 async def tcp_tx(writer, SDR_tx):
     while True:
         msg = await SDR_tx.get()      # wait for outgoing message
@@ -35,7 +34,6 @@ async def tcp_rx(reader, SDR_rx):
         if not msg:
             break                       # server closed connection
         await SDR_rx.put(msg)         # push into RX queue
-
 
 
 async def run_client(host, port):
@@ -53,6 +51,9 @@ async def run_client(host, port):
     SL_rx = asyncio.Queue()
     SL_tx = asyncio.Queue()
 
+    #session state change queue
+    SSQ = asyncio.Queue()
+
     # data link layer queues
     DLL_rx = asyncio.Queue()
     DLL_tx = asyncio.Queue()
@@ -64,7 +65,7 @@ async def run_client(host, port):
     # create instances of each layer
     al = AudimusApplicationLayer(AL_rx, AL_tx,PL_rx,PL_tx)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
-    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx)
+    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SSQ)
     dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx)
 
     # run application rx and tx coroutines
@@ -83,9 +84,8 @@ async def run_client(host, port):
     pl_tx_handler = asyncio.create_task(pl.tx())
     pl_rx_handler = asyncio.create_task(pl.rx())
 
-    # run session layer coroutines
-    sl_tx_handler = asyncio.create_task(sl.tx())
-    sl_rx_handler = asyncio.create_task(sl.rx())
+    # Session layer co-routines called from within
+    sl_session_watcher = asyncio.create_task(sl.state_watcher())
 
     # run data link layer coroutines
     dll_tx_handler = asyncio.create_task(dll.tx())

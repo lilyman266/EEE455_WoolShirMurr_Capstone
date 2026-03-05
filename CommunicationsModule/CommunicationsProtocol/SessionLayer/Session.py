@@ -8,23 +8,27 @@ import os
 import struct
 import asyncio
 
+
 class SessionMode(Enum):
-    CONNECTIONLESS_DOWNLINK = 0
+    CONNECTED_UPLINK = 0
     CONNECTED_DOWNLINK = 1
-    CONNECTED_UPLINK = 2
+    CONNECTIONLESS_DOWNLINK =2
+
 
 class Session:
-    def __init__(self, context, DLL_rx, DLL_tx, packet_number_path):
+    def __init__(self, DLL_rx, DLL_tx, packet_number_path):
         self.below_tx = DLL_tx
         self.below_rx = DLL_rx
         self.packet_number_path = packet_number_path
         self.packet_number = self.read_packet_number()
-        self.context = context
         self.packet_store = PacketStore("CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore") #saves all packets until acked
         self.packet_tracker = MissingPacketIndex("CommunicationsModule/CommunicationsProtocol/SessionLayer/MissingPacketIndex")
 
     async def rx(self):
-        return await self.below_rx.get()
+
+        message = await self.below_rx.get()
+        self.logger.info(message)
+        return
 
     async def tx(self, message):
         await self.below_tx.put(message)
