@@ -1,9 +1,9 @@
 import asyncio
-
+import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from CommunicationsModule.CommunicationsProtocol.ApplicationLayer.ApplicationLayer import AudimusApplicationLayer
 from CommunicationsModule.CommunicationsProtocol.PresentationLayer.PresentationLayer import AudimusPresentationLayer
 from CommunicationsModule.CommunicationsProtocol.DataLinkLayer.DataLinkLayer import AudimusDataLinkLayer
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.SessionLayer import AudimusSessionLayer, SessionMode
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.SessionLayer import AudimusSessionLayer
 
 
 def read_lines(path):
@@ -52,7 +52,7 @@ async def run_client(host, port):
     SL_tx = asyncio.Queue()
 
     #session state change queue
-    SSQ = asyncio.Queue()
+    SL_sc = asyncio.Queue()
 
     # data link layer queues
     DLL_rx = asyncio.Queue()
@@ -65,12 +65,12 @@ async def run_client(host, port):
     # create instances of each layer
     al = AudimusApplicationLayer(AL_rx, AL_tx,PL_rx,PL_tx)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
-    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SSQ)
+    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SL_sc)
     dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx)
 
     # run application rx and tx coroutines
-    AL_rx = asyncio.create_task(app_rx(AL_rx))
-    AL_tx = asyncio.create_task(app_tx(AL_tx))
+    AL_rx_handler = asyncio.create_task(app_rx(AL_rx))
+    AL_tx_handler = asyncio.create_task(app_tx(AL_tx))
 
     # run application layer coroutines
     al_tx_handler = asyncio.create_task(al.tx())
@@ -84,12 +84,14 @@ async def run_client(host, port):
     pl_tx_handler = asyncio.create_task(pl.tx())
     pl_rx_handler = asyncio.create_task(pl.rx())
 
-    # Session layer co-routines called from within
-    sl_session_watcher = asyncio.create_task(sl.state_watcher())
+    # session layer coroutines started internally
+    # session layer coroutines started internally
+    sl_handler = asyncio.create_task(sl.start())
 
     # run data link layer coroutines
     dll_tx_handler = asyncio.create_task(dll.tx())
     dll_rx_handler = asyncio.create_task(dll.rx())
+
 
     await asyncio.gather(tx, rx)
 

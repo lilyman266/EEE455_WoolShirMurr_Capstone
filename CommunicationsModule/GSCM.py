@@ -1,10 +1,11 @@
 import asyncio
 import random
+import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from CommunicationsModule.CommunicationsProtocol.ApplicationLayer.ApplicationLayer import GroundStationApplicationLayer
 from CommunicationsModule.CommunicationsProtocol.PresentationLayer.PresentationLayer import GroundStationPresentationLayer
 from CommunicationsModule.CommunicationsProtocol.DataLinkLayer.DataLinkLayer import GroundStationDataLinkLayer
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.SessionLayer import GroundStationSessionLayer, SessionMode
-
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.SessionLayer import GroundStationSessionLayer
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import SessionMode
 
 def read_lines(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -17,7 +18,7 @@ async def app_rx(AL_rx):
         message = await AL_rx.get()
 
 
-async def app_tx(AL_tx, state_change_queue):
+async def app_tx(AL_tx, sl ):
 
   # For reading from the command line
     loop = asyncio.get_running_loop()
@@ -26,18 +27,18 @@ async def app_tx(AL_tx, state_change_queue):
         line = await loop.run_in_executor(None,input,"> ")
         if line.lower() == "exit":
             break
-        print(line)
+
 
 
 # For reading from a file
    #  for line in read_lines("CommunicationsModule/TestTXGroundStation"):
         match line:
             case "connected uplink mode":
-                await state_change_queue.put(SessionMode.CONNECTED_UPLINK)
+                await sl.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedUplink)
             case "connected downlink mode":
-                await state_change_queue.put(SessionMode.CONNECTED_DOWNLINK)
+                 await sl.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
             case "connectionless downlink mode":
-                await state_change_queue.put(SessionMode.CONNECTIONLESS_DOWNLINK)
+                await sl.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
             case _ :
                 await AL_tx.put(line)
         #await asyncio.sleep(1)
@@ -85,7 +86,6 @@ async def handle_client(reader, writer):
     SL_tx = asyncio.Queue()
     SL_SC = asyncio.Queue()
 
-
     #data link layer queues
     DLL_rx = asyncio.Queue()
     DLL_tx = asyncio.Queue()
@@ -104,9 +104,7 @@ async def handle_client(reader, writer):
     sat_rx = asyncio.create_task(tcp_rx(reader, SDR_rx))
     sat_tx = asyncio.create_task(tcp_tx(writer, SDR_tx))
 
-    # run application rx and tx coroutines
-    AL_rx = asyncio.create_task(app_rx(AL_rx))
-    AL_tx = asyncio.create_task(app_tx(AL_tx,SL_SC))
+
 
     #run application layer coroutines
     al_tx_handler = asyncio.create_task(al.tx())
@@ -116,16 +114,16 @@ async def handle_client(reader, writer):
     pl_tx_handler = asyncio.create_task(pl.tx())
     pl_rx_handler = asyncio.create_task(pl.rx())
 
-    # run session layer coroutines
-    sl_tx_handler = asyncio.create_task(sl.tx())
-    sl_rx_handler = asyncio.create_task(sl.rx())
-
-    # run state watcher coroutines
-    sl_watcher_handler = asyncio.create_task(sl.state_watcher())
+    # session layer coroutines started internally
+    sl_handler = asyncio.create_task(sl.start())
 
     #run data link layer coroutines
     dll_tx_handler = asyncio.create_task(dll.tx())
     dll_rx_handler = asyncio.create_task(dll.rx())
+
+    # run application rx and tx coroutines
+    AL_rx = asyncio.create_task(app_rx(AL_rx))
+    AL_tx = asyncio.create_task(app_tx(AL_tx, sl))
 
     # wait for responses
 

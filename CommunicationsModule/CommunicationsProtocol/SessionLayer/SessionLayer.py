@@ -5,186 +5,151 @@ from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectionlessDown
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectedDownlink import GroundStationConnectedDownlink, AudimusConnectedDownlink
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectedUplink import GroundStationConnectedUplink, AudimusConnectedUplink
 from CommunicationsModule.Logger.Errors import StateChangeError as SessionChangeError
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import SessionMode
+import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 
+import asyncio
+import time
+from enum import Enum
 
+class SessionLayer:
+    def __init__(self, sl_rx, sl_tx, dll_rx, dll_tx, session_queue):
+        self.below_rx      = dll_rx
+        self.below_tx      = dll_tx
+        self.layer_rx      = sl_rx
+        self.layer_tx      = sl_tx
+        self.mode          = None
+        self.session       = None                          # explicit init
+        self.name          = "Session Layer"
+        self.logger        = LoggerFactory.get_logger(self.name)
+        self.session_queue = session_queue
+        self._tasks        = []
+        self._session_lock = asyncio.Lock()
 
-class SessionLayer(ProtocolLayer.ProtocolLayer):
-    def __init__(self, SL_rx,SL_tx, DLL_rx, DLL_tx):
-        super().__init__(SL_rx,SL_tx, DLL_rx, DLL_tx)
-        self.name = "Session Layer     "
-        self.logger = LoggerFactory.get_logger(self.name)
-        self.transition_lock = asyncio.Lock()
-        self.DLL_rx = DLL_rx
+    async def start(self):
+        """Call this after the event loop is running"""
+        self._tasks = [
+            asyncio.create_task(self.state_watcher(), name="state_watcher"),
+            asyncio.create_task(self.rx(),            name="session_rx"),
+            asyncio.create_task(self.tx(),            name="session_tx"),
+        ]
 
-
-class GroundStationSessionLayer(SessionLayer):
-    def __init__(self, SL_rx,SL_tx, DLL_rx, DLL_tx, state_change_queue):
-        super().__init__(SL_rx,SL_tx, DLL_rx, DLL_tx)
-        self.session_queue = state_change_queue
-        self.session = None
-        self.mode = None
-        self.tx_handler = None
-        self.rx_handler = None
-        asyncio.create_task(self.set_session(SessionMode.CONNECTIONLESS_DOWNLINK))
-
+    async def stop(self):
+        for task in self._tasks:
+            task.cancel()
+        await asyncio.gather(*self._tasks, return_exceptions=True)
 
     async def rx(self):
-        try:
-            while True:
-                message = await self.session.rx()
+        while True:
+            packet = await self.below_rx.get()
+
+            async with self._session_lock:
+                session = self.session
+
+            if session is None:
+                self.logger.warning("Packet dropped - no active session")
+                continue
+
+            message = await session.handle_rx(packet)
+
+            if message is not None:
                 await self.layer_rx.put(message)
-        except asyncio.CancelledError:
-            raise
-
-    async def tx(self):
-        try:
-            while True:
-                message = await self.layer_tx.get()
-                message = self.process_tx(message)
-                await self.session.tx(message)
-        except asyncio.CancelledError:
-            raise
-
-    def process_tx(self, message):
-        self.logger.info(message)
-        return message
-
-
-    #sets session and makes connection if necessary. Stops rx and tx handlers.
-    async def set_session(self, new_mode: SessionMode):
-        async with self.transition_lock:
-
-            if self.mode == new_mode:
-                self.logger.info(f"allready in mode: {new_mode}")
-                return
-
-            self.logger.info(f"session changing to: {new_mode}")
-
-            #cancel the running tx and rx
-            if self.tx_handler:
-                self.tx_handler.cancel()
-                try:
-                    await self.tx_handler
-                except asyncio.CancelledError:
-                    pass
-
-            if self.rx_handler:
-                self.rx_handler.cancel()
-                try:
-                    await self.rx_handler
-                except asyncio.CancelledError:
-                    pass
-
-            #if there is a connection, tear it down
-            if self.mode == SessionMode.CONNECTED_UPLINK or self.mode == SessionMode.CONNECTED_DOWNLINK:
-                asyncio.create_task(self.session.tear_down())
-
-            self.mode = new_mode
-
-            #match for new connection
-            match self.mode:
-                case SessionMode.CONNECTIONLESS_DOWNLINK:
-                    self.session = GroundStationConnectionlessDownlink(self.below_rx, self.below_tx)
-
-                case SessionMode.CONNECTED_UPLINK:
-                    self.session = GroundStationConnectedUplink(self.below_rx, self.below_tx, self.session_queue)
-                    await asyncio.create_task(self.session.handshake())
-
-                case SessionMode.CONNECTED_DOWNLINK:
-                    self.session = GroundStationConnectedDownlink(self.below_rx, self.below_tx)
-
-                case _:
-                    raise SessionChangeError("Error changing session")
-
-            #restart rx and tx coroutines
-            self.tx_handler = asyncio.create_task(self.tx())
-            self.rx_handler = asyncio.create_task(self.rx())
-
-
-    async def state_watcher(self):
-        while True:
-            session = await self.session_queue.get()
-            await self.set_session(session)
-
-
-
-class AudimusSessionLayer(SessionLayer):
-    def __init__(self, SL_rx,SL_tx, DLL_rx, DLL_tx, SSQ):
-        super().__init__(SL_rx,SL_tx, DLL_rx, DLL_tx)
-        self.session_queue = SSQ
-        self.session = None
-        self.mode = None
-        self.tx_handler = None
-        self.rx_handler = None
-        asyncio.create_task(self.set_session(SessionMode.CONNECTIONLESS_DOWNLINK))
-
-    async def rx(self):
-        while True:
-            message = await self.session.rx()
-            print(message)
-            await self.layer_rx.put(message)
 
     async def tx(self):
         while True:
             message = await self.layer_tx.get()
-            self.logger.info(message)
-            message = self.process_tx(message)
-            await self.session.tx(message)
 
-    async def state_watcher(self):
+            async with self._session_lock:
+                session = self.session
+
+            if session is None:
+                self.logger.warning("Message dropped - no active session")
+                continue
+
+            packet = await session.handle_tx(message)
+
+            if packet is not None:
+                await self.below_tx.put(packet)
+
+    async def state_watcher(self):              # lives in base, not duplicated
         while True:
-            session = await self.session_queue.get()
-            await self.set_session(session)
 
-    async def set_session(self, new_mode):
-        async with self.transition_lock:
+            new_mode = await self.session_queue.get()
 
             if self.mode == new_mode:
-                self.logger.info(f"allready in mode: {new_mode}")
-                return
+                self.logger.info(f"Already in mode: {new_mode}")
+                continue
 
-            self.logger.info(f"session changing to: {new_mode}")
+            await self.set_session(new_mode)
 
-            # cancel rx and tx couroutines
-            if self.tx_handler:
-                self.tx_handler.cancel()
+    async def set_session(self, new_mode: Audimus_pb2.SESSION_MODE):
+        pass
 
-            if self.rx_handler:
-                self.rx_handler.cancel()
 
-            # if there is a connection, tear it down
-            if self.mode == SessionMode.CONNECTED_UPLINK or self.mode == SessionMode.CONNECTED_DOWNLINK:
-                asyncio.create_task(self.session.tear_down())
+
+
+
+
+##################################Ground Station###########################################
+
+
+class GroundStationSessionLayer(SessionLayer):
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sc):
+        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, sl_sc)
+
+    async def start(self):
+        await self.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+        await super().start()
+
+
+    async def set_session(self, new_mode: Audimus_pb2.SESSION_MODE):
+
+        async with self._session_lock:
+
+            if self.session:
+                await self.session.on_exit()
 
             self.mode = new_mode
-
-            # match for new connection
             match self.mode:
-                case SessionMode.CONNECTIONLESS_DOWNLINK:
-                    self.session = AudimusConnectionlessDownlink(self.below_rx, self.below_tx, self.session_queue)
-
-                case SessionMode.CONNECTED_UPLINK:
-                    self.session = AudimusConnectedUplink(self.below_rx, self.below_tx, self.session_queue)
-                    await asyncio.create_task(self.session.handshake())
-
-                case SessionMode.CONNECTED_DOWNLINK:
-                    self.session = AudimusConnectedDownlink(self.below_rx, self.below_tx, self.session_queue)
-
+                case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
+                    self.session = GroundStationConnectionlessDownlink(self)
+                case Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                    self.session = GroundStationConnectedUplink(self)
+                case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
+                    self.session = GroundStationConnectedDownlink(self)
                 case _:
                     raise SessionChangeError("Error changing session")
 
-            # restart rx and tx coroutines
-            self.tx_handler = asyncio.create_task(self.tx())
-            self.rx_handler = asyncio.create_task(self.rx())
-
-
-    def process_tx(self, message):
-        return message
-
-    def process_rx(self, message):
-        return message
+            await self.session.on_enter()
 
 
 
+##################################Audimus###########################################
 
+class AudimusSessionLayer(SessionLayer):
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sq):
+        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, sl_sq)
+
+    async def start(self):
+        await self.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+        await super().start()
+
+    async def set_session(self, new_mode: Audimus_pb2.SESSION_MODE):
+
+
+        async with self._session_lock:
+
+            if self.session:
+                await self.session.on_exit()
+
+            self.mode = new_mode
+            match self.mode:
+                case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
+                    self.session = AudimusConnectionlessDownlink(self)
+                case Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                    self.session = AudimusConnectedUplink(self)
+                case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
+                    self.session = AudimusConnectedDownlink(self)
+                case _:
+                    raise SessionChangeError("Error changing session")
+
+            await self.session.on_enter()

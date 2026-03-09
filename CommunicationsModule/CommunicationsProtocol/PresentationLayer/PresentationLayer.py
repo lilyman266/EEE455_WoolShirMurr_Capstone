@@ -68,12 +68,9 @@ class PresentationLayer(ProtocolLayer.ProtocolLayer):
 
 
 
-
-
 class GroundStationPresentationLayer(PresentationLayer):
     def __init__(self, PL_rx,PL_tx, SL_rx, SL_tx):
         super().__init__(PL_rx, PL_tx, SL_rx, SL_tx, "CommunicationsModule/CommunicationsProtocol/PresentationLayer/GroundStationData")
-
 
 
 class AudimusPresentationLayer(PresentationLayer):

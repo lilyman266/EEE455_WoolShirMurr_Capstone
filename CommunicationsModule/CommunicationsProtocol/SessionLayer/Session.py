@@ -1,6 +1,3 @@
-import CommunicationsModule.Audimus_pb2 as Audimus_pb2
-from Logger.Logger import LoggerFactory
-from CommunicationsModule.Logger.Errors import InvalidSendError
 from enum import Enum
 import csv
 from collections import deque
@@ -16,28 +13,33 @@ class SessionMode(Enum):
 
 
 class Session:
-    def __init__(self, DLL_rx, DLL_tx, packet_number_path):
-        self.below_tx = DLL_tx
-        self.below_rx = DLL_rx
-        self.packet_number_path = packet_number_path
-        self.packet_number = self.read_packet_number()
-        self.packet_store = PacketStore("CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore") #saves all packets until acked
-        self.packet_tracker = MissingPacketIndex("CommunicationsModule/CommunicationsProtocol/SessionLayer/MissingPacketIndex")
+    def __init__(self, layer):
+        self.layer = layer
+        self.packet_store = PacketStore()  # saves all packets until acked
+        self.packet_tracker = MissingPacketIndex() #
 
-    async def rx(self):
+    async def handle_rx(self, packet):
+        """Process incoming packet from layer RX loop"""
+        return packet
 
-        message = await self.below_rx.get()
-        self.logger.info(message)
-        return
+    async def handle_tx(self, message):
+        """Process outgoing message before sending"""
+        return message
 
-    async def tx(self, message):
-        await self.below_tx.put(message)
+    async def on_enter(self):
+        """Called when session becomes active"""
+        pass
 
+    async def on_exit(self):
+        """Called when session is replaced"""
+        pass
 
     def write_packet_number(self, packet_number):
+        """writes current packet number over different sessions"""
         with open(self.packet_number_path, "w", encoding="utf-8") as f: f.write(str(packet_number))
 
     def read_packet_number(self):
+        """reads current packet number over different sessions"""
         try:
             with open(self.packet_number_path, 'r', encoding='utf-8') as file:
                 packet_number = file.read()
@@ -53,23 +55,24 @@ class Session:
 
 
 
-#class for ground station to track all missing packet numbers until they are retransmitted
+
 class MissingPacketIndex:
-    def __init__(self, filename):
-        self.filename = filename
+    """class for ground station to track all missing packet numbers until they are retransmitted"""
+    def __init__(self):
+        self.packet_index = "CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore/packet_index"
         self.missing = set()
         self._load()
 
     def _load(self):
         try:
-            with open(self.filename, "r") as f:
+            with open(self.packet_index, "r") as f:
                 for line in f:
                     self.missing.add(int(line.strip()))
         except FileNotFoundError:
             pass
 
     def _persist(self):
-        with open(self.filename, "w") as f:
+        with open(self.packet_index, "w") as f:
             for seq in sorted(self.missing):
                 f.write(f"{seq}\n")
 
@@ -84,16 +87,13 @@ class MissingPacketIndex:
         self.missing.discard(seq)
         self._persist()
 
-#class for Audimus to read/write all packets unti they can be acked.
-class PacketStore:
-    LOG_FILE = "packets.log"
-    IDX_FILE = "packets.idx"
 
-    def __init__(self, directory):
-        self.dir = directory
-        os.makedirs(self.dir, exist_ok=True)
-        self.log_path = os.path.join(self.dir, self.LOG_FILE)
-        self.idx_path = os.path.join(self.dir, self.IDX_FILE)
+class PacketStore:
+    """#class for Audimus to read/write all packets unti they can be acked."""
+
+    def __init__(self):
+        self.log_path = "CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore/packets.log"
+        self.idx_path = "CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore/packets.idx"
 
         self.lock = asyncio.Lock()
         self.index = {}

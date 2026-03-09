@@ -30,6 +30,7 @@ class GroundStationApplicationLayer(ApplicationLayer):
         super().__init__(AL_rx, AL_tx, PL_rx, PL_tx)
 
 
+
 class AudimusApplicationLayer(ApplicationLayer):
     def __init__(self, AL_rx, AL_tx, PL_rx, PL_tx):
         super().__init__(AL_rx, AL_tx, PL_rx, PL_tx)

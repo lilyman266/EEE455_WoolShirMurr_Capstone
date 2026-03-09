@@ -1,8 +1,10 @@
 from Logger.Logger import LoggerFactory
+from abc import ABC, abstractmethod
+
 
 class ProtocolLayer:
     def __init__(self, layer_rx, layer_tx, below_rx, below_tx):
-        # this layers tx and rx queues
+        # this layer's tx and rx queues
         self.layer_rx = layer_rx
         self.layer_tx = layer_tx
 
@@ -34,11 +36,14 @@ class ProtocolLayer:
             # put message into the tx queue of the layer below
             await self.below_tx.put(message)
 
+    @abstractmethod
     def process_rx(self, message):
-        return message
+        pass
 
+    @abstractmethod
     def process_tx(self, message):
-        return message
+        pass
 
+    @abstractmethod
     def log(self, message):
         pass

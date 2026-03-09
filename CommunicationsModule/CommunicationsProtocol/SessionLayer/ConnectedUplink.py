@@ -1,143 +1,173 @@
 import asyncio
+import time
+
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session, SessionMode
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 
+MAX_TRIES = 5
+TIMEOUT   = 1.5
 
-MAX_RETRIES = 5
-TIMEOUT = 0.7
 
 class ConnectedUplink(Session):
-    def __init__(self, DLL_rx, DLL_tx, file_path):
-        super().__init__(DLL_rx, DLL_tx, file_path)
+    """Full-duplex connected uplink session.
+    TX: Frame outgoing payload with sequence number
+        Send message to layer below
+        Wait for ACK with same SEQ
+        Retransmit on timeout up to MAX_TRIES
+    RX: ACK frame: route to internal ACK queue
+        If DATA frame: ACK immediately, suppress duplicates, deliver upward"""
+
+    def __init__(self, layer):
+        super().__init__(layer)
         self.name = "ConnectedUplink"
         self.logger = LoggerFactory.get_logger(self.name)
+        self.ack_queue = asyncio.Queue()
+        self.tx_seq = 0
+        self.last_rx_seq = 0
+        self.tx_lock = asyncio.Lock()
 
-    async def rx(self):
-        message = self.below_rx.get()
-        return message
+    async def on_enter(self):
+        self.logger.info(f"{self.name} entered")
 
+    async def on_exit(self):
+        self.logger.info(f"{self.name} exiting")
 
-    async def tx(self, message):
-        msg = self.frame(message)
-        await self.below_tx.put(msg)
+    async def handle_rx(self, raw: bytes):
+        """ACKs frames are consumed internally and not passed upward.
+           DATA frames are ACKed immediately and delivered upward.
+           Duplicate DATA frames are ACKed again but not redelivered."""
 
-    def frame(self, presentation_message):
-        msg = Audimus_pb2.Session_Message()
-        msg.presentation_message = presentation_message
-        msg.mode = Audimus_pb2.SESSION_MODE.ConnectedUplink
-        msg.packet_number = self.packet_number
-        self.write_packet_number(self.packet_number)
-        return msg.SerializeToString()
+        try:
+            frame = Audimus_pb2.Session_Message()
+            frame.ParseFromString(raw)
 
-    async def tear_down(self):
-        pass
-
-
-class GroundStationConnectedUplink(ConnectedUplink):
-    def __init__(self, DLL_rx, DLL_tx, session_queue):
-        super().__init__(DLL_rx, DLL_tx, "CommunicationsModule/CommunicationsProtocol/SessionLayer/GroundStationData")
-        self.session_queue = session_queue
-
-    async def handshake(self):
-
-        for attempt in range(1, MAX_RETRIES + 1):
-            # Send SYN
-            syn_msg = Audimus_pb2.Session_Message(
-                presentation_message = b'SYN',
-                SYN=True,
-                mode = Audimus_pb2.ConnectedUplink
+            self.logger.info(
+                f"handle_rx self={id(self)} queue={id(self.ack_queue)} "
+                f"ACK={frame.ACK} seq={frame.packet_number}"
             )
-            await self.below_tx.put(syn_msg.SerializeToString())
 
-            try:
-                # Wait for SYN-ACK
-                raw = await asyncio.wait_for(self.below_rx.get(), timeout=TIMEOUT)
-                response = Audimus_pb2.Session_Message()
-                response.ParseFromString(raw)
+            if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                self.logger.warning(
+                    f"Unexpected mode received: {frame.mode} in {self.name}"
+                )
 
-                if response.SYN and response.ACK:
-                    # Send final ACK
-                    ack_msg = Audimus_pb2.Session_Message(
-                        ACK=True
-                    )
-                    await self.below_tx.put(ack_msg.SerializeToString())
-                    self.logger.info("Connection Established")
-                    return True
+            # ACK path
+            if frame.ACK:
+                self.logger.debug(f"ACK received for seq={frame.packet_number}")
+                await self.ack_queue.put(frame)
+                return None
 
-            except asyncio.TimeoutError:
-                pass
+            # DATA path: ACK immediately
+            ack = self.build_ack(frame.packet_number)
+            await self.layer.below_tx.put(ack)
+            self.logger.info(f"ACK sent for seq={frame.packet_number}")
+
+            # Duplicate / retransmitted frame: ACKed already, do not redeliver
+            if frame.packet_number <= self.last_rx_seq:
+                self.logger.warning(
+                    f"Duplicate/old packet received seq={frame.packet_number}, "
+                    f"last_rx_seq={self.last_rx_seq}; payload dropped after ACK"
+                )
+                return None
+
+            # Ordered delivery is expected; log if there is a jump
+            expected_seq = self.last_rx_seq + 1
+            if frame.packet_number != expected_seq:
+                self.logger.warning(
+                    f"Sequence jump detected: got seq={frame.packet_number}, "
+                    f"expected seq={expected_seq}; accepting anyway"
+                )
+
+            self.last_rx_seq = frame.packet_number
+            return frame.presentation_message
+
+        except Exception as e:
+            self.logger.error(f"handle_rx error: {e}")
+            return None
+
+    async def handle_tx(self, message):
+        """Frame, send, and wait for ACK.
+        Retransmits up to MAX_TRIES times before giving up."""
 
 
-        self.logger.info("Handshake failed")
-        await self.session_queue.put(SessionMode.CONNECTIONLESS_DOWNLINK)
-        return False
-
-class AudimusConnectedUplink(ConnectedUplink):
-    def __init__(self, DLL_rx, DLL_tx, session_queue):
-        super().__init__(DLL_rx, DLL_tx, "CommunicationsModule/CommunicationsProtocol/SessionLayer/AudimusData")
-        self.session_queue = session_queue
+        async with self.tx_lock:
+            self.tx_seq += 1
+            seq = self.tx_seq
+            frame = self.frame(message, seq)
 
 
-    async def handshake(self):
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                # Wait for SYN
-                raw = await asyncio.wait_for(self.below_rx.get(), timeout=TIMEOUT)
 
-                message = Audimus_pb2.Session_Message()
-                message.ParseFromString(raw)
+            for attempt in range(1, MAX_TRIES + 1):
 
-                if message.SYN and not message.ACK:
+                await self.layer.below_tx.put(frame)
+                deadline = time.monotonic() + TIMEOUT
 
-                    # Send SYN-ACK
-                    syn_ack = Audimus_pb2.Session_Message(
-                        presentation_message=b'SYN-ACK',
-                        SYN=True,
-                        ACK=True,
-                    )
-                    await self.below_tx.put(syn_ack.SerializeToString())
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
 
                     try:
-                        # Wait for final ACK
-                        raw_ack = await asyncio.wait_for(
-                            self.below_rx.get(),
-                            timeout=TIMEOUT
+                        ack = await asyncio.wait_for(
+                            self.ack_queue.get(),
+                            timeout=remaining
                         )
-
-                        final_msg = Audimus_pb2.Session_Message()
-                        final_msg.ParseFromString(raw_ack)
-
-                        if final_msg.ACK and not final_msg.SYN:
-                            self.logger.info("Received ACK — Connection Established")
-                            return True
-
                     except asyncio.TimeoutError:
-                        await self.session_queue.put(SessionMode.CONNECTIONLESS_DOWNLINK)
-            except asyncio.TimeoutError:
-                # No SYN received this round
-                continue
-        self.logger.info("Server handshake failed")
-        return False
+                        break
+
+                    if ack.packet_number == seq:
+                        return None
+
+                    # Old ACK from an earlier packet/retry
+                    self.logger.warning(
+                        f"Stale ACK received seq={ack.packet_number}, expected {seq}"
+                    )
+
+                self.logger.warning(
+                    f"Timeout waiting for ACK (seq={seq}, attempt {attempt})"
+                )
+
+            self.logger.error(f"Packet seq={seq} failed after {MAX_TRIES} attempts")
+            return None
+
+    def frame(self, presentation_message, seq):
+        msg = Audimus_pb2.Session_Message(
+            presentation_message = presentation_message,
+            mode = Audimus_pb2.SESSION_MODE.ConnectedUplink,
+            packet_number = seq,
+            SYN = False,
+            ACK = False
+        )
+
+        return msg.SerializeToString()
+
+    def build_ack(self, seq: int) -> bytes:
+        ack  = Audimus_pb2.Session_Message(
+            mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
+            packet_number=seq,
+            SYN=False,
+            ACK=True
+        )
+        return ack.SerializeToString()
+
+
+################################## Ground Station ###########################################
+
+class GroundStationConnectedUplink(ConnectedUplink):
+    """Ground station side of full-duplex connected uplink."""
+
+    def __init__(self, layer):
+        super().__init__(layer)
 
 
 
-    async def rx(self):
-        message = await self.below_rx.get()
-        self.logger.info("rx: {message}")
-        message = self.deframe(message)
-        return message
 
-    async def deframe(self, data_link_message):
-        message = Audimus_pb2.Session_Message()
-        message.ParseFromString(data_link_message)
-        match message.mode:
-            case 1:
-                await self.session_queue.put(SessionMode.CONNECTED_DOWNLINK)
-            case 2:
-                await self.session_queue.put(SessionMode.CONNECTED_UPLINK)
-            case _:
-                pass
-        return message.message
+################################## Audimus ###########################################
 
+class AudimusConnectedUplink(ConnectedUplink):
+    """Audimus side of full-duplex connected uplink."""
+
+    def __init__(self, layer):
+        super().__init__(layer)
 

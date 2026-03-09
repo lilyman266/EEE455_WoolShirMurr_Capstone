@@ -9,11 +9,9 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
 
 
     def process_rx(self, message):
-        self.logger.info(b'rx: ' + message)
         return message
 
     def process_tx(self, message):
-        self.logger.info(b'tx: ' + message)
         return message
 
 
