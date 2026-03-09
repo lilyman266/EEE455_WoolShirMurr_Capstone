@@ -9,6 +9,7 @@ CLIENTID = 6789
 # Create the Flask application instance
 app = Flask(__name__)
 stub = WebAppDatabaseStub()
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "very-secret")
 
 @app.route('/', methods=['GET'])
 def guest():
