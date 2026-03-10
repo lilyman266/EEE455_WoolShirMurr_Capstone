@@ -6,12 +6,6 @@ import struct
 import asyncio
 
 
-class SessionMode(Enum):
-    CONNECTED_UPLINK = 0
-    CONNECTED_DOWNLINK = 1
-    CONNECTIONLESS_DOWNLINK =2
-
-
 class Session:
     def __init__(self, layer):
         self.layer = layer

@@ -5,7 +5,7 @@ from CommunicationsModule.CommunicationsProtocol.ApplicationLayer.ApplicationLay
 from CommunicationsModule.CommunicationsProtocol.PresentationLayer.PresentationLayer import GroundStationPresentationLayer
 from CommunicationsModule.CommunicationsProtocol.DataLinkLayer.DataLinkLayer import GroundStationDataLinkLayer
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.SessionLayer import GroundStationSessionLayer
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import SessionMode
+
 
 def read_lines(path):
     with open(path, "r", encoding="utf-8") as f:

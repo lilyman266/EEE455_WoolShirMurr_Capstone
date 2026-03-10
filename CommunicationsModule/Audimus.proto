@@ -28,4 +28,7 @@ message Session_Message{
   optional bool ACK = 6;
   optional bool DATA = 7;
   optional bool DATAREQ= 8;
+  optional bool NACK = 9;
+  optional bool FIN = 10;
+  repeated uint32 missing_packets = 11;
 }

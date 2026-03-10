@@ -1,30 +1,30 @@
+import asyncio
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
-from CommunicationsModule.Logger.Errors import InvalidSendError
-from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session, SessionMode
-
-import asyncio
-
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 
 MAX_TRIES = 5
-TIMEOUT = 5
+TIMEOUT   = 5
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Base
+# ─────────────────────────────────────────────────────────────────────────────
 
 class ConnectionlessDownlink(Session):
-    """ Base class for connectionless downlink sessions"""
+    """Base class for connectionless downlink sessions."""
 
     def __init__(self, layer):
         super().__init__(layer)
-        self.layer = layer
-        self.name = "ConnectionlessDownlink"
-        self.logger = LoggerFactory.get_logger(self.name)
-        self.packet_number = self.read_packet_number()
-        self.handshake_rx_queue = asyncio.Queue()
-        self.connecting = False
-
+        self.layer               = layer
+        self.name                = "ConnectionlessDownlink"
+        self.logger              = LoggerFactory.get_logger(self.name)
+        self.packet_number       = self.read_packet_number()
+        self.handshake_rx_queue  = asyncio.Queue()
+        self.connecting          = False
 
     async def handle_rx(self, packet: bytes):
         pass
-
 
     async def handle_tx(self, message: bytes):
         pass
@@ -36,40 +36,47 @@ class ConnectionlessDownlink(Session):
         pass
 
 
+############## Ground Station #####################################################
+
 class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
     """
     RX: Receives data frames from Audimus, deframes, tracks dropped packets.
-    TX: Sends SYN requests to Audimus to initiate connected sessions. Error if sends other message. .
+    TX: Sends SYN requests to Audimus to initiate a connected session.
+        Any other outgoing message is an error.
     """
 
     def __init__(self, layer):
-        self.packet_number_path = ("CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore/GroundStationCurrentPacketNumber")
-        super().__init__(layer)  # reads packet_number via read_packet_number()
+        self.packet_number_path = (
+            "CommunicationsModule/CommunicationsProtocol"
+            "/SessionLayer/PacketStore/GroundStationCurrentPacketNumber"
+        )
+        super().__init__(layer)
 
 
-    async def handle_rx(self, data_link_message):
-        """Deframe incoming packet.Returns none if frame is malformed. If handshake is in progress, use special queue"""
+    async def handle_rx(self, raw: bytes):
+        """Deframe incoming packet.
+        If a handshake is in progress route to the handshake queue instead."""
 
         if self.connecting:
-            await self.handshake_rx_queue.put(data_link_message)
+            await self.handshake_rx_queue.put(raw)
             return None
 
         try:
-            return self.deframe(data_link_message)
+            return self.deframe(raw)
         except Exception as e:
             self.logger.error(f"Failed to deframe packet: {e}")
             return None
 
-    def deframe(self, data_link_message):
+    def deframe(self, raw: bytes):
         frame = Audimus_pb2.Session_Message()
-        frame.ParseFromString(data_link_message)
+        frame.ParseFromString(raw)
         self.track_packet(frame.packet_number)
         return frame.presentation_message
 
     def track_packet(self, received_number: int):
         """Record any dropped packets between last received and current."""
-
         expected = self.packet_number + 1
+
         if received_number != expected:
             for dropped in range(expected, received_number):
                 self.packet_tracker.record_drop(dropped)
@@ -79,75 +86,89 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
         self.write_packet_number(self.packet_number)
 
 
-    async def handle_tx(self, message):
-        """Ground station does not send data in connectionless downlink mode. Only syn request"""
+    async def handle_tx(self, message: bytes):
+        """Ground station only sends SYN requests in this mode."""
         try:
             frame = self.frame_syn(message)
-            self.logger.info(f"Sending SYN request")
             return frame
         except Exception as e:
             self.logger.error(f"Failed to frame SYN: {e}")
             return None
 
+    def frame_syn(self, mode: Audimus_pb2.SESSION_MODE) -> bytes:
+        msg = Audimus_pb2.Session_Message(SYN=True, mode=mode)
+        return msg.SerializeToString()
 
 
     async def on_exit(self):
         await super().on_exit()
-        self.logger.info(
-            f"GroundStation connectionless downlink exiting. "
-            f"Final packet number: {self.packet_number}"
-        )
 
-    async def handshake(self, new_mode:Audimus_pb2.SESSION_MODE):
-        """sends Syn, expects SYNACK, responds with ACK. Cancels if timer expires"""
-        self.logger.info(f"initiating handshake for{new_mode}")
+
+
+    async def handshake(self, new_mode: Audimus_pb2.SESSION_MODE):
+        """
+        3-way handshake (initiator side).
+        Sends SYN → waits for SYN-ACK → sends ACK → requests mode change.
+        Retries up to MAX_TRIES times on timeout.
+        """
+        self.logger.info(f"Initiating handshake for mode {new_mode}")
         self.connecting = True
 
-        for attempt in range(MAX_TRIES):
+        for attempt in range(1, MAX_TRIES + 1):
             try:
-                syn = Audimus_pb2.Session_Message(SYN = True, mode = new_mode)
+
+                syn = Audimus_pb2.Session_Message(SYN=True, mode=new_mode)
                 await self.layer.below_tx.put(syn.SerializeToString())
 
-
-                #wait for SYN-ACK
-                raw = await asyncio.wait_for(self.handshake_rx_queue.get(), timeout= TIMEOUT)
+                raw     = await asyncio.wait_for(
+                    self.handshake_rx_queue.get(), timeout=TIMEOUT
+                )
                 syn_ack = Audimus_pb2.Session_Message()
                 syn_ack.ParseFromString(raw)
+
                 if not syn_ack.SYNACK:
-                    break
+                    self.logger.warning(
+                        f"Expected SYNACK, got unexpected frame (attempt {attempt}) – retrying"
+                    )
+                    continue
 
-                else:
-                    #send ack
-                    ack = Audimus_pb2.Session_Message(ACK = True, mode = new_mode)
-                    await self.layer.below_tx.put(ack.SerializeToString())
 
-                    #switch modes
-                    await self.layer.session_queue.put(new_mode)
-                    break
+                ack = Audimus_pb2.Session_Message(ACK=True, mode=new_mode)
+                await self.layer.below_tx.put(ack.SerializeToString())
+                self.logger.info("handshake complete")
+
+                await self.layer.session_queue.put(new_mode)
+                self.connecting = False
+                return  # success
 
             except asyncio.TimeoutError:
-                self.logger.error(f"handshake failed after {MAX_TRIES} attempts")
+                self.logger.warning(
+                    f"Timeout waiting for SYN-ACK (attempt {attempt}/{MAX_TRIES})"
+                )
+
+        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts")
         self.connecting = False
 
 
-
-
-
-
+##############Audimus #####################################################
 
 class AudimusConnectionlessDownlink(ConnectionlessDownlink):
+    """
+    TX: Frames outgoing data with an incrementing packet number.
+    RX: Delivers payload upward. SYN frames trigger a handshake task.
+    """
 
     def __init__(self, layer):
         self.packet_number_path = (
             "CommunicationsModule/CommunicationsProtocol"
             "/SessionLayer/PacketStore/AudimusCurrentPacketNumber"
         )
-        super().__init__(layer)  # reads packet_number via read_packet_number()
+        super().__init__(layer)
 
 
     async def handle_tx(self, message: bytes) -> bytes | None:
-        """Frame outgoing data and send to ground station. Increments and persists packet number on every transmission.
-        """
+        """Frame outgoing data. Increments and persists packet number on every
+        successful transmission; rolls back on failure."""
         try:
             self.packet_number += 1
             frame = self.frame(message)
@@ -156,87 +177,88 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
             return frame
         except Exception as e:
             self.logger.error(f"Failed to frame message: {e}")
-            self.packet_number -= 1  # roll back on failure
+            self.packet_number -= 1  # roll back
             return None
 
-    def frame(self, presentation_message):
-        msg = Audimus_pb2.Session_Message()
-        msg.presentation_message = presentation_message
-        msg.mode = Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
-        msg.packet_number = self.packet_number
-        msg.SYN = False
+    def frame(self, presentation_message: bytes) -> bytes:
+        msg = Audimus_pb2.Session_Message(
+            presentation_message = presentation_message,
+            mode                 = Audimus_pb2.SESSION_MODE.ConnectionlessDownlink,
+            packet_number        = self.packet_number,
+            SYN                  = False,
+        )
         return msg.SerializeToString()
 
 
-    async def handle_rx(self, raw):
-        """Receive messages from ground station. SYN frames trigger a session mode transition.
-         Returns presentation payload, or None if it was a control frame only.
-         If handshake is in progress, use special queue"""
+    async def handle_rx(self, raw: bytes):
+        """Deliver payload upward.
+        SYN frames trigger a handshake task and return None.
+        If a handshake is already in progress, route to the handshake queue."""
+
         if self.connecting:
             await self.handshake_rx_queue.put(raw)
             return None
+
         try:
-            return await self.deframe(raw)
+            return self.deframe(raw)
         except Exception as e:
             self.logger.error(f"Failed to deframe message: {e}")
             return None
 
-    async def deframe(self, raw):
+    def deframe(self, raw: bytes):
+        """Parse frame. SYN triggers handshake task; data frames return payload."""
         frame = Audimus_pb2.Session_Message()
         frame.ParseFromString(raw)
 
         if frame.SYN:
-            self.Connecting = True
+            self.connecting = True                          # set BEFORE spawning task
             asyncio.create_task(self.handshake(frame))
-            return None  # SYN frames have no payload for presentation
+            return None                                     # no payload for presentation
 
         return frame.presentation_message
 
+
+    async def on_exit(self):
+        await super().on_exit()
+
+
     async def handshake(self, syn: Audimus_pb2.Session_Message):
         """
-        Executes the full 3-way handshake from the satellite side.
-        Called by handle_rx when a SYN frame is detected.
-        Stays in connectionless mode until final ACK is confirmed.
-        Switches mode via session_queue only on success.
+        3-way handshake (responder side).
+        Sends SYN-ACK → waits for ACK → requests mode change.
+        Retries up to MAX_TRIES times on timeout.
         """
         new_mode = syn.mode
-        self.connecting = True
-        for attempt in range(MAX_TRIES):
+        self.logger.info(f"Handshake started for mode {new_mode}")
+
+        for attempt in range(1, MAX_TRIES + 1):
             try:
 
-                # send syn ack
-                syn_ack = Audimus_pb2.Session_Message(SYNACK = True, mode = new_mode)
+                syn_ack = Audimus_pb2.Session_Message(SYNACK=True, mode=new_mode)
                 await self.layer.below_tx.put(syn_ack.SerializeToString())
-                self.logger.info(f"SYN-ACK sent (attempt {attempt})")
 
-                # wait for ack
-                raw = await asyncio.wait_for(
-                    self.handshake_rx_queue.get(),
-                    timeout=TIMEOUT
+
+                raw      = await asyncio.wait_for(
+                    self.handshake_rx_queue.get(), timeout=TIMEOUT
                 )
                 response = Audimus_pb2.Session_Message()
                 response.ParseFromString(raw)
 
-                if response.ACK:
-                    # switch modes
-                    self.logger.info(f"Handshake complete - requesting mode {new_mode}")
-                    await self.layer.session_queue.put(new_mode)
-                    self.connecting = False
-                    return  # success
+                if not response.ACK:
+                    self.logger.warning(
+                        f"Expected ACK, got unexpected frame (attempt {attempt}) – retrying"
+                    )
+                    continue
 
+                self.logger.info(f"Handshake complete")
+                await self.layer.session_queue.put(new_mode)
+                self.connecting = False
+                return  # success
 
             except asyncio.TimeoutError:
-                self.logger.warning(f"Handshake timeout waiting for ACK ")
+                self.logger.warning(
+                    f"Timeout waiting for ACK (attempt {attempt}/{MAX_TRIES})"
+                )
 
-
-        # all retries exhausted - notify ground station
-        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts - ")
+        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts")
         self.connecting = False
-
-
-    async def on_exit(self):
-        await super().on_exit()  # saves packet number
-        self.logger.info(
-            f"Audimus connectionless downlink exiting. "
-            f"Final packet number: {self.packet_number}"
-        )
