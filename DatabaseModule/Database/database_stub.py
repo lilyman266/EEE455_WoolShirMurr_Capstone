@@ -34,19 +34,19 @@ class DatabaseStub(ABC):
 
     #Add log to DB
     @abstractmethod
-    def add_log(self, type:str, origin:str, data:str):
+    def add_log(self, priority:str, origin, destination, description:str):
         pass
     #Add acoustic data to DB
     @abstractmethod
-    def add_acoustic_data(self):
+    def add_acoustic_data(self, data:str):
         pass
     #Add uplink command to DB
     @abstractmethod
-    def add_uplink_command(self):
+    def add_uplink_command(self, data:str):
         pass
     #Add command response to DB
     @abstractmethod
-    def add_command_response(self):
+    def add_command_response(self, data:str):
         pass
     #Add a user request to user_requests table
     @abstractmethod
@@ -95,21 +95,14 @@ class CommsModDatabaseStub(DatabaseStub):
     # 0 if operation completed without errors
     #Description: 
     # This is a function designed to add a log to the "LOG" database from the Communications module.#
-    def add_log(self, type:str, data:str):
-        #check if type is valid, if not raise TypeNotValidError and return the type inputted
-        if type not in TYPELIST:
-            raise TypeNotValidError()
-            return type
-        #check if data is a string
-        if not isinstance(data, str):
-            raise DataNotValidError()
-            return data
+    def add_log(self, priority:str, origin, destination, description:str):
         #open db connection
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
 
         #Attempt insertion - ANY ERRORS ARE HANDLED BY POSTGRESQL
-        cursor.execute("""INSERT INTO logs (type, origin, data) VALUES (%s, %s, %s);""", (type, self.origin, data))
+        cursor.execute("""INSERT INTO logs (priority, origin, destination, timestamp, description) 
+                          VALUES (%s, %s, %s, %s, %s);""", (priority, origin, destination, datetime.now(), description))
 
         #commit changes and close connection
         conn.commit()
@@ -125,22 +118,19 @@ class CommsModDatabaseStub(DatabaseStub):
     #Description: 
     # This is a function designed to add acoustic data to the "acoustic_data" table in the "gs_db" database from the Communications module.#
     def add_acoustic_data(self, data:str):
-        #check if data is a string TODO: FIGURE OUT WHAT FORM THIS WILL ACTUALLY TAKE AND ADJUST THE COMMAND/DB ACCORDINGLY!
-        if not isinstance(data, str):
-            raise DataNotValidError()
-            return data
-        #open db connection
+        # open db connection
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
 
-        #Attempt insertion - ANY ERRORS ARE HANDLED BY POSTGRESQL
-        cursor.execute("""INSERT INTO acoustic_data (raw_data) VALUES (%s);""", (data,))
+        # Attempt insertion - ANY ERRORS ARE HANDLED BY POSTGRESQL
+        cursor.execute("""INSERT INTO acoustic_data (timestamp, restricted, raw_data)
+                          VALUES (%s, %s, %s);""",
+                       (datetime.now(), 1, data))
 
-        #commit changes and close connection
+        # commit changes and close connection
         conn.commit()
         cursor.close()
         conn.close()
-        
         return 0
 
     #Parameters:
@@ -151,16 +141,12 @@ class CommsModDatabaseStub(DatabaseStub):
     #Description: 
     # This is a function designed to add uplink commands in string form to the "uplink_commands" table in the "gs_db" database from the Communications module.#
     def add_uplink_command(self, data:str):
-        #check if data is a string
-        if not isinstance(data, str):
-            raise DataNotValidError()
-            return data
         #open db connection
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
 
         #Attempt insertion - ANY ERRORS ARE HANDLED BY POSTGRESQL
-        cursor.execute("""INSERT INTO uplink_commands (data) VALUES (%s);""", (data))
+        cursor.execute("""INSERT INTO uplink_commands (timestamp, data) VALUES (%s);""", (datetime.now(), data))
 
         #commit changes and close connection
         conn.commit()
@@ -177,16 +163,12 @@ class CommsModDatabaseStub(DatabaseStub):
     #Description: 
     # This is a function designed to add responses to uplink commands to the "downlink_responses" table in the "gs_db" database from the Communications module.#
     def add_command_response(self, data:str):
-        #check if data is a string
-        if not isinstance(data, str):
-            raise DataNotValidError()
-            return data
         #open db connection
         conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD, port=PORT)
         cursor = conn.cursor()
 
         #Attempt insertion - ANY ERRORS ARE HANDLED BY POSTGRESQL
-        cursor.execute("""INSERT INTO downlink_responses (data) VALUES (%s);""", (data))
+        cursor.execute("""INSERT INTO downlink_responses (timestamp, data) VALUES (%s, %s);""", (datetime.now(), data))
 
         #commit changes and close connection
         conn.commit()
@@ -225,7 +207,7 @@ class WebAppDatabaseStub(DatabaseStub):
         self.origin = 'web_app'
     
     #Add a log to the DB - NOTE: add_log SHOULD NOT BE IMPLEMENTED FOR WEB APP
-    def add_log(self, type:str, data:str):
+    def add_log(self, priority:str, origin, destination, description:str):
         pass
     
     #Add acoustic data to the DB - NOTE: add_acoustic_data SHOULD NOT BE IMPLEMENTED FOR WEB APP
