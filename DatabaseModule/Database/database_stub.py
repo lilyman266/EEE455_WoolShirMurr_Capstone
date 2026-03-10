@@ -71,7 +71,7 @@ class DatabaseStub(ABC):
         pass
     #Read acoustic data from the DB
     @abstractmethod
-    def read_acoustic_data(self, start_time=None, end_time=None, id=None, restricted=None):
+    def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, my_id:str=None, restricted:str=None, user:str=None):
         pass
     #Read uplink commands from the DB (not required for this implementation)
     @abstractmethod
@@ -246,7 +246,7 @@ class CommsModDatabaseStub(DatabaseStub):
     def read_log(self, start_time=None, end_time=None, id=None, type=None, origin=None):
         pass
     #Read acoustic data from the DB - NOTE: read_acoustic_data SHOULD NOT BE IMPLEMENTED FOR COMMUNICAITONS MODULE
-    def read_acoustic_data(self, start_time=None, end_time=None, id=None, restricted=None):
+    def read_acoustic_data(self, start_time:datetime=None, end_time:datetime=None, my_id:str=None, restricted:str=None, user:str=None):
         pass
     #Read uplink commands from the DB  - NOTE: read_uplink_commands SHOULD NOT BE IMPLEMENTED FOR COMMUNICAITONS MODULE
     def read_uplink_commands(self, start_time=None, end_time=None, id=None):
