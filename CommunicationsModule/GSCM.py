@@ -43,32 +43,6 @@ async def app_tx(AL_tx, sl ):
                 await AL_tx.put(line)
         #await asyncio.sleep(1)
 
-#write to SDR sending file
-async def file_tx(SDR_tx):
-    pass
-
-#write to SDR receiving file
-async def file_Rx(SDR_rx):
-    pass
-
-#sends to Audimus with tcp
-async def tcp_tx(writer, SDR_tx):
-    while True:
-        msg = (await SDR_tx.get())
-
-        writer.write(msg)          # msg must be bytes
-        await writer.drain()
-
-#receives from Audimus with tcp
-async def tcp_rx(reader, SDR_rx):
-    while True:
-        msg = await reader.read(1024)
-        if random.randint(0,10) >10 :
-            print("dropped a packet")
-            continue
-        if msg == b"":  # connection closed
-            break
-        await SDR_rx.put(msg)
 
 
 
@@ -98,12 +72,7 @@ async def handle_client(reader, writer):
     al = GroundStationApplicationLayer(AL_rx, AL_tx, PL_rx, PL_tx)
     pl = GroundStationPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
     sl = GroundStationSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SL_SC)
-    dll = GroundStationDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx)
-
-    #run tcp rx and tx coroutines
-    sat_rx = asyncio.create_task(tcp_rx(reader, SDR_rx))
-    sat_tx = asyncio.create_task(tcp_tx(writer, SDR_tx))
-
+    dll = GroundStationDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx, reader, writer)
 
 
     #run application layer coroutines
@@ -118,8 +87,8 @@ async def handle_client(reader, writer):
     sl_handler = asyncio.create_task(sl.start())
 
     #run data link layer coroutines
-    dll_tx_handler = asyncio.create_task(dll.tx())
-    dll_rx_handler = asyncio.create_task(dll.rx())
+    dll_tx_handler = asyncio.create_task(dll.tx_tcp())
+    dll_rx_handler = asyncio.create_task(dll.rx_tcp())
 
     # run application rx and tx coroutines
     AL_rx = asyncio.create_task(app_rx(AL_rx))

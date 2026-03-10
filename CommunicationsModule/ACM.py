@@ -21,20 +21,6 @@ async def app_tx(AL_tx):
         await asyncio.sleep(1)
 
 
-async def tcp_tx(writer, SDR_tx):
-    while True:
-        msg = await SDR_tx.get()      # wait for outgoing message
-        writer.write(msg)               # send it
-        await writer.drain()            # flush
-
-
-async def tcp_rx(reader, SDR_rx):
-    while True:
-        msg = await reader.read(1024)   # wait for incoming data
-        if not msg:
-            break                       # server closed connection
-        await SDR_rx.put(msg)         # push into RX queue
-
 
 async def run_client(host, port):
     reader, writer = await asyncio.open_connection(host, port)
@@ -66,7 +52,7 @@ async def run_client(host, port):
     al = AudimusApplicationLayer(AL_rx, AL_tx,PL_rx,PL_tx)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
     sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SL_sc)
-    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx)
+    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx, reader, writer)
 
     # run application rx and tx coroutines
     AL_rx_handler = asyncio.create_task(app_rx(AL_rx))
@@ -76,9 +62,6 @@ async def run_client(host, port):
     al_tx_handler = asyncio.create_task(al.tx())
     al_rx_handler = asyncio.create_task(al.rx())
 
-    #run satellite rx and tx coroutines
-    rx = asyncio.create_task(tcp_rx(reader, SDR_rx))
-    tx = asyncio.create_task(tcp_tx(writer, SDR_tx))
 
     # run presentation layer coroutines
     pl_tx_handler = asyncio.create_task(pl.tx())
@@ -89,11 +72,22 @@ async def run_client(host, port):
     sl_handler = asyncio.create_task(sl.start())
 
     # run data link layer coroutines
-    dll_tx_handler = asyncio.create_task(dll.tx())
-    dll_rx_handler = asyncio.create_task(dll.rx())
+    dll_tx_handler = asyncio.create_task(dll.tx_tcp())
+    dll_rx_handler = asyncio.create_task(dll.rx_tcp())
 
+    task_handlers = [
+        AL_rx_handler,
+        AL_tx_handler,
+        al_tx_handler,
+        al_rx_handler,
+        pl_tx_handler,
+        pl_rx_handler,
+        sl_handler,
+        dll_tx_handler,
+        dll_rx_handler,
+    ]
 
-    await asyncio.gather(tx, rx)
+    await asyncio.gather(*task_handlers)
 
 
 async def main():
