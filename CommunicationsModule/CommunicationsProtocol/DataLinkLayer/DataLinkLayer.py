@@ -1,7 +1,7 @@
 from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 from Logger.Logger import LoggerFactory
 import random
-import zmq
+import zmq.asyncio
 import time
 CHUNK_SIZE = 1024
 
@@ -43,26 +43,27 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
 
     # sends to GNU Radio with ZMQ
     async def tx_zmq(self):
-        context = zmq.Context()
+        context = zmq.asyncio.Context()
         socket = context.socket(zmq.PUB)
         socket.bind("tcp://0.0.0.0:5557")
         time.sleep(1)
 
         while True:
-            msg = (await self.layer_tx.get())
+            msg =  await self.layer_tx.get()
             padded = msg.ljust(CHUNK_SIZE, b'\x00')[:CHUNK_SIZE]
-            socket.send(padded)
+            await socket.send(padded)
             time.sleep(0.1)
 
 
     # receives from GNU radio with ZMQ
     async def rx_zmq(self):
-        context = zmq.Context()
+        context = zmq.asyncio.Context()
         socket = context.socket(zmq.SUB)
         socket.connect("tcp://0.0.0.0:5557")
         socket.setsockopt(zmq.SUBSCRIBE, b"")
+
         while True:
-            msg = socket.recv()
+            msg = await socket.recv()
             msg = msg.strip(b'\x00')
             if random.randint(0, 10) > 10:
                 print("dropped a packet")
