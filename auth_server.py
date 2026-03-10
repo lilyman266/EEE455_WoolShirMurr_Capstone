@@ -14,6 +14,8 @@ db_stub = WebAppDatabaseStub()
 
 # ###################### AUTH SERVER REDIRECTS ########################################
 @app.route('/', methods=['GET'])
+def home():
+    login()
 
 @app.route('/login', methods=['GET'])
 def login():
