@@ -1,7 +1,9 @@
 from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 from Logger.Logger import LoggerFactory
 import random
-
+import zmq
+import time
+CHUNK_SIZE = 1024
 
 
 class DataLinkLayer(ProtocolLayer.ProtocolLayer):
@@ -39,14 +41,59 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
             await self.writer.drain()
 
 
+    # sends to GNU Radio with ZMQ
+    async def tx_zmq(self):
+        context = zmq.Context()
+        socket = context.socket(zmq.PUB)
+        socket.bind("tcp://0.0.0.0:5557")
+        time.sleep(1)
+
+        while True:
+            msg = (await self.layer_tx.get())
+            padded = msg.ljust(CHUNK_SIZE, b'\x00')[:CHUNK_SIZE]
+            socket.send(padded)
+            time.sleep(0.1)
+
+
+    # receives from GNU radio with ZMQ
+    async def rx_zmq(self):
+        context = zmq.Context()
+        socket = context.socket(zmq.SUB)
+        socket.connect("tcp://0.0.0.0:5557")
+        socket.setsockopt(zmq.SUBSCRIBE, b"")
+        while True:
+            msg = socket.recv()
+            msg = msg.strip(b'\x00')
+            if random.randint(0, 10) > 10:
+                print("dropped a packet")
+                continue
+            if msg == b"":  # connection closed
+                break
+            await self.layer_rx.put(msg)
+
+
 class GroundStationDataLinkLayer(DataLinkLayer):
     def __init__(self, DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader, writer):
         super().__init__(DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader,writer)
+
+    def process_rx(self, message):
+        return message
+
+    def process_tx(self, message):
+        return message
+
+
+
 
 
 class AudimusDataLinkLayer(DataLinkLayer):
     def __init__(self, DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader, writer):
         super().__init__(DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader, writer)
 
+    def process_rx(self, message):
+        return message
+
+    def process_tx(self, message):
+        return message
 
 
