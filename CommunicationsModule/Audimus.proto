@@ -8,8 +8,16 @@ enum SESSION_MODE{
    ConnectedUplink = 2;
 }
 
+enum MESSAGE_TYPE{
+   Command = 1;
+   Command_response = 2;
+   Sonobuoy_data = 3;
+   Mission_data = 4;
+}
+
 message Application_Message{
   string message = 1;
+  MESSAGE_TYPE type = 2;
 }
 
 message Presentation_Message{

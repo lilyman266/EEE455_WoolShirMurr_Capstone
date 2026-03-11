@@ -41,12 +41,31 @@ class GroundStationApplicationLayer(ApplicationLayer):
             self.logger.info(f"rx: {message}")
 
 
-    async def distribute(self, message):
-        pass
+    async def tx(self):
+        while True:
+            message = await self.command_line()
+
+    async def distribute(self):
+        message= await self.command_line()
+
+        # send session change commands to the session layer
+        match message:
+            case "connected uplink mode":
+                await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedUplink)
+            case "connected downlink mode":
+                await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
+            case "connectionless downlink mode":
+                await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+            case _:
+                message = self.encode(message)
+                await self.below_tx.put(message)
 
 
 
-    async def tx_command_line(self):
+
+
+
+    async def command_line(self):
         """reads input from the command line"""
         loop = asyncio.get_running_loop()
         print("Enter messages (type 'exit' to quit):")
@@ -55,19 +74,7 @@ class GroundStationApplicationLayer(ApplicationLayer):
             if line.lower() == "exit":
                 break
 
-            # For reading from a file
-            #  for line in read_lines("CommunicationsModule/TestTXGroundStation"):
-            match line:
-                case "connected uplink mode":
-                    await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedUplink)
-                case "connected downlink mode":
-                    await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
-                case "connectionless downlink mode":
-                    await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
-                case _:
-                    message = self.encode(line)
-                    await self.below_tx.put(message)
-            # await asyncio.sleep(1)
+
 
 
 class AudimusApplicationLayer(ApplicationLayer):
