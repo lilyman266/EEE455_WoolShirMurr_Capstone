@@ -1,6 +1,7 @@
 from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
+from database_stub import CommsModDatabaseStub
 import asyncio
 
 class ApplicationLayer(ProtocolLayer.ProtocolLayer):
@@ -33,6 +34,7 @@ class ApplicationLayer(ProtocolLayer.ProtocolLayer):
 class GroundStationApplicationLayer(ApplicationLayer):
     def __init__(self,  PL_rx, PL_tx, sl):
         super().__init__(PL_rx, PL_tx, sl)
+        self.db_stub = CommsModDatabaseStub()
 
     async def rx(self):
         while True:
@@ -46,7 +48,7 @@ class GroundStationApplicationLayer(ApplicationLayer):
             message = await self.command_line()
 
     async def distribute(self):
-        message= await self.command_line()
+        message= await self.command_line() #returns Application_Message
 
         # send session change commands to the session layer
         match message:
@@ -59,6 +61,16 @@ class GroundStationApplicationLayer(ApplicationLayer):
             case _:
                 message = self.encode(message)
                 await self.below_tx.put(message)
+
+        match message.type:
+            case 1:
+                result = await asyncio.to_thread(self.db_stub.add_uplink_command(data=message))
+            case 2:
+                result = await asyncio.to_thread(self.db_stub.add_command_response(data=message))
+            case 3:
+                result = await asyncio.to_thread(self.db_stub.add_acoustic_data(data=message))
+            case 4:
+                result = await asyncio.to_thread(self.db_stub.add_mission_data(data=message))
 
 
 
