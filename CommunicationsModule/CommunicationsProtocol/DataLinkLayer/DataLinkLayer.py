@@ -7,8 +7,8 @@ CHUNK_SIZE = 1024
 
 
 class DataLinkLayer(ProtocolLayer.ProtocolLayer):
-    def __init__(self, DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader, writer):
-        super().__init__(DLL_rx,DLL_tx, SDR_rx, SDR_tx)
+    def __init__(self, DLL_rx,DLL_tx, reader, writer):
+        super().__init__(DLL_rx,DLL_tx, None, None)
         self.name = "Data Link Layer   "
         self.logger = LoggerFactory.get_logger(self.name)
         self.reader = reader
@@ -74,8 +74,8 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
 
 
 class GroundStationDataLinkLayer(DataLinkLayer):
-    def __init__(self, DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader, writer):
-        super().__init__(DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader,writer)
+    def __init__(self, DLL_rx,DLL_tx, reader, writer):
+        super().__init__(DLL_rx,DLL_tx, reader,writer)
 
     def process_rx(self, message):
         return message
@@ -88,8 +88,8 @@ class GroundStationDataLinkLayer(DataLinkLayer):
 
 
 class AudimusDataLinkLayer(DataLinkLayer):
-    def __init__(self, DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader, writer):
-        super().__init__(DLL_rx,DLL_tx, SDR_rx, SDR_tx, reader, writer)
+    def __init__(self, DLL_rx,DLL_tx, reader, writer):
+        super().__init__(DLL_rx,DLL_tx, reader, writer)
 
     def process_rx(self, message):
         return message

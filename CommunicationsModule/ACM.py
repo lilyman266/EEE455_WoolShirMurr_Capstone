@@ -35,7 +35,7 @@ async def run_client(host, port):
     al = AudimusApplicationLayer(PL_rx,PL_tx)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
     sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SL_sc)
-    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx, reader, writer)
+    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, reader, writer)
 
 
     # run application layer coroutines

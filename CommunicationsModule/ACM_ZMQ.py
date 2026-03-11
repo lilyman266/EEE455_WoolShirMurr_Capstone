@@ -24,15 +24,13 @@ async def run_client(reader =1, writer =2):
     DLL_rx = asyncio.Queue()
     DLL_tx = asyncio.Queue()
 
-    # SDR_queue
-    SDR_rx = asyncio.Queue()
-    SDR_tx = asyncio.Queue()
+
 
     # create instances of each layer
     al = AudimusApplicationLayer(PL_rx, PL_tx)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
     sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SL_sc)
-    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, SDR_rx, SDR_tx, reader, writer)
+    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, reader, writer)
 
     # run application layer coroutines
     al_tx_handler = asyncio.create_task(al.tx_file())
