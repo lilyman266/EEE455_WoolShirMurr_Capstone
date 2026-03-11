@@ -12,7 +12,6 @@ class ApplicationLayer(ProtocolLayer.ProtocolLayer):
         self.below_tx = PL_tx
         self.session_layer = sl
 
-
     def process_tx(self, message):
         return self.encode(message)
 
@@ -43,37 +42,40 @@ class GroundStationApplicationLayer(ApplicationLayer):
 
     async def tx(self):
         while True:
-            message = await self.command_line()
+            async for message in self.command_line():
+
+                match message:
+                    case "connected uplink mode":
+                        await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedUplink)
+                    case "connected downlink mode":
+                        await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
+                    case "connectionless downlink mode":
+                        await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+                    case _:
+                        message = self.encode(message)
+                        await self.below_tx.put(message)
+
+            
 
     async def distribute(self):
         message= await self.command_line()
 
         # send session change commands to the session layer
-        match message:
-            case "connected uplink mode":
-                await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedUplink)
-            case "connected downlink mode":
-                await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
-            case "connectionless downlink mode":
-                await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
-            case _:
-                message = self.encode(message)
-                await self.below_tx.put(message)
-
-
-
 
 
 
     async def command_line(self):
-        """reads input from the command line"""
+        """Yield messages from the command line asynchronously."""
         loop = asyncio.get_running_loop()
         print("Enter messages (type 'exit' to quit):")
+
         while True:
             line = await loop.run_in_executor(None, input, "> ")
+
             if line.lower() == "exit":
                 break
 
+            yield line
 
 
 
