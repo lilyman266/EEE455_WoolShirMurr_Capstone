@@ -44,7 +44,6 @@ class SessionLayer:
     async def rx(self):
         while True:
             packet = await self.below_rx.get()
-            self.logger.info(f"rx: {packet}")
             async with self._session_lock:
                 session = self.session
 
@@ -144,10 +143,7 @@ class GroundStationSessionLayer(SessionLayer):
                 self.logger.warning(f"switching between connected sessions is not supported. switch to connectionless downlink first")
                 continue
 
-
-
             match self.mode:
-
                 # switching from connectionless downlink to a connected mode
                 case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
                     await self.session.handshake(new_mode)
@@ -206,7 +202,7 @@ class AudimusSessionLayer(SessionLayer):
 
 
 class MissingPacketIndex:
-    """class for ground station to track all missing packet numbers until they are retransmitted"""
+    """class for the ground station to track all missing packet numbers"""
     def __init__(self):
         self.packet_index = "CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore/GS_packet_tracker"
         self.missing = set()
@@ -243,12 +239,10 @@ class MissingPacketIndex:
 
 
 class PacketStore:
+    """class for Audimus to store all data untill it is acked.
+     - Stored by connectionless downlink
+     - retrieved and acknowledged by connected downlink
     """
-    Async-safe class to store, retrieve, and acknowledge packets
-    from a communications protocol session layer.
-    Packets are persisted to a JSON index file.
-    """
-
     STORE_PATH = (
         "CommunicationsModule/CommunicationsProtocol"
         "/SessionLayer/PacketStore/packets.idx"
@@ -266,7 +260,7 @@ class PacketStore:
         self._store = self._read_store()
 
 
-    def _read_store(self) -> dict:
+    def _read_store(self):
         try:
             with open(self.STORE_PATH, "r") as f:
                 data = json.load(f)
@@ -277,11 +271,9 @@ class PacketStore:
 
     def _write_store(self, store: dict) -> None:
         """Serialise and write the packet store dict to the index file."""
-        # bytes are not JSON serialisable, so store as hex strings
         serialisable = {str(k): v.hex() for k, v in store.items()}
         with open(self.STORE_PATH, "w") as f:
             json.dump(serialisable, f, indent=4)
-
 
     async def store_packet(self, seq_number: int, payload: bytes) -> None:
         if seq_number in self._store:
@@ -299,21 +291,10 @@ class PacketStore:
         return self._store[seq_number]
 
     async def acknowledge(self, seq_number: int) -> None:
-        """
-        Acknowledge and remove a packet from the store.
-
-        Args:
-            seq_number (int): The sequence number of the packet to acknowledge.
-
-        Raises:
-            TypeError: If seq_number is not an int.
-            KeyError:  If no packet with the given sequence number exists.
-        """
         if not isinstance(seq_number, int):
             raise TypeError(
                 f"seq_number must be an int, got {type(seq_number).__name__}"
             )
-
 
         if seq_number not in self._store:
             raise KeyError(

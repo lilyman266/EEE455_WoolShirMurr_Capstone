@@ -9,7 +9,6 @@ TIMEOUT          = 5.0
 TEARDOWN_TIMEOUT = 3.0
 POLL_INTERVAL    = 2
 
-
 class ConnectedDownlink(Session):
     def __init__(self, layer):
         super().__init__(layer)
@@ -26,7 +25,6 @@ class ConnectedDownlink(Session):
         self.stop_event         = asyncio.Event()
         self.layer              = layer
         self.tasks              = []
-
 
     async def on_enter(self):
         self.logger.info(f"{self.name} entered")
@@ -50,8 +48,6 @@ class ConnectedDownlink(Session):
         task = asyncio.create_task(coro, name=name)
         self.tasks.append(task)
         return task
-
-    # ── rx dispatcher ────────────────────────────────────────────────────────
 
     async def handle_rx(self, raw: bytes):
         try:
@@ -101,8 +97,6 @@ class ConnectedDownlink(Session):
         self.logger.warning("TX attempted in ConnectedDownlink – message dropped.")
         return None
 
-    # ── teardown ─────────────────────────────────────────────────────────────
-
     async def teardown(self):
         self.teardown_requested.set()
         self.logger.info("Teardown requested – waiting for tx_lock")
@@ -134,7 +128,6 @@ class ConnectedDownlink(Session):
 
         self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
 
-    # ── frame builders ────────────────────────────────────────────────────────
 
     def build_retransmit_request(self, missing_seqs: list[int]) -> bytes:
         msg = Audimus_pb2.Session_Message(
@@ -167,10 +160,7 @@ class ConnectedDownlink(Session):
         ).SerializeToString()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Ground Station
-# ─────────────────────────────────────────────────────────────────────────────
-
+####################Ground Station############################################################
 class GroundStationConnectedDownlink(ConnectedDownlink):
     def __init__(self, layer):
         super().__init__(layer)
@@ -184,7 +174,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
         self.logger.info("GroundStation ConnectedDownlink: on_exit")
         await super().on_exit()
 
-    # ── helpers ───────────────────────────────────────────────────────────────
 
     def _drain_queues(self):
         """Discard any stale frames left in queues from a previous session."""
@@ -202,7 +191,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                     f"Drained {drained} stale frame(s) from queue on enter"
                 )
 
-    # ── retransmit loop ───────────────────────────────────────────────────────
 
     async def retransmit_loop(self):
         self.logger.info("retransmit_loop started (implicit-ACK mode)")
@@ -229,37 +217,32 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
         except asyncio.CancelledError:
             self.logger.info("retransmit_loop cancelled")
 
-    # ── single request/collect round ─────────────────────────────────────────
-
     async def _request_round(self, missing: list[int]) -> bool:
+        """"
+        1. sends the request
+        2. collects data frames untill timeout
+        3. loops untill no packets left
+        """
+
         async with self.tx_lock:
             for attempt in range(1, MAX_TRIES + 1):
 
-                # ── 1. Send the request ───────────────────────────────────
                 request = self.build_retransmit_request(missing)
                 await self.layer.below_tx.put(request)
                 self.logger.info(
                     f"RETRANSMIT_REQUEST sent {missing} "
                     f"(attempt {attempt}/{MAX_TRIES})"
                 )
-                print("check 1")
 
-                # ── 2. Collect DATA frames until timeout ──────────────────
                 received: dict[int, bytes] = {}
                 deadline = asyncio.get_event_loop().time() + TIMEOUT
 
-                print("check 2")
                 while len(received) < len(missing):
                     time_left = deadline - asyncio.get_event_loop().time()
                     if time_left <= 0:
                         break
-
                     try:
-                        frame = await asyncio.wait_for(
-                            self.data_queue.get(),
-                            timeout=time_left,
-                        )
-
+                        frame = await asyncio.wait_for(self.data_queue.get(),timeout=time_left)
                     except asyncio.TimeoutError:
                         break
 
@@ -283,7 +266,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                         f"(implicit ACK will be sent next round)"
                     )
 
-                # ── 4. Decide whether to retry ────────────────────────────
                 if len(received) == len(missing):
                     self.logger.info(
                         f"All {len(missing)} packets received in attempt {attempt}"
@@ -296,10 +278,8 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                     f"{len(received)}/{len(missing)}, "
                     f"still missing {still_missing}"
                 )
-                # Update `missing` to only the packets still needed before retry
                 missing = still_missing
 
-            # Exhausted all attempts
             self.logger.error(
                 f"_request_round failed after {MAX_TRIES} attempts; "
                 f"packets {missing} still outstanding"
@@ -307,15 +287,11 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
             return False
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Satellite
-# ─────────────────────────────────────────────────────────────────────────────
-
+############################ Audimus ###############################################
 class AudimusConnectedDownlink(ConnectedDownlink):
 
     def __init__(self, layer):
         super().__init__(layer)
-        # Sequence numbers transmitted in the most recent retransmit round.
         self._last_sent_set: set[int] = set()
 
     async def on_enter(self):
@@ -329,7 +305,6 @@ class AudimusConnectedDownlink(ConnectedDownlink):
 
 
     async def _serve_loop(self):
-
         self.logger.info("Satellite serve_loop started (implicit-ACK mode)")
         try:
             while not self.stop_event.is_set():
@@ -344,7 +319,6 @@ class AudimusConnectedDownlink(ConnectedDownlink):
                         f"(absent from new request) — deleting from store"
                     )
                     self._delete_from_store(implicitly_acked)
-
 
                 if new_missing == set():
                     self.logger.info("Empty RETRANSMIT_REQUEST received all packets implicitly ACK'd; awaiting FIN""")
@@ -361,9 +335,7 @@ class AudimusConnectedDownlink(ConnectedDownlink):
 
 
     async def _send_packets(self, seqs: set[int]) -> set[int]:
-
         sent: set[int] = set()
-
         async with self.tx_lock:
 
             for seq in sorted(seqs):
@@ -380,6 +352,7 @@ class AudimusConnectedDownlink(ConnectedDownlink):
                 sent.add(seq)
                 self.logger.debug(f"Retransmitted packet seq={seq}")
         return sent
+
 
     def _delete_from_store(self, seqs: set[int]):
         """Remove implicitly-acknowledged packets from the persistent store."""

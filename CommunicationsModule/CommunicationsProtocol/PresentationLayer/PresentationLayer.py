@@ -1,13 +1,9 @@
 from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
-import os
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
 from Logger.Logger import LoggerFactory
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
-import base64
-import json
-import asyncio
 
 KEY_FILE = "CommunicationsModule/CommunicationsProtocol/PresentationLayer/master_key" #preload before launch
 KEY_SIZE = 32  # 256 bits for AES-256-GCM

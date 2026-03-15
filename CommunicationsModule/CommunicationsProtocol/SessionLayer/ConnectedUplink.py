@@ -11,16 +11,8 @@ TEARDOWN_TIMEOUT = 3.0
 
 
 class ConnectedUplink(Session):
-    """Full-duplex connected uplink session.
-    TX: Frame outgoing payload with sequence number
-        Send message to layer below
-        Wait for ACK with same SEQ
-        Retransmit on timeout up to MAX_TRIES
-    RX: ACK frame: route to internal ACK queue
-        If DATA frame: ACK immediately, suppress duplicates, deliver upward
-        FIN frame: ACK immediately, push mode change via session_queue
-    Teardown (ground station only):
-        on_exit sends FIN and waits for FIN-ACK up to MAX_TRIES times."""
+    """routes flagged messages to internal queues for processing
+    teardown is three step handshake"""
 
     def __init__(self, layer):
         super().__init__(layer)
@@ -102,8 +94,7 @@ class ConnectedUplink(Session):
             return None
 
 
-    # If teardown has been requested we will never get a useful ACK
-    # back, so refuse immediately rather than queuing behind the FIN.
+    # If teardown has been requested we will never get a useful ACK back, so refuse immediately
     async def handle_tx(self, message):
 
         if self.teardown_requested.is_set():
@@ -154,15 +145,13 @@ class ConnectedUplink(Session):
             return None
 
 
-    # Signal intent first so any concurrent handle_tx call that has
-    # NOT yet acquired the lock will bail out immediately.
+    # Signal intent first so any concurrent handle_tx call that has not yet acquired the lock will stop.
     async def teardown(self):
 
         self.teardown_requested.set()
         self.logger.info("Teardown requested – waiting for tx_lock")
 
-        # Acquire the lock so we are guaranteed no data frame is in-flight
-        # when the FIN hits the wire.
+        # Lock to protect moving data
         async with self.tx_lock:
             self.logger.info("tx_lock acquired – sending FIN")
             fin = self.build_fin()

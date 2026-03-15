@@ -12,27 +12,21 @@ class Session:
 
 
     async def handle_rx(self, packet):
-        """Process incoming packet from layer RX loop"""
         return packet
 
     async def handle_tx(self, message):
-        """Process outgoing message before sending"""
         return message
 
     async def on_enter(self):
-        """Called when session becomes active"""
         pass
 
     async def on_exit(self):
-        """Called when session is replaced"""
         pass
 
     def write_packet_number(self, packet_number):
-        """writes current packet number over different sessions"""
         with open(self.packet_number_path, "w", encoding="utf-8") as f: f.write(str(packet_number))
 
     def read_packet_number(self):
-        """reads current packet number over different sessions"""
         try:
             with open(self.packet_number_path, 'r', encoding='utf-8') as file:
                 packet_number = file.read()

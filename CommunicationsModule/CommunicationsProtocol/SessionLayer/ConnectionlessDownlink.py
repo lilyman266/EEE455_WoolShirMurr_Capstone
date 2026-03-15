@@ -7,9 +7,6 @@ MAX_TRIES = 5
 TIMEOUT   = 5
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Base
-# ─────────────────────────────────────────────────────────────────────────────
 
 class ConnectionlessDownlink(Session):
     """Base class for connectionless downlink sessions."""
@@ -40,9 +37,9 @@ class ConnectionlessDownlink(Session):
 
 class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
     """
-    RX: Receives data frames from Audimus, deframes, tracks dropped packets.
-    TX: Sends SYN requests to Audimus to initiate a connected session.
-        Any other outgoing message is an error.
+    rx receives data frames from Audimus, deframes, tracks dropped packets
+    tx Sends SYN requests to Audimus to initiate a connected session
+    Any other outgoing message is an error
     """
 
     def __init__(self, layer):
@@ -150,10 +147,9 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
 class AudimusConnectionlessDownlink(ConnectionlessDownlink):
     """
-    TX: Frames outgoing data with an incrementing packet number.
-    RX: Delivers payload upward. SYN frames trigger a handshake task.
+    rx frames outgoing data with an incrementing packet number
+    tx delivers payload upward, SYN frames trigger a handshake task
     """
-
     def __init__(self, layer):
         self.packet_number_path = (
             "CommunicationsModule/CommunicationsProtocol"
