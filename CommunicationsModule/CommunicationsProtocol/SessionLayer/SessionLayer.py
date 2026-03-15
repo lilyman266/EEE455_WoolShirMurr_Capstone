@@ -87,7 +87,6 @@ class SessionLayer:
             self.session = await self.get_session(new_mode)
             self.mode = new_mode
 
-
             #start the next session
             await self.session.on_enter()
 
@@ -107,7 +106,6 @@ class GroundStationSessionLayer(SessionLayer):
             "CommunicationsModule/CommunicationsProtocol"
             "/SessionLayer/PacketStore/GroundStationCurrentPacketNumber"
         )
-
 
 
     async def start(self):
@@ -146,12 +144,7 @@ class GroundStationSessionLayer(SessionLayer):
                 self.logger.warning(f"switching between connected sessions is not supported. switch to connectionless downlink first")
                 continue
 
-            #if there are no packets to retransmit
-            if new_mode == Audimus_pb2.SESSION_MODE.ConnectedDownlink:
 
-                if not self.packet_tracker.has_missing_packets():
-                    self.logger.info(f"no packets awaiting retransmission. staying in connectionless downlink mode")
-                    continue
 
             match self.mode:
 
@@ -247,12 +240,6 @@ class MissingPacketIndex:
         return bool(self.missing)
 
 
-
-
-
-import os
-import json
-import asyncio
 
 
 class PacketStore:

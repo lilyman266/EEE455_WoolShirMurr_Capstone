@@ -40,10 +40,15 @@ class ConnectedDownlink(Session):
 
     async def on_exit(self):
         self.stop_event.set()
-        for task in self.tasks:
+        current = asyncio.current_task()
+
+        tasks_to_cancel = [t for t in self.tasks if t is not current]
+        for task in tasks_to_cancel:
             task.cancel()
-        if self.tasks:
-            await asyncio.gather(*self.tasks, return_exceptions=True)
+
+        if tasks_to_cancel:
+            await asyncio.gather(*tasks_to_cancel, return_exceptions=True)
+
         self.tasks.clear()
 
     def start_task(self, coro, name=None):
@@ -90,8 +95,6 @@ class ConnectedDownlink(Session):
             self.logger.debug(f"DATA frame received seq={frame.packet_number} → data_queue")
             await self.data_queue.put(frame)
             return None
-
-
 
 
         except Exception as e:
@@ -299,9 +302,11 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                         break
 
                     seq = frame.packet_number
+                    print(seq)
                     if seq in missing and seq not in received:
                         received[seq] = frame.presentation_message
                         self.logger.debug(f"Received retransmitted packet seq={seq}")
+                        self.layer.packet_tracker.acknowledge(seq)
                         await self.layer.layer_rx.put(frame.presentation_message)
                     else:
                         self.logger.warning(
@@ -411,6 +416,7 @@ class AudimusConnectedDownlink(ConnectedDownlink):
                 #    the ground station is no longer asking for ──────────────
                 implicitly_acked = self._last_sent_set - new_missing
                 if implicitly_acked:
+
                     self.logger.info(
                         f"Implicit ACK for packets {implicitly_acked} "
                         f"(absent from new request) — deleting from store"

@@ -20,7 +20,7 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
             # receive a message from tcp
             msg = await self.reader.read(1024)
 
-            if random.randint(1,10) > 8:
+            if random.randint(1,10) > 10:
                 print("packet dropped")
                 continue
 
@@ -44,7 +44,7 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
             #send the message over tcp
             self.writer.write(message)
 
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.0001)
             await self.writer.drain()
 
 
