@@ -9,10 +9,10 @@ enum SESSION_MODE{
 }
 
 enum MESSAGE_TYPE{
-   Command = 1;
-   Command_response = 2;
-   Sonobuoy_data = 3;
-   Mission_data = 4;
+   Command = 0;
+   Command_response = 1;
+   Sonobuoy_data = 2;
+   Mission_data = 3;
 }
 
 message Application_Message{
@@ -29,7 +29,7 @@ message Presentation_Message{
 
 message Session_Message{
   SESSION_MODE mode = 1;
-  optional int32 packet_number =2;
+  optional int32 packet_number = 2;
   bytes presentation_message = 3;
   optional bool SYN = 4 ;
   optional bool SYNACK = 5;
@@ -38,5 +38,6 @@ message Session_Message{
   optional bool DATAREQ= 8;
   optional bool NACK = 9;
   optional bool FIN = 10;
-  repeated uint32 missing_packets = 11;
+  optional bool RET = 11;
+  repeated uint32 retransmit_request = 12;
 }

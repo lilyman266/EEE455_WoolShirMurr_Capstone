@@ -23,11 +23,6 @@ async def handle_client(reader, writer):
     DLL_rx = asyncio.Queue()
     DLL_tx = asyncio.Queue()
 
-    #SDR_queue
-    SDR_rx = asyncio.Queue()
-    SDR_tx = asyncio.Queue()
-
-
 
     #create instances of each layer, pass each layer its own queue and the queue of the level beneath it
     dll = GroundStationDataLinkLayer(DLL_rx, DLL_tx, reader, writer)

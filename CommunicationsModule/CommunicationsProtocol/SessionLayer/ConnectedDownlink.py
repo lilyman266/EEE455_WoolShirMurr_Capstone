@@ -1,427 +1,485 @@
 import asyncio
+
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 
-MAX_TRIES = 5
-TIMEOUT   = 5.0
-BURST_TIMEOUT = 10.0  # total time to wait for the full burst
+MAX_TRIES        = 5
+TIMEOUT          = 5.0
+TEARDOWN_TIMEOUT = 3.0
+POLL_INTERVAL    = 0.1
 
 
-class ConnectionlessDownlink(Session):
-    """Base class for connectionless downlink sessions."""
+# ─────────────────────────────────────────────────────────────────────────────
+# Base
+# ─────────────────────────────────────────────────────────────────────────────
 
+class ConnectedDownlink(Session):
     def __init__(self, layer):
         super().__init__(layer)
-        self.layer              = layer
-        self.name               = "ConnectionlessDownlink"
+        self.name               = "ConnectedDownlink"
         self.logger             = LoggerFactory.get_logger(self.name)
-        self.packet_number      = self.read_packet_number()
-        self.handshake_rx_queue = asyncio.Queue()
-        self.recovery_rx_queue  = asyncio.Queue()
-        self.connecting         = False
-        self.recovering         = False
 
-    async def handle_rx(self, packet: bytes):
-        pass
+        self.ack_queue          = asyncio.Queue()
+        self.fin_ack_queue      = asyncio.Queue()
+        self.request_queue      = asyncio.Queue()
+        self.data_queue         = asyncio.Queue()
 
-    async def handle_tx(self, message: bytes):
-        pass
+        self.tx_lock            = asyncio.Lock()
+        self.teardown_requested = asyncio.Event()
+        self.stop_event         = asyncio.Event()
+        self.layer              = layer
+        self.tasks              = []
+
+    # ── lifecycle ────────────────────────────────────────────────────────────
 
     async def on_enter(self):
         self.logger.info(f"{self.name} entered")
+        self.stop_event.clear()
+        self.teardown_requested.clear()
 
     async def on_exit(self):
-        pass
+        self.stop_event.set()
+        for task in self.tasks:
+            task.cancel()
+        if self.tasks:
+            await asyncio.gather(*self.tasks, return_exceptions=True)
+        self.tasks.clear()
 
+    def start_task(self, coro, name=None):
+        task = asyncio.create_task(coro, name=name)
+        self.tasks.append(task)
+        return task
 
-################################## Ground Station ###########################################
-
-class GroundStationConnectedDownlink(ConnectionlessDownlink):
-
-    def __init__(self, layer):
-        self.packet_number_path = (
-            "CommunicationsModule/CommunicationsProtocol"
-            "/SessionLayer/PacketStore/GroundStationCurrentPacketNumber"
-        )
-        super().__init__(layer)
-
-
+    # ── rx dispatcher ────────────────────────────────────────────────────────
 
     async def handle_rx(self, raw: bytes):
-        """Route incoming bytes to the correct internal queue or deliver upward."""
-
-        if self.connecting:
-            await self.handshake_rx_queue.put(raw)
-            return None
-
-        if self.recovering:
-            await self.recovery_rx_queue.put(raw)
-            return None
-
         try:
-            return self._deframe(raw)
-        except Exception as e:
-            self.logger.error(f"handle_rx deframe error: {e}")
-            return None
 
-    def _deframe(self, raw: bytes):
-        frame = Audimus_pb2.Session_Message()
-        frame.ParseFromString(raw)
-        self._track_packet(frame.packet_number)
-        return frame.presentation_message
+            frame = Audimus_pb2.Session_Message()
+            frame.ParseFromString(raw)
 
-    def _track_packet(self, received_number: int):
-        """Record any sequence gaps between last received and current packet."""
-        expected = self.packet_number + 1
-        if received_number != expected:
-            for dropped in range(expected, received_number):
-                self.packet_tracker.record_drop(dropped)
-                self.logger.warning(f"Dropped packet detected: seq={dropped}")
-        self.packet_number = received_number
-        self.write_packet_number(self.packet_number)
+            if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedDownlink:
+                self.logger.warning(f"Unexpected mode {frame.mode} in {self.name}")
 
-    async def handle_tx(self, message: bytes):
-        """ The ground station cant send new data """
-        self.logger.warning(
-            "handle_tx called on GroundStationConnectionlessDownlink – "
-            "sending new data is not permitted in this mode. Message dropped."
-        )
-        return None
-
-
-    async def handshake(self, new_mode: Audimus_pb2.SESSION_MODE):
-        """3-way handshake """
-        self.logger.info(f"Initiating handshake for mode={new_mode}")
-        self.connecting = True
-
-        for attempt in range(1, MAX_TRIES + 1):
-            try:
-                # Step 1 – SYN
-                syn = Audimus_pb2.Session_Message(
-                    SYN=True,
-                    mode=new_mode
-                )
-                await self.layer.below_tx.put(syn.SerializeToString())
-                self.logger.debug(f"SYN sent (attempt {attempt})")
-
-                # Step 2 – wait for SYN-ACK
-                raw = await asyncio.wait_for(
-                    self.handshake_rx_queue.get(),
-                    timeout=TIMEOUT
-                )
-                syn_ack = Audimus_pb2.Session_Message()
-                syn_ack.ParseFromString(raw)
-
-                if not syn_ack.SYNACK:
-                    self.logger.warning(
-                        f"Expected SYNACK, got unexpected frame – retrying"
-                    )
-                    continue
-
-                # Step 3 – ACK
-                ack = Audimus_pb2.Session_Message(
-                    ACK=True,
-                    mode=new_mode
-                )
-                await self.layer.below_tx.put(ack.SerializeToString())
-                self.logger.info("Handshake complete")
-                self.connecting = False
-
-                # Kick off missed-packet recovery before switching mode
-                await self._request_missed_packets()
-                return
-
-            except asyncio.TimeoutError:
-                self.logger.warning(
-                    f"Handshake timeout on attempt {attempt}/{MAX_TRIES}"
-                )
-
-        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts")
-        self.connecting = False
-
-
-
-    async def _request_missed_packets(self):
-        """
-        Recovery sub-protocol (ground station side):
-          1. Build a list of all missing sequence numbers from MissingPacketIndex
-          2. Send a single NACK frame containing that list
-          3. Receive the burst – one DATA frame per missing packet
-          4. Deliver each recovered payload upward and acknowledge it
-        """
-        missing = self.packet_tracker.get_missing_packets()
-
-        if not missing:
-            self.logger.info("No missed packets – recovery skipped")
-            return
-
-        self.logger.info(f"Requesting {len(missing)} missed packets: {missing}")
-        self.recovering = True
-
-        # Step 1 – send NACK listing all missing sequence numbers
-        nack = Audimus_pb2.Session_Message(
-            mode=Audimus_pb2.SESSION_MODE.ConnectionlessDownlink,
-            NACK=True,
-            missing_packets=missing          # repeated uint32 field
-        )
-        await self.layer.below_tx.put(nack.SerializeToString())
-        self.logger.debug("NACK sent")
-
-        # Step 2 – collect exactly len(missing) DATA frames (or timeout)
-        recovered = 0
-        deadline  = asyncio.get_event_loop().time() + BURST_TIMEOUT
-
-        while recovered < len(missing):
-            remaining = deadline - asyncio.get_event_loop().time()
-            if remaining <= 0:
-                self.logger.error(
-                    f"Burst timeout: received {recovered}/{len(missing)} packets"
-                )
-                break
-
-            try:
-                raw = await asyncio.wait_for(
-                    self.recovery_rx_queue.get(),
-                    timeout=remaining
-                )
-            except asyncio.TimeoutError:
-                self.logger.error(
-                    f"Burst timeout: received {recovered}/{len(missing)} packets"
-                )
-                break
-
-            try:
-                frame = Audimus_pb2.Session_Message()
-                frame.ParseFromString(raw)
-
-                self.logger.info(
-                    f"Recovered packet seq={frame.packet_number}"
-                )
-
-                # Mark as no longer missing
-                self.packet_tracker.acknowledge(frame.packet_number)
-                recovered += 1
-
-                # Deliver payload upward
-                if frame.presentation_message:
-                    await self.layer.layer_rx.put(frame.presentation_message)
-
-            except Exception as e:
-                self.logger.error(f"Failed to deframe recovered packet: {e}")
-
-        self.recovering = False
-        self.logger.info(
-            f"Recovery complete: {recovered}/{len(missing)} packets recovered"
-        )
-
-    # ---------------------------------------------------------------- exit --
-
-    async def on_exit(self):
-        await super().on_exit()
-        self.logger.info(
-            f"GroundStation connectionless downlink exiting. "
-            f"Final packet number: {self.packet_number}"
-        )
-
-
-################################## Audimus ###########################################
-
-class AudimusConnectedDownlink(ConnectionlessDownlink):
-    """
-    TX  : Frames outgoing data, increments sequence number, persists to
-          PacketStore.  Sending new data is blocked while a recovery burst
-          is in progress so that the burst is not interleaved with live frames.
-    RX  : Handles 3-way handshake (responder side).
-          Handles NACK frames – reads requested packets from PacketStore
-          and bursts them back to the ground station.
-          Any attempt to receive new application data is silently dropped
-          (satellite does not receive data in this mode).
-    """
-
-    def __init__(self, layer):
-        self.packet_number_path = (
-            "CommunicationsModule/CommunicationsProtocol"
-            "/SessionLayer/PacketStore/AudimusCurrentPacketNumber"
-        )
-        super().__init__(layer)
-        self._burst_lock = asyncio.Lock()   # prevents live TX during burst
-
-
-
-    async def handle_tx(self, message: bytes):
-        """
-        Frame and store an outgoing data packet.
-        Blocked (queues behind _burst_lock) while a recovery burst is running
-        so that burst frames and live frames are never interleaved.
-        """
-        async with self._burst_lock:
-            try:
-                self.packet_number += 1
-                frame = self._frame(message)
-                self.write_packet_number(self.packet_number)
-                await self.packet_store.store_packet(self.packet_number, frame)
-                return frame
-            except Exception as e:
-                self.logger.error(f"handle_tx error: {e}")
-                self.packet_number -= 1      # roll back on failure
+            if frame.FIN and frame.ACK:
+                self.logger.debug("FIN-ACK received → fin_ack_queue")
+                await self.fin_ack_queue.put(frame)
                 return None
 
-    def _frame(self, presentation_message):
+            if frame.ACK:
+                self.logger.debug(f"ACK received seq={frame.packet_number} → ack_queue")
+                await self.ack_queue.put(frame)
+                return None
+
+            if frame.FIN:
+                self.logger.info("FIN received – sending FIN-ACK and returning to connectionless")
+                await self.layer.below_tx.put(self.build_fin_ack())
+                await self.layer.session_queue.put(
+                    Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
+                )
+                return None
+
+            if frame.retransmit_request:
+                self.logger.info(f"RETRANSMIT_REQUEST received: {frame.packet_number}")
+                await self.request_queue.put(frame)
+                return None
+
+
+            # Data frame (no FIN, ACK, or retransmit_request flags)
+            self.logger.debug(f"DATA frame received seq={frame.packet_number} → data_queue")
+            await self.data_queue.put(frame)
+            return None
+
+
+
+
+        except Exception as e:
+            self.logger.error(f"handle_rx error: {e}")
+            return None
+
+    async def handle_tx(self, message: bytes):
+        self.logger.warning("TX attempted in ConnectedDownlink – message dropped.")
+        return None
+
+    # ── teardown ─────────────────────────────────────────────────────────────
+
+    async def teardown(self):
+        self.teardown_requested.set()
+        self.logger.info("Teardown requested – waiting for tx_lock")
+
+        async with self.tx_lock:
+            self.logger.info("tx_lock acquired – sending FIN")
+            fin = self.build_fin()
+
+            for attempt in range(1, MAX_TRIES + 1):
+                await self.layer.below_tx.put(fin)
+                self.logger.info(f"FIN sent (attempt {attempt}/{MAX_TRIES})")
+
+                try:
+                    await asyncio.wait_for(
+                        self.fin_ack_queue.get(),
+                        timeout=TEARDOWN_TIMEOUT
+                    )
+                    self.logger.info("FIN-ACK received – teardown complete")
+                    await self.layer.set_session(
+                        Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
+                    )
+                    return
+
+                except asyncio.TimeoutError:
+                    self.logger.warning(
+                        f"Teardown timeout waiting for FIN-ACK "
+                        f"(attempt {attempt}/{MAX_TRIES})"
+                    )
+
+        self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
+
+    # ── frame builders ────────────────────────────────────────────────────────
+
+    def build_retransmit_request(self, missing_seqs: list[int]) -> bytes:
         msg = Audimus_pb2.Session_Message(
-            presentation_message=presentation_message,
-            mode=Audimus_pb2.SESSION_MODE.ConnectionlessDownlink,
-            packet_number=self.packet_number,
-            SYN=False,
-            ACK=False
+            mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
+            retransmit_request=missing_seqs,
         )
         return msg.SerializeToString()
 
 
-
-    async def handle_rx(self, raw):
-        """
-        Route incoming bytes.
-        During handshake  → handshake_rx_queue.
-        NACK frame        → trigger burst (fire-and-forget task).
-        Anything else     → satellite does not receive application data here,
-                            log a warning and drop.
-        """
-        if self.connecting:
-            await self.handshake_rx_queue.put(raw)
-            return None
-
-        try:
-            frame = Audimus_pb2.Session_Message()
-            frame.ParseFromString(raw)
-        except Exception as e:
-            self.logger.error(f"handle_rx parse error: {e}")
-            return None
-
-        # SYN → start handshake
-        if frame.SYN:
-            self.connecting = True
-            asyncio.create_task(
-                self.handshake(frame),
-                name="audimus_handshake"
-            )
-            return None
-
-        # NACK → burst missed packets back
-        if frame.NACK:
-            asyncio.create_task(
-                self._burst_missed_packets(list(frame.missing_packets)),
-                name="audimus_burst"
-            )
-            return None
-
-        # Anything else: satellite does not accept new data in this mode
-        self.logger.warning(
-            "Audimus received unexpected frame in ConnectionlessDownlink "
-            f"(mode={frame.mode}, SYN={frame.SYN}, ACK={frame.ACK}) – dropped"
+    def build_data_frame(self, seq: int, payload: bytes) -> bytes:
+        msg = Audimus_pb2.Session_Message(
+            mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
+            packet_number=seq,
+            presentation_message=payload,
         )
-        return None
+        return msg.SerializeToString()
+
+    def build_fin(self) -> bytes:
+        return Audimus_pb2.Session_Message(
+            mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
+            FIN=True,
+        ).SerializeToString()
+
+    def build_fin_ack(self) -> bytes:
+        return Audimus_pb2.Session_Message(
+            mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
+            FIN=True,
+            ACK=True,
+        ).SerializeToString()
 
 
-    async def handshake(self, syn: Audimus_pb2.Session_Message):
-        """
-        3-way handshake (satellite responder):
-          1. Send SYN-ACK
-          2. Wait for ACK
-          (mode switch is NOT triggered here; the ground station drives that)
-        """
-        new_mode = syn.mode
-        self.connecting = True
+# ─────────────────────────────────────────────────────────────────────────────
+# Ground Station
+# ─────────────────────────────────────────────────────────────────────────────
 
-        for attempt in range(1, MAX_TRIES + 1):
-            try:
-                # Step 1 – SYN-ACK
-                syn_ack = Audimus_pb2.Session_Message(
-                    SYNACK=True,
-                    mode=new_mode
-                )
-                await self.layer.below_tx.put(syn_ack.SerializeToString())
-                self.logger.info(f"SYN-ACK sent (attempt {attempt})")
+class GroundStationConnectedDownlink(ConnectedDownlink):
+    """
+    Implicit-ACK protocol:
+      - Sends RETRANSMIT_REQUEST containing only still-missing packets.
+      - The satellite infers that anything it sent last round that is
+        absent from the new request was successfully received.
+      - When nothing is missing, sends an empty RETRANSMIT_REQUEST as a
+        final flush signal, then initiates FIN teardown.
+      - No per-packet ACK frames are ever sent.
+    """
 
-                # Step 2 – wait for ACK
-                raw = await asyncio.wait_for(
-                    self.handshake_rx_queue.get(),
-                    timeout=TIMEOUT
-                )
-                response = Audimus_pb2.Session_Message()
-                response.ParseFromString(raw)
+    def __init__(self, layer):
+        super().__init__(layer)
 
-                if response.ACK:
-                    self.logger.info("Handshake complete – waiting for NACK")
-                    self.connecting = False
-                    return
-
-                self.logger.warning(
-                    f"Expected ACK, got unexpected frame – retrying"
-                )
-
-            except asyncio.TimeoutError:
-                self.logger.warning(
-                    f"Handshake timeout on attempt {attempt}/{MAX_TRIES}"
-                )
-
-        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts")
-        self.connecting = False
-
-
-    async def _burst_missed_packets(self, missing_seqs):
-        """
-        Recovery sub-protocol (satellite side):
-          Acquires the burst lock (blocks live TX), reads each requested packet
-          from PacketStore, and sends them all back-to-back.
-        """
-        if not missing_seqs:
-            self.logger.info("NACK received with empty list – nothing to burst")
-            return
-
-        self.logger.info(
-            f"Bursting {len(missing_seqs)} missed packets: {missing_seqs}"
-        )
-
-        async with self._burst_lock:   # block new live TX until burst finishes
-            for seq in missing_seqs:
-                try:
-                    payload = await self.packet_store.get_packet(seq)
-
-                    if payload is None:
-                        self.logger.warning(
-                            f"Packet seq={seq} not found in store – skipping"
-                        )
-                        continue
-
-                    # Re-wrap with original seq number so the ground station
-                    # can identify which gap each frame fills
-                    frame = Audimus_pb2.Session_Message(
-                        mode=Audimus_pb2.SESSION_MODE.ConnectionlessDownlink,
-                        packet_number=seq,
-                        SYN=False,
-                        ACK=False
-                    )
-                    # payload is already a serialised Session_Message stored by
-                    # handle_tx; unwrap it to get the presentation_message
-                    stored = Audimus_pb2.Session_Message()
-                    stored.ParseFromString(payload)
-                    frame.presentation_message = stored.presentation_message
-
-                    await self.layer.below_tx.put(frame.SerializeToString())
-                    self.logger.debug(f"Burst: sent seq={seq}")
-
-                except Exception as e:
-                    self.logger.error(
-                        f"Failed to retrieve/send packet seq={seq}: {e}"
-                    )
-
-        self.logger.info("Burst complete")
-
+    async def on_enter(self):
+        await super().on_enter()
+        self._drain_queues()
+        self.start_task(self.retransmit_loop(), name="gs_retransmit_loop")
 
     async def on_exit(self):
+        self.logger.info("GroundStation ConnectedDownlink: on_exit")
         await super().on_exit()
-        self.logger.info(
-            f"Audimus connectionless downlink exiting. "
-            f"Final packet number: {self.packet_number}"
-        )
+
+    # ── helpers ───────────────────────────────────────────────────────────────
+
+    def _drain_queues(self):
+        """Discard any stale frames left in queues from a previous session."""
+        for queue in (self.data_queue, self.ack_queue,
+                      self.fin_ack_queue, self.request_queue):
+            drained = 0
+            while not queue.empty():
+                try:
+                    queue.get_nowait()
+                    drained += 1
+                except asyncio.QueueEmpty:
+                    break
+            if drained:
+                self.logger.debug(
+                    f"Drained {drained} stale frame(s) from queue on enter"
+                )
+
+    # ── retransmit loop ───────────────────────────────────────────────────────
+
+    async def retransmit_loop(self):
+        """
+        Main ground-station loop.
+
+        Each iteration:
+          1. Ask the packet tracker for still-missing sequence numbers.
+          2. If none are missing, send an empty RETRANSMIT_REQUEST so the
+             satellite can flush its last sent-set, then tear down.
+          3. Otherwise send a RETRANSMIT_REQUEST and collect DATA frames
+             until the timeout expires or all packets arrive.
+          4. Mark any newly received packets in the packet tracker so they
+             won't appear in the next request (that absence = implicit ACK).
+        """
+        self.logger.info("retransmit_loop started (implicit-ACK mode)")
+
+        try:
+            while not self.stop_event.is_set():
+
+                missing = self.layer.packet_tracker.get_missing_packets()
+
+                if not missing:
+                    # ── Send empty request as final implicit-ACK flush ────────
+                    self.logger.info(
+                        "No missing packets – sending empty RETRANSMIT_REQUEST "
+                        "to let satellite flush last round, then tearing down"
+                    )
+                    flush = self.build_retransmit_request([])
+                    await self.layer.below_tx.put(flush)
+
+                    # Give the satellite a moment to process the flush before FIN
+                    await asyncio.sleep(POLL_INTERVAL)
+                    await self.teardown()
+                    return
+
+                self.logger.info(f"Requesting retransmission of {missing}")
+                await self._request_round(missing)
+
+                await asyncio.sleep(POLL_INTERVAL)
+
+        except asyncio.CancelledError:
+            self.logger.info("retransmit_loop cancelled")
+
+    # ── single request/collect round ─────────────────────────────────────────
+
+    async def _request_round(self, missing: list[int]) -> bool:
+        """
+        Send one RETRANSMIT_REQUEST and collect DATA frames until the
+        deadline expires or all requested packets have arrived.
+
+        Received packets are stored via the packet store and marked in the
+        packet tracker so they will be absent from the *next* request —
+        that absence serves as the implicit ACK to the satellite.
+
+        Returns True if every requested packet was received, False otherwise.
+        """
+        async with self.tx_lock:
+            for attempt in range(1, MAX_TRIES + 1):
+
+                # ── 1. Send the request ───────────────────────────────────
+                request = self.build_retransmit_request(missing)
+                await self.layer.below_tx.put(request)
+                self.logger.info(
+                    f"RETRANSMIT_REQUEST sent {missing} "
+                    f"(attempt {attempt}/{MAX_TRIES})"
+                )
+
+                # ── 2. Collect DATA frames until timeout ──────────────────
+                received: dict[int, bytes] = {}
+                deadline = asyncio.get_event_loop().time() + TIMEOUT
+
+                while len(received) < len(missing):
+                    time_left = deadline - asyncio.get_event_loop().time()
+                    if time_left <= 0:
+                        break
+
+                    try:
+                        frame = await asyncio.wait_for(
+                            self.data_queue.get(),
+                            timeout=time_left,
+                        )
+
+                    except asyncio.TimeoutError:
+                        break
+
+                    seq = frame.packet_number
+                    if seq in missing and seq not in received:
+                        received[seq] = frame.presentation_message
+                        self.logger.debug(f"Received retransmitted packet seq={seq}")
+                        await self.layer.layer_rx.put(frame.presentation_message)
+                    else:
+                        self.logger.warning(
+                            f"Unexpected seq={seq} in retransmit round "
+                            f"(missing={missing}) – discarding"
+                        )
+
+                # ── 3. Persist received packets & update tracker ──────────
+                # Marking these packets in the tracker means they will NOT
+                # appear in the next RETRANSMIT_REQUEST.  Their absence in
+                # that next request is what tells the satellite it can delete
+                # them — no explicit ACK frame is needed.
+                for seq, payload in received.items():
+                    self.layer.packet_store.store_packet(seq, payload)
+                    self.layer.packet_tracker.mark_received(seq)
+                    self.logger.info(
+                        f"Packet seq={seq} stored & marked received "
+                        f"(implicit ACK will be sent next round)"
+                    )
+
+                # ── 4. Decide whether to retry ────────────────────────────
+                if len(received) == len(missing):
+                    self.logger.info(
+                        f"All {len(missing)} packets received in attempt {attempt}"
+                    )
+                    return True
+
+                still_missing = [s for s in missing if s not in received]
+                self.logger.warning(
+                    f"Attempt {attempt}/{MAX_TRIES}: received "
+                    f"{len(received)}/{len(missing)}, "
+                    f"still missing {still_missing}"
+                )
+                # Update `missing` to only the packets still needed before retry
+                missing = still_missing
+                print(f"still missing {missing}")
+
+            # Exhausted all attempts
+            self.logger.error(
+                f"_request_round failed after {MAX_TRIES} attempts; "
+                f"packets {missing} still outstanding"
+            )
+            return False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Satellite
+# ─────────────────────────────────────────────────────────────────────────────
+
+class AudimusConnectedDownlink(ConnectedDownlink):
+    """
+    Implicit-ACK protocol (satellite side):
+
+    The satellite tracks which packet sequence numbers it transmitted in the
+    most recent round (_last_sent_set).  When the *next* RETRANSMIT_REQUEST
+    arrives, any sequence number that was in _last_sent_set but is absent
+    from the new request is implicitly acknowledged — the ground station
+    received it — and can be deleted from persistent storage.
+
+    An *empty* RETRANSMIT_REQUEST means "I have everything; prepare for FIN".
+    In that case the entire _last_sent_set is implicitly acknowledged and
+    deleted.
+    """
+
+    def __init__(self, layer):
+        super().__init__(layer)
+        # Sequence numbers transmitted in the most recent retransmit round.
+        self._last_sent_set: set[int] = set()
+
+    async def on_enter(self):
+        await super().on_enter()
+        self._last_sent_set.clear()
+        self.start_task(self._serve_loop(), name="sat_serve_loop")
+
+    async def on_exit(self):
+        self.logger.info("Satellite ConnectedDownlink: on_exit")
+        await super().on_exit()
+
+    # ── main serving loop ─────────────────────────────────────────────────────
+
+    async def _serve_loop(self):
+        """
+        Wait for RETRANSMIT_REQUEST frames and serve them.
+
+        Protocol:
+          received request  │  action
+          ──────────────────┼──────────────────────────────────────────────────
+          non-empty         │  implicit-ACK absent seqs, send requested packets
+          empty             │  implicit-ACK all remaining, wait for FIN
+        """
+        self.logger.info("Satellite serve_loop started (implicit-ACK mode)")
+        try:
+            while not self.stop_event.is_set():
+
+                # ── Wait for next request (with timeout so stop_event is polled)
+                try:
+                    frame = await asyncio.wait_for(
+                        self.request_queue.get(),
+                        timeout=POLL_INTERVAL,
+                    )
+                except asyncio.TimeoutError:
+                    continue
+
+                new_missing = set(frame.retransmit_request)
+                print(f"still missing {new_missing}")
+                # ── Implicit ACK: confirm everything sent last round that
+                #    the ground station is no longer asking for ──────────────
+                implicitly_acked = self._last_sent_set - new_missing
+                if implicitly_acked:
+                    self.logger.info(
+                        f"Implicit ACK for packets {implicitly_acked} "
+                        f"(absent from new request) — deleting from store"
+                    )
+                    self._delete_from_store(implicitly_acked)
+
+                # ── Empty request = ground station has everything ─────────────
+                if not new_missing:
+                    self.logger.info(
+                        "Empty RETRANSMIT_REQUEST received — "
+                        "all packets implicitly ACK'd; awaiting FIN"
+                    )
+                    # Any remainder (e.g. from a partially-received last round)
+                    if self._last_sent_set:
+                        self._delete_from_store(self._last_sent_set)
+                    self._last_sent_set.clear()
+                    continue   # will now just wait for FIN via handle_rx
+
+                # ── Serve the requested packets ───────────────────────────────
+                self.logger.info(f"Serving retransmit request: {new_missing}")
+                actually_sent = await self._send_packets(new_missing)
+
+                self._last_sent_set = actually_sent
+
+        except asyncio.CancelledError:
+            self.logger.info("Satellite serve_loop cancelled")
+
+    # ── packet transmission ───────────────────────────────────────────────────
+
+    async def _send_packets(self, seqs: set[int]) -> set[int]:
+        """
+        Fetch and transmit each requested packet from the persistent store.
+        Returns the set of sequence numbers that were actually sent
+        (a sequence number is skipped if it is no longer in the store).
+        """
+        sent: set[int] = set()
+
+        async with self.tx_lock:
+
+            for seq in sorted(seqs):
+                payload = await self.layer.packet_store.get_packet(seq)
+
+                if payload is None:
+                    self.logger.warning(
+                        f"Packet seq={seq} requested but not in store — skipping"
+                    )
+                    continue
+                frame = self.build_data_frame(seq, payload)
+
+
+                await self.layer.below_tx.put(frame)
+
+
+                sent.add(seq)
+                self.logger.debug(f"Retransmitted packet seq={seq}")
+        return sent
+
+    # ── storage management ────────────────────────────────────────────────────
+
+    def _delete_from_store(self, seqs: set[int]):
+        """Remove implicitly-acknowledged packets from the persistent store."""
+        for seq in seqs:
+            deleted = self.layer.packet_store.acknowledge(seq, None)
+            if deleted is not None:
+                self.logger.info(
+                    f"Deleted implicitly-ACK'd packet seq={seq} from store"
+                )
+            else:
+                self.logger.warning(
+                    f"Tried to delete seq={seq} but it was not in store "
+                    f"(already deleted or never stored)"
+                )

@@ -3,6 +3,7 @@ import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 import asyncio
 
+
 class ApplicationLayer(ProtocolLayer.ProtocolLayer):
     def __init__(self,  PL_rx, PL_tx, sl):
         super().__init__(None, None, PL_rx, PL_tx)
@@ -46,9 +47,9 @@ class GroundStationApplicationLayer(ApplicationLayer):
 
                 match message:
                     case "connected uplink mode":
-                        await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedUplink)
+                        await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectedUplink)
                     case "connected downlink mode":
-                        await self.session_layer.session.handshake(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
+                        await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
                     case "connectionless downlink mode":
                         await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
                     case _:
@@ -59,9 +60,7 @@ class GroundStationApplicationLayer(ApplicationLayer):
 
     async def distribute(self):
         message= await self.command_line()
-
         # send session change commands to the session layer
-
 
 
     async def command_line(self):
@@ -103,6 +102,6 @@ class AudimusApplicationLayer(ApplicationLayer):
             message = self.process_tx(line)
             self.logger.info(message)
             await self.below_tx.put(message)
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
 
 

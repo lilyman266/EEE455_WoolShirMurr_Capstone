@@ -52,7 +52,6 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
         )
         super().__init__(layer)
 
-
     async def handle_rx(self, raw: bytes):
         """Deframe incoming packet.
         If a handshake is in progress route to the handshake queue instead."""
@@ -71,6 +70,7 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
         frame = Audimus_pb2.Session_Message()
         frame.ParseFromString(raw)
         self.track_packet(frame.packet_number)
+
         return frame.presentation_message
 
     def track_packet(self, received_number: int):
@@ -79,11 +79,12 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
         if received_number != expected:
             for dropped in range(expected, received_number):
-                self.packet_tracker.record_drop(dropped)
+                self.layer.packet_tracker.record_drop(dropped)
                 self.logger.warning(f"Dropped packet: {dropped}")
 
         self.packet_number = received_number
         self.write_packet_number(self.packet_number)
+
 
 
     async def handle_tx(self, message: bytes):
@@ -106,11 +107,6 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
 
     async def handshake(self, new_mode: Audimus_pb2.SESSION_MODE):
-        """
-        3-way handshake (initiator side).
-        Sends SYN → waits for SYN-ACK → sends ACK → requests mode change.
-        Retries up to MAX_TRIES times on timeout.
-        """
         self.logger.info(f"Initiating handshake for mode {new_mode}")
         self.connecting = True
 
@@ -137,7 +133,7 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
                 await self.layer.below_tx.put(ack.SerializeToString())
                 self.logger.info("handshake complete")
 
-                await self.layer.session_queue.put(new_mode)
+                await self.layer.set_session(new_mode)
                 self.connecting = False
                 return  # success
 
@@ -171,9 +167,9 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
         successful transmission; rolls back on failure."""
         try:
             self.packet_number += 1
+            await self.layer.packet_store.store_packet(self.packet_number, message)
             frame = self.frame(message)
             self.write_packet_number(self.packet_number)
-            await self.packet_store.store_packet(self.packet_number, frame)
             return frame
         except Exception as e:
             self.logger.error(f"Failed to frame message: {e}")
@@ -251,8 +247,8 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
                     continue
 
                 self.logger.info(f"Handshake complete")
-                await self.layer.session_queue.put(new_mode)
                 self.connecting = False
+                await self.layer.set_session(new_mode)
                 return  # success
 
             except asyncio.TimeoutError:

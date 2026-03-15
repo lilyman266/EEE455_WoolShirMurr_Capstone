@@ -31,22 +31,13 @@ class ConnectedUplink(Session):
         self.tx_seq        = 0
         self.last_rx_seq   = 0
         self.tx_lock       = asyncio.Lock()
+        self.teardown_requested = asyncio.Event()
 
-        # ── teardown coordination ──────────────────────────────────────────
-        # Set just before _send_teardown acquires tx_lock.
-        # handle_tx checks this BEFORE acquiring the lock so it fails fast
-        # without queuing another frame behind the FIN.
-        self._teardown_requested = asyncio.Event()
-
-    # ------------------------------------------------------------------ rx ---
-
+    #ACK, fin, fin-ack handled at layers below. Only data is passed upward. Fin triggers change in mode
     async def handle_rx(self, raw: bytes):
-        """ACK frames are consumed internally and not passed upward.
-           DATA frames are ACKed immediately and delivered upward.
-           Duplicate DATA frames are ACKed again but not redelivered.
-           FIN frames are ACKed and trigger a mode change on the satellite."""
 
         try:
+
             frame = Audimus_pb2.Session_Message()
             frame.ParseFromString(raw)
 
@@ -60,34 +51,34 @@ class ConnectedUplink(Session):
                     f"Unexpected mode received: {frame.mode} in {self.name}"
                 )
 
-            # FIN-ACK path (ground station teardown receiving confirmation)
+            # if we get a fin ack
             if frame.FIN and frame.ACK:
                 self.logger.debug("FIN-ACK received")
                 await self.fin_ack_queue.put(frame)
                 return None
 
-            # ACK path
+            # if we get an ack
             if frame.ACK:
                 self.logger.debug(f"ACK received for seq={frame.packet_number}")
                 await self.ack_queue.put(frame)
                 return None
 
-            # FIN path (satellite receiving teardown notice)
+            # if we get a fin
             if frame.FIN:
                 self.logger.info("FIN received – sending FIN-ACK and triggering mode change")
-                fin_ack = self._build_fin_ack()
+                fin_ack = self.build_fin_ack()
                 await self.layer.below_tx.put(fin_ack)
                 await self.layer.session_queue.put(
                     Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
                 )
                 return None
 
-            # DATA path: ACK immediately
-            ack = self._build_ack(frame.packet_number)
+            # if we get data
+            ack = self.build_ack(frame.packet_number)
             await self.layer.below_tx.put(ack)
             self.logger.info(f"ACK sent for seq={frame.packet_number}")
 
-            # Duplicate / retransmitted frame: ACKed already, do not redeliver
+            # if we get a duplicate
             if frame.packet_number <= self.last_rx_seq:
                 self.logger.warning(
                     f"Duplicate/old packet received seq={frame.packet_number}, "
@@ -95,7 +86,7 @@ class ConnectedUplink(Session):
                 )
                 return None
 
-            # Ordered delivery is expected; log if there is a jump
+            # if packets are out of order
             expected_seq = self.last_rx_seq + 1
             if frame.packet_number != expected_seq:
                 self.logger.warning(
@@ -110,26 +101,25 @@ class ConnectedUplink(Session):
             self.logger.error(f"handle_rx error: {e}")
             return None
 
-    # ------------------------------------------------------------------ tx ---
 
+    # If teardown has been requested we will never get a useful ACK
+    # back, so refuse immediately rather than queuing behind the FIN.
     async def handle_tx(self, message):
-        # ── Fast-path rejection BEFORE we try to acquire the lock ─────────
-        # If teardown has been requested we will never get a useful ACK
-        # back, so refuse immediately rather than queuing behind the FIN.
-        if self._teardown_requested.is_set():
+
+        if self.teardown_requested.is_set():
             self.logger.warning("handle_tx called during teardown – message dropped")
             return None
 
         async with self.tx_lock:
-            # Re-check inside the lock: teardown may have been requested
-            # while we were waiting to acquire it.
-            if self._teardown_requested.is_set():
+            # check the lock
+
+            if self.teardown_requested.is_set():
                 self.logger.warning("handle_tx: teardown started while waiting for lock – message dropped")
                 return None
 
             self.tx_seq += 1
             seq   = self.tx_seq
-            frame = self._frame(message, seq)
+            frame = self.frame(message, seq)
 
             for attempt in range(1, MAX_TRIES + 1):
 
@@ -163,19 +153,19 @@ class ConnectedUplink(Session):
             self.logger.error(f"Packet seq={seq} failed after {MAX_TRIES} attempts")
             return None
 
-    # --------------------------------------------------------------- teardown ---
 
-    async def _send_teardown(self):
-        # Signal intent first so any concurrent handle_tx call that has
-        # NOT yet acquired the lock will bail out immediately.
-        self._teardown_requested.set()
+    # Signal intent first so any concurrent handle_tx call that has
+    # NOT yet acquired the lock will bail out immediately.
+    async def teardown(self):
+
+        self.teardown_requested.set()
         self.logger.info("Teardown requested – waiting for tx_lock")
 
         # Acquire the lock so we are guaranteed no data frame is in-flight
         # when the FIN hits the wire.
         async with self.tx_lock:
             self.logger.info("tx_lock acquired – sending FIN")
-            fin = self._build_fin()
+            fin = self.build_fin()
             for attempt in range(1, MAX_TRIES + 1):
                 await self.layer.below_tx.put(fin)
                 self.logger.info(f"FIN sent (attempt {attempt}/{MAX_TRIES})")
@@ -186,6 +176,7 @@ class ConnectedUplink(Session):
                         timeout=TEARDOWN_TIMEOUT
                     )
                     self.logger.info("FIN-ACK received – teardown complete")
+                    await self.layer.set_session(Audimus_pb2.ConnectionlessDownlink)
                     return  # success
 
                 except asyncio.TimeoutError:
@@ -196,15 +187,15 @@ class ConnectedUplink(Session):
 
         self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
 
-    # ---------------------------------------------------------------- helpers ---
 
     async def on_enter(self):
         self.logger.info(f"{self.name} entered")
 
+
     async def on_exit(self):
         self.logger.info(f"{self.name} exiting")
 
-    def _frame(self, presentation_message, seq) -> bytes:
+    def frame(self, presentation_message, seq) -> bytes:
         msg = Audimus_pb2.Session_Message(
             presentation_message=presentation_message,
             mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
@@ -215,7 +206,7 @@ class ConnectedUplink(Session):
         )
         return msg.SerializeToString()
 
-    def _build_ack(self, seq: int) -> bytes:
+    def build_ack(self, seq: int) -> bytes:
         ack = Audimus_pb2.Session_Message(
             mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             packet_number=seq,
@@ -225,7 +216,7 @@ class ConnectedUplink(Session):
         )
         return ack.SerializeToString()
 
-    def _build_fin(self) -> bytes:
+    def build_fin(self) -> bytes:
         fin = Audimus_pb2.Session_Message(
             mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             SYN=False,
@@ -234,7 +225,7 @@ class ConnectedUplink(Session):
         )
         return fin.SerializeToString()
 
-    def _build_fin_ack(self) -> bytes:
+    def build_fin_ack(self) -> bytes:
         fin_ack = Audimus_pb2.Session_Message(
             mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             SYN=False,
@@ -244,28 +235,22 @@ class ConnectedUplink(Session):
         return fin_ack.SerializeToString()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-#  Ground Station
-# ──────────────────────────────────────────────────────────────────────────────
+############################################ Ground Station ##########################################
 
 class GroundStationConnectedUplink(ConnectedUplink):
-    """Ground station side – initiates teardown on exit."""
 
     def __init__(self, layer):
         super().__init__(layer)
 
     async def on_exit(self):
         self.logger.info("GroundStation ConnectedUplink: initiating teardown")
-        await self._send_teardown()
         await super().on_exit()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-#  Audimus (Satellite)
-# ──────────────────────────────────────────────────────────────────────────────
+############################################ Audimus ##########################################
+
 
 class AudimusConnectedUplink(ConnectedUplink):
-    """Satellite side – reacts to FIN in handle_rx, no teardown initiation."""
 
     def __init__(self, layer):
         super().__init__(layer)

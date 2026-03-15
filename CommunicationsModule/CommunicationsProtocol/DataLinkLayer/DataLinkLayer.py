@@ -3,6 +3,7 @@ from Logger.Logger import LoggerFactory
 import random
 import zmq.asyncio
 import time
+import asyncio
 CHUNK_SIZE = 1024
 
 
@@ -18,6 +19,10 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
         while True:
             # receive a message from tcp
             msg = await self.reader.read(1024)
+
+            if random.randint(1,10) > 8:
+                print("packet dropped")
+                continue
 
             # Check for EOF / connection closed
             if not msg:
@@ -35,9 +40,11 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
         while True:
             # grab the message from this layer's tx queue
             message = await self.layer_tx.get()
-
+            self.logger.info(b'tx: ' + message)
             #send the message over tcp
             self.writer.write(message)
+
+            await asyncio.sleep(0.001)
             await self.writer.drain()
 
 
@@ -46,13 +53,13 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
         context = zmq.asyncio.Context()
         socket = context.socket(zmq.PUB)
         socket.bind("tcp://0.0.0.0:5557")
-        time.sleep(1)
+        await asyncio.sleep(1)
 
         while True:
             msg =  await self.layer_tx.get()
             padded = msg.ljust(CHUNK_SIZE, b'\x00')[:CHUNK_SIZE]
             await socket.send(padded)
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
 
 
     # receives from GNU radio with ZMQ
