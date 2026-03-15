@@ -291,6 +291,10 @@ class PacketStore:
         self._store[seq_number] = payload
         self._write_store(self._store)
 
+    async def empty_store(self) -> None:
+        self._store= {}
+        self._write_store(self._store)
+
     async def get_packet(self, seq_number: int):
         return self._store[seq_number]
 

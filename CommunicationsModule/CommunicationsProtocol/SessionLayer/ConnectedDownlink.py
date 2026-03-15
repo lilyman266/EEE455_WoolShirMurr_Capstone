@@ -7,12 +7,8 @@ from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Ses
 MAX_TRIES        = 5
 TIMEOUT          = 5.0
 TEARDOWN_TIMEOUT = 3.0
-POLL_INTERVAL    = 0.1
+POLL_INTERVAL    = 2
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Base
-# ─────────────────────────────────────────────────────────────────────────────
 
 class ConnectedDownlink(Session):
     def __init__(self, layer):
@@ -31,7 +27,6 @@ class ConnectedDownlink(Session):
         self.layer              = layer
         self.tasks              = []
 
-    # ── lifecycle ────────────────────────────────────────────────────────────
 
     async def on_enter(self):
         self.logger.info(f"{self.name} entered")
@@ -85,8 +80,9 @@ class ConnectedDownlink(Session):
                 )
                 return None
 
-            if frame.retransmit_request:
-                self.logger.info(f"RETRANSMIT_REQUEST received: {frame.packet_number}")
+            #retransmission request
+            if frame.RET:
+                self.logger.info(f"RETRANSMIT_REQUEST received: {frame.retransmit_request}")
                 await self.request_queue.put(frame)
                 return None
 
@@ -144,6 +140,7 @@ class ConnectedDownlink(Session):
         msg = Audimus_pb2.Session_Message(
             mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
             retransmit_request=missing_seqs,
+            RET = True,
         )
         return msg.SerializeToString()
 
@@ -175,16 +172,6 @@ class ConnectedDownlink(Session):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class GroundStationConnectedDownlink(ConnectedDownlink):
-    """
-    Implicit-ACK protocol:
-      - Sends RETRANSMIT_REQUEST containing only still-missing packets.
-      - The satellite infers that anything it sent last round that is
-        absent from the new request was successfully received.
-      - When nothing is missing, sends an empty RETRANSMIT_REQUEST as a
-        final flush signal, then initiates FIN teardown.
-      - No per-packet ACK frames are ever sent.
-    """
-
     def __init__(self, layer):
         super().__init__(layer)
 
@@ -218,20 +205,7 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
     # ── retransmit loop ───────────────────────────────────────────────────────
 
     async def retransmit_loop(self):
-        """
-        Main ground-station loop.
-
-        Each iteration:
-          1. Ask the packet tracker for still-missing sequence numbers.
-          2. If none are missing, send an empty RETRANSMIT_REQUEST so the
-             satellite can flush its last sent-set, then tear down.
-          3. Otherwise send a RETRANSMIT_REQUEST and collect DATA frames
-             until the timeout expires or all packets arrive.
-          4. Mark any newly received packets in the packet tracker so they
-             won't appear in the next request (that absence = implicit ACK).
-        """
         self.logger.info("retransmit_loop started (implicit-ACK mode)")
-
         try:
             while not self.stop_event.is_set():
 
@@ -239,10 +213,7 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
 
                 if not missing:
                     # ── Send empty request as final implicit-ACK flush ────────
-                    self.logger.info(
-                        "No missing packets – sending empty RETRANSMIT_REQUEST "
-                        "to let satellite flush last round, then tearing down"
-                    )
+                    self.logger.info("No missing packets – sending empty RETRANSMIT_REQUEST to let satellite flush its store then tearing down")
                     flush = self.build_retransmit_request([])
                     await self.layer.below_tx.put(flush)
 
@@ -253,7 +224,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
 
                 self.logger.info(f"Requesting retransmission of {missing}")
                 await self._request_round(missing)
-
                 await asyncio.sleep(POLL_INTERVAL)
 
         except asyncio.CancelledError:
@@ -262,16 +232,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
     # ── single request/collect round ─────────────────────────────────────────
 
     async def _request_round(self, missing: list[int]) -> bool:
-        """
-        Send one RETRANSMIT_REQUEST and collect DATA frames until the
-        deadline expires or all requested packets have arrived.
-
-        Received packets are stored via the packet store and marked in the
-        packet tracker so they will be absent from the *next* request —
-        that absence serves as the implicit ACK to the satellite.
-
-        Returns True if every requested packet was received, False otherwise.
-        """
         async with self.tx_lock:
             for attempt in range(1, MAX_TRIES + 1):
 
@@ -282,11 +242,13 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                     f"RETRANSMIT_REQUEST sent {missing} "
                     f"(attempt {attempt}/{MAX_TRIES})"
                 )
+                print("check 1")
 
                 # ── 2. Collect DATA frames until timeout ──────────────────
                 received: dict[int, bytes] = {}
                 deadline = asyncio.get_event_loop().time() + TIMEOUT
 
+                print("check 2")
                 while len(received) < len(missing):
                     time_left = deadline - asyncio.get_event_loop().time()
                     if time_left <= 0:
@@ -302,7 +264,7 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                         break
 
                     seq = frame.packet_number
-                    print(seq)
+                    print(f"seq: {seq}")
                     if seq in missing and seq not in received:
                         received[seq] = frame.presentation_message
                         self.logger.debug(f"Received retransmitted packet seq={seq}")
@@ -314,14 +276,8 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                             f"(missing={missing}) – discarding"
                         )
 
-                # ── 3. Persist received packets & update tracker ──────────
-                # Marking these packets in the tracker means they will NOT
-                # appear in the next RETRANSMIT_REQUEST.  Their absence in
-                # that next request is what tells the satellite it can delete
-                # them — no explicit ACK frame is needed.
                 for seq, payload in received.items():
-                    self.layer.packet_store.store_packet(seq, payload)
-                    self.layer.packet_tracker.mark_received(seq)
+                    self.layer.packet_tracker.acknowledge(seq)
                     self.logger.info(
                         f"Packet seq={seq} stored & marked received "
                         f"(implicit ACK will be sent next round)"
@@ -342,7 +298,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                 )
                 # Update `missing` to only the packets still needed before retry
                 missing = still_missing
-                print(f"still missing {missing}")
 
             # Exhausted all attempts
             self.logger.error(
@@ -357,19 +312,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class AudimusConnectedDownlink(ConnectedDownlink):
-    """
-    Implicit-ACK protocol (satellite side):
-
-    The satellite tracks which packet sequence numbers it transmitted in the
-    most recent round (_last_sent_set).  When the *next* RETRANSMIT_REQUEST
-    arrives, any sequence number that was in _last_sent_set but is absent
-    from the new request is implicitly acknowledged — the ground station
-    received it — and can be deleted from persistent storage.
-
-    An *empty* RETRANSMIT_REQUEST means "I have everything; prepare for FIN".
-    In that case the entire _last_sent_set is implicitly acknowledged and
-    deleted.
-    """
 
     def __init__(self, layer):
         super().__init__(layer)
@@ -385,57 +327,30 @@ class AudimusConnectedDownlink(ConnectedDownlink):
         self.logger.info("Satellite ConnectedDownlink: on_exit")
         await super().on_exit()
 
-    # ── main serving loop ─────────────────────────────────────────────────────
 
     async def _serve_loop(self):
-        """
-        Wait for RETRANSMIT_REQUEST frames and serve them.
 
-        Protocol:
-          received request  │  action
-          ──────────────────┼──────────────────────────────────────────────────
-          non-empty         │  implicit-ACK absent seqs, send requested packets
-          empty             │  implicit-ACK all remaining, wait for FIN
-        """
         self.logger.info("Satellite serve_loop started (implicit-ACK mode)")
         try:
             while not self.stop_event.is_set():
 
-                # ── Wait for next request (with timeout so stop_event is polled)
-                try:
-                    frame = await asyncio.wait_for(
-                        self.request_queue.get(),
-                        timeout=POLL_INTERVAL,
-                    )
-                except asyncio.TimeoutError:
-                    continue
-
+                frame = await asyncio.wait_for(self.request_queue.get(),timeout=POLL_INTERVAL)
                 new_missing = set(frame.retransmit_request)
-                print(f"still missing {new_missing}")
-                # ── Implicit ACK: confirm everything sent last round that
-                #    the ground station is no longer asking for ──────────────
+
                 implicitly_acked = self._last_sent_set - new_missing
                 if implicitly_acked:
-
                     self.logger.info(
                         f"Implicit ACK for packets {implicitly_acked} "
                         f"(absent from new request) — deleting from store"
                     )
                     self._delete_from_store(implicitly_acked)
 
-                # ── Empty request = ground station has everything ─────────────
-                if not new_missing:
-                    self.logger.info(
-                        "Empty RETRANSMIT_REQUEST received — "
-                        "all packets implicitly ACK'd; awaiting FIN"
-                    )
-                    # Any remainder (e.g. from a partially-received last round)
-                    if self._last_sent_set:
-                        self._delete_from_store(self._last_sent_set)
-                    self._last_sent_set.clear()
+
+                if new_missing == set():
+                    self.logger.info("Empty RETRANSMIT_REQUEST received all packets implicitly ACK'd; awaiting FIN""")
+                    await self.layer.packet_store.empty_store()
                     continue   # will now just wait for FIN via handle_rx
 
-                # ── Serve the requested packets ───────────────────────────────
                 self.logger.info(f"Serving retransmit request: {new_missing}")
                 actually_sent = await self._send_packets(new_missing)
 
@@ -444,14 +359,9 @@ class AudimusConnectedDownlink(ConnectedDownlink):
         except asyncio.CancelledError:
             self.logger.info("Satellite serve_loop cancelled")
 
-    # ── packet transmission ───────────────────────────────────────────────────
 
     async def _send_packets(self, seqs: set[int]) -> set[int]:
-        """
-        Fetch and transmit each requested packet from the persistent store.
-        Returns the set of sequence numbers that were actually sent
-        (a sequence number is skipped if it is no longer in the store).
-        """
+
         sent: set[int] = set()
 
         async with self.tx_lock:
@@ -465,16 +375,11 @@ class AudimusConnectedDownlink(ConnectedDownlink):
                     )
                     continue
                 frame = self.build_data_frame(seq, payload)
-
-
                 await self.layer.below_tx.put(frame)
-
 
                 sent.add(seq)
                 self.logger.debug(f"Retransmitted packet seq={seq}")
         return sent
-
-    # ── storage management ────────────────────────────────────────────────────
 
     def _delete_from_store(self, seqs: set[int]):
         """Remove implicitly-acknowledged packets from the persistent store."""
