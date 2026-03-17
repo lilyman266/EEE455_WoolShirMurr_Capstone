@@ -7,7 +7,7 @@ from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Ses
 MAX_TRIES        = 5
 TIMEOUT          = 5.0
 TEARDOWN_TIMEOUT = 3.0
-POLL_INTERVAL    = 2
+POLL_INTERVAL    = 4
 
 class ConnectedDownlink(Session):
     def __init__(self, layer):
@@ -55,15 +55,21 @@ class ConnectedDownlink(Session):
             frame = Audimus_pb2.Session_Message()
             frame.ParseFromString(raw)
 
+
+            if frame.RST:
+                self.logger.warning(f"Received reset. Going back to connectionless downlink")
+                await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+
+
             if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedDownlink:
-                self.logger.warning(f"Unexpected mode {frame.mode} in {self.name}")
+                self.logger.info(f"Unexpected mode {frame.mode} in {self.name}")
 
             if frame.FIN and frame.ACK:
                 self.logger.debug("FIN-ACK received → fin_ack_queue")
                 await self.fin_ack_queue.put(frame)
                 return None
 
-            if frame.ACK:
+            if frame.ACK and not frame.RET:
                 self.logger.debug(f"ACK received seq={frame.packet_number} → ack_queue")
                 await self.ack_queue.put(frame)
                 return None
@@ -71,17 +77,15 @@ class ConnectedDownlink(Session):
             if frame.FIN:
                 self.logger.info("FIN received – sending FIN-ACK and returning to connectionless")
                 await self.layer.below_tx.put(self.build_fin_ack())
-                await self.layer.session_queue.put(
-                    Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
-                )
+                await self.layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
                 return None
 
             #retransmission request
             if frame.RET:
                 self.logger.info(f"RETRANSMIT_REQUEST received: {frame.retransmit_request}")
                 await self.request_queue.put(frame)
-                return None
 
+                return None
 
             # Data frame (no FIN, ACK, or retransmit_request flags)
             self.logger.debug(f"DATA frame received seq={frame.packet_number} → data_queue")
@@ -94,7 +98,7 @@ class ConnectedDownlink(Session):
             return None
 
     async def handle_tx(self, message: bytes):
-        self.logger.warning("TX attempted in ConnectedDownlink – message dropped.")
+        self.logger.info("TX attempted in ConnectedDownlink – message dropped.")
         return None
 
     async def teardown(self):
@@ -115,18 +119,17 @@ class ConnectedDownlink(Session):
                         timeout=TEARDOWN_TIMEOUT
                     )
                     self.logger.info("FIN-ACK received – teardown complete")
-                    await self.layer.set_session(
-                        Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
-                    )
+                    await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
                     return
 
                 except asyncio.TimeoutError:
-                    self.logger.warning(
+                    self.logger.info(
                         f"Teardown timeout waiting for FIN-ACK "
                         f"(attempt {attempt}/{MAX_TRIES})"
                     )
 
         self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
+        await self.reset()
 
 
     def build_retransmit_request(self, missing_seqs: list[int]) -> bytes:
@@ -134,6 +137,7 @@ class ConnectedDownlink(Session):
             mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
             retransmit_request=missing_seqs,
             RET = True,
+            ACK = True,
         )
         return msg.SerializeToString()
 
@@ -143,6 +147,7 @@ class ConnectedDownlink(Session):
             mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
             packet_number=seq,
             presentation_message=payload,
+            RET = False,
         )
         return msg.SerializeToString()
 
@@ -150,6 +155,7 @@ class ConnectedDownlink(Session):
         return Audimus_pb2.Session_Message(
             mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
             FIN=True,
+            RET = False,
         ).SerializeToString()
 
     def build_fin_ack(self) -> bytes:
@@ -157,6 +163,7 @@ class ConnectedDownlink(Session):
             mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
             FIN=True,
             ACK=True,
+            RET=False,
         ).SerializeToString()
 
 
@@ -164,6 +171,7 @@ class ConnectedDownlink(Session):
 class GroundStationConnectedDownlink(ConnectedDownlink):
     def __init__(self, layer):
         super().__init__(layer)
+
 
     async def on_enter(self):
         await super().on_enter()
@@ -217,8 +225,8 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
         except asyncio.CancelledError:
             self.logger.info("retransmit_loop cancelled")
 
-    async def _request_round(self, missing: list[int]) -> bool:
-        """"
+    async def _request_round(self, missing: list[int]):
+        """
         1. sends the request
         2. collects data frames untill timeout
         3. loops untill no packets left
@@ -235,10 +243,10 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                 )
 
                 received: dict[int, bytes] = {}
-                deadline = asyncio.get_event_loop().time() + TIMEOUT
+                deadline = asyncio.get_running_loop().time() + TIMEOUT
 
                 while len(received) < len(missing):
-                    time_left = deadline - asyncio.get_event_loop().time()
+                    time_left = deadline - asyncio.get_running_loop().time()
                     if time_left <= 0:
                         break
                     try:
@@ -247,14 +255,14 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                         break
 
                     seq = frame.packet_number
-                    print(f"seq: {seq}")
+
                     if seq in missing and seq not in received:
                         received[seq] = frame.presentation_message
                         self.logger.debug(f"Received retransmitted packet seq={seq}")
                         self.layer.packet_tracker.acknowledge(seq)
                         await self.layer.layer_rx.put(frame.presentation_message)
                     else:
-                        self.logger.warning(
+                        self.logger.info(
                             f"Unexpected seq={seq} in retransmit round "
                             f"(missing={missing}) – discarding"
                         )
@@ -273,7 +281,7 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                     return True
 
                 still_missing = [s for s in missing if s not in received]
-                self.logger.warning(
+                self.logger.info(
                     f"Attempt {attempt}/{MAX_TRIES}: received "
                     f"{len(received)}/{len(missing)}, "
                     f"still missing {still_missing}"
@@ -294,6 +302,7 @@ class AudimusConnectedDownlink(ConnectedDownlink):
         super().__init__(layer)
         self._last_sent_set: set[int] = set()
 
+
     async def on_enter(self):
         await super().on_enter()
         self._last_sent_set.clear()
@@ -303,54 +312,68 @@ class AudimusConnectedDownlink(ConnectedDownlink):
         self.logger.info("Satellite ConnectedDownlink: on_exit")
         await super().on_exit()
 
-
     async def _serve_loop(self):
         self.logger.info("Satellite serve_loop started (implicit-ACK mode)")
         try:
             while not self.stop_event.is_set():
+                try:
+                    frame = await asyncio.wait_for(
+                        self.request_queue.get(),
+                        timeout=POLL_INTERVAL
+                    )
+                except asyncio.TimeoutError:
+                    self.logger.debug("No retransmit request within poll interval — continuing")
+                    continue
 
-                frame = await asyncio.wait_for(self.request_queue.get(),timeout=POLL_INTERVAL)
+                #calculate what has been implicitly acked
                 new_missing = set(frame.retransmit_request)
-
                 implicitly_acked = self._last_sent_set - new_missing
+
+                #deletes whatever has been implicitly acked
                 if implicitly_acked:
                     self.logger.info(
                         f"Implicit ACK for packets {implicitly_acked} "
                         f"(absent from new request) — deleting from store"
                     )
-                    self._delete_from_store(implicitly_acked)
+                    for seq in implicitly_acked:
+                        await self.layer.packet_store.acknowledge(seq)
+                    self._last_sent_set -= implicitly_acked
 
+                #if we receive an emtpy set, we can delete the whole store
                 if new_missing == set():
-                    self.logger.info("Empty RETRANSMIT_REQUEST received all packets implicitly ACK'd; awaiting FIN""")
+                    self.logger.info("Empty RETRANSMIT_REQUEST received — all packets implicitly ACK'd; awaiting FIN")
                     await self.layer.packet_store.empty_store()
-                    continue   # will now just wait for FIN via handle_rx
+                    continue
 
+                #send whatever has not been implicitely acked
                 self.logger.info(f"Serving retransmit request: {new_missing}")
                 actually_sent = await self._send_packets(new_missing)
-
                 self._last_sent_set = actually_sent
+
 
         except asyncio.CancelledError:
             self.logger.info("Satellite serve_loop cancelled")
-
 
     async def _send_packets(self, seqs: set[int]) -> set[int]:
         sent: set[int] = set()
         async with self.tx_lock:
 
             for seq in sorted(seqs):
-                payload = await self.layer.packet_store.get_packet(seq)
 
-                if payload is None:
-                    self.logger.warning(
-                        f"Packet seq={seq} requested but not in store — skipping"
-                    )
+                try:
+                    payload = await self.layer.packet_store.get_packet(seq)
+                except Exception as e:
+                    self.logger.infp("Packet seq={seq} requested but not in store — sending emtpy packet")
+                    payload = f"Packet was dropped and unable to be recovered"
                     continue
+
+
                 frame = self.build_data_frame(seq, payload)
                 await self.layer.below_tx.put(frame)
 
                 sent.add(seq)
-                self.logger.debug(f"Retransmitted packet seq={seq}")
+                self.logger.info(f"Retransmitted packet seq={seq}")
+
         return sent
 
 
@@ -363,7 +386,7 @@ class AudimusConnectedDownlink(ConnectedDownlink):
                     f"Deleted implicitly-ACK'd packet seq={seq} from store"
                 )
             else:
-                self.logger.warning(
+                self.logger.info(
                     f"Tried to delete seq={seq} but it was not in store "
                     f"(already deleted or never stored)"
                 )

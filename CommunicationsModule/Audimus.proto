@@ -15,10 +15,52 @@ enum MESSAGE_TYPE{
    Mission_data = 3;
 }
 
-message Application_Message{
-  string message = 1;
-  MESSAGE_TYPE type = 2;
+
+
+//////////////////////////////////////////// command types and response  //////////////////////////////
+
+
+message Test_Data{
+    bool text = 1;
+    bool audio = 2;
 }
+
+message Debug{
+    bool mem = 1;
+    bool sd = 2;
+    string start = 3;
+    string end =4;
+}
+
+message Chute{
+    bool deploy_now = 1;
+    int32 delay = 2;
+}
+
+message Burn{
+    int32 burn_time = 1;
+    int32 delay = 2;
+}
+
+message Health{
+    int32 recent = 1;
+    int32 start_time =2;
+    int32 end_time = 3;
+}
+
+message Audio_Command{
+    int32 number = 1;
+    int32 start_time = 2;
+    int32 end_time =3;
+}
+
+message Command_Response{
+    string response = 1;
+}
+
+/////////////////////////////////////////////// layer messages ///////////////////////////////////////////////
+
+
 
 message Presentation_Message{
   int32 key_epoch = 1;
@@ -39,5 +81,6 @@ message Session_Message{
   optional bool NACK = 9;
   optional bool FIN = 10;
   optional bool RET = 11;
-  repeated uint32 retransmit_request = 12;
+  optional bool RST = 12;
+  repeated uint32 retransmit_request = 13;
 }

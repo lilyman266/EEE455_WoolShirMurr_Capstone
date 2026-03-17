@@ -52,13 +52,18 @@ class PresentationLayer(ProtocolLayer.ProtocolLayer):
     def encrypt(self, plaintext: bytes) -> bytes:
         nonce = self.get_nonce()
         aad = f"{SENDER_IDENTITY}".encode("utf-8")
-        cipher = self.aesgcm.encrypt(nonce, plaintext, aad)
+
+        try:
+            cipher = self.aesgcm.encrypt(nonce, plaintext, aad)
+        except ValueError:
+            self.logger.warning(f"message: {plaintext} too short for encryption")
+            return b''
+
         return nonce + cipher
 
 
     def process_rx(self, message):
         message = self.deframe(message)
-        self.logger.info(f"rx: {message}")
         return message
 
     def deframe(self, message):
@@ -66,7 +71,12 @@ class PresentationLayer(ProtocolLayer.ProtocolLayer):
         pl_message.ParseFromString(message)
 
         # Always decrypt using the session number in the packet
-        plaintext = self.decrypt(pl_message.application_message,pl_message.session_number)
+        try:
+            plaintext = self.decrypt(pl_message.application_message,pl_message.session_number)
+        except ValueError:
+            self.logger.warning(f"message: {message} too short for decryption")
+            return b''
+
 
         if pl_message.session_number > self.session_number:
             self.update_session_number(pl_message.session_number)

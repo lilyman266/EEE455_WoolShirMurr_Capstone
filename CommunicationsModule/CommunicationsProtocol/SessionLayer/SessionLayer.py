@@ -166,9 +166,10 @@ class GroundStationSessionLayer(SessionLayer):
 
 class AudimusSessionLayer(SessionLayer):
 
-    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sq):
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sq, aros_sq):
         super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, sl_sq)
         self.packet_store = PacketStore()  # saves all packets until acked
+        self.aros_session_queue = aros_sq
         self.packet_number_path = (
             "CommunicationsModule/CommunicationsProtocol"
             "/SessionLayer/PacketStore/GroundStationCurrentPacketNumber"
@@ -191,11 +192,28 @@ class AudimusSessionLayer(SessionLayer):
                 return None
 
 
-    # reads from state queue, evaluates if session needs to be changed.
+    # reads from state queue, evaluates if session needs to be changed. send new session mode to audimus sim
     async def state_watcher(self):
         while True:
             new_mode = await self.session_queue.get()
             await self.set_session(new_mode)
+
+
+
+    async def set_session(self, new_mode: Audimus_pb2.SESSION_MODE):
+
+        # teardown the current session
+        if self.session:
+            await self.session.on_exit()
+
+        async with self._session_lock:
+            self.session = await self.get_session(new_mode)
+            self.mode = new_mode
+
+            #start the next session
+            await self.session.on_enter()
+            await self.aros_session_queue.put(new_mode)
+
 
 
 ############################### packet index and packet tracker ######################################
@@ -206,9 +224,9 @@ class MissingPacketIndex:
     def __init__(self):
         self.packet_index = "CommunicationsModule/CommunicationsProtocol/SessionLayer/PacketStore/GS_packet_tracker"
         self.missing = set()
-        self._load()
+        self.load()
 
-    def _load(self):
+    def load(self):
         try:
             with open(self.packet_index, "r") as f:
                 for line in f:
@@ -216,21 +234,21 @@ class MissingPacketIndex:
         except FileNotFoundError:
             pass
 
-    def _persist(self):
+    def persist(self):
         with open(self.packet_index, "w") as f:
             for seq in sorted(self.missing):
                 f.write(f"{seq}\n")
 
     def record_drop(self, seq):
         self.missing.add(seq)
-        self._persist()
+        self.persist()
 
     def get_missing_packets(self):
         return sorted(self.missing)
 
     def acknowledge(self, seq):
         self.missing.discard(seq)
-        self._persist()
+        self.persist()
 
     def has_missing_packets(self):
         return bool(self.missing)
@@ -288,7 +306,10 @@ class PacketStore:
         self._write_store(self._store)
 
     async def get_packet(self, seq_number: int):
-        return self._store[seq_number]
+        try:
+            return self._store[seq_number]
+        except KeyError:
+            return None
 
     async def acknowledge(self, seq_number: int) -> None:
         if not isinstance(seq_number, int):

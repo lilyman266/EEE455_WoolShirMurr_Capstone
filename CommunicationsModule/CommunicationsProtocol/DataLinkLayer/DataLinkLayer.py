@@ -20,18 +20,17 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
             # receive a message from tcp
             msg = await self.reader.read(1024)
 
-            if random.randint(1,10) > 10:
-                print("packet dropped")
-                continue
 
             # Check for EOF / connection closed
             if not msg:
                 self.logger.info("Connection closed, stopping rx")
-                break  # or handle reconnection logic here
+                break  # or handle reconnection logic hereF
 
 
-            self.logger.info(b'rx: ' + msg)
-            #do the thing ot the message
+            if random.randint(1,10) > 9:
+                print("packet dropped")
+                continue
+
 
             #put the message in the layers rx queue
             await self.layer_rx.put(msg)
@@ -40,7 +39,7 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
         while True:
             # grab the message from this layer's tx queue
             message = await self.layer_tx.get()
-            self.logger.info(b'tx: ' + message)
+
             #send the message over tcp
             self.writer.write(message)
 

@@ -2,7 +2,7 @@ from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 import asyncio
-
+import random
 
 class ApplicationLayer(ProtocolLayer.ProtocolLayer):
     def __init__(self,  PL_rx, PL_tx, sl):
@@ -12,6 +12,7 @@ class ApplicationLayer(ProtocolLayer.ProtocolLayer):
         self.below_rx = PL_rx
         self.below_tx = PL_tx
         self.session_layer = sl
+
 
     def process_tx(self, message):
         return self.encode(message)
@@ -56,8 +57,6 @@ class GroundStationApplicationLayer(ApplicationLayer):
                         message = self.encode(message)
                         await self.below_tx.put(message)
 
-            
-
     async def distribute(self):
         message= await self.command_line()
         # send session change commands to the session layer
@@ -77,10 +76,18 @@ class GroundStationApplicationLayer(ApplicationLayer):
             yield line
 
 
+############################# Audimus application layer ############################
+
+
 
 class AudimusApplicationLayer(ApplicationLayer):
-    def __init__(self, PL_rx, PL_tx):
+    def __init__(self, PL_rx, PL_tx, ASQ):
         super().__init__(PL_rx, PL_tx, None)
+
+        self.aros_mode = Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
+        self.session_queue = ASQ
+        self.session_lock = asyncio.Lock()
+
 
     def read_lines(self, path):
         with open(path, "r", encoding="utf-8") as f:
@@ -88,20 +95,42 @@ class AudimusApplicationLayer(ApplicationLayer):
                 yield line.rstrip("\n")
 
 
-    async def rx(self):
+############################# AROS simulator living in audimus application layer #############################
+
+    # Script to model AROS behavior
+    async def AROS_sim(self):
         while True:
-            message = await self.below_rx.get()
-            message = self.decode(message)
-            self.logger.info(message)
+            async with self.session_lock:
+                match self.aros_mode:
+
+                    case Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                        message = await self.below_rx.get()
+                        message = self.decode(message)
+                        self.logger.info(message)
+
+                    case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
+                        await asyncio.sleep(0.1)
+
+                    case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
+                        #wait a random amount of time, then send a message burst of random length
+                        await asyncio.sleep(random.expovariate(2))
+                        for burst in range(int(random.expovariate(2))):
+                            line = self.read_one_line("CommunicationsModule/TestTXAudimus")
+                            message = self.encode(line)
+
+                            await self.below_tx.put(message)
 
 
 
-    #send lines from files
-    async def tx_file(self):
-        for line in self.read_lines("CommunicationsModule/TestTXAudimus"):
-            message = self.process_tx(line)
-            self.logger.info(message)
-            await self.below_tx.put(message)
-            await asyncio.sleep(0.1)
+    def read_one_line(self, path: str):
+            with open(path, "r", encoding="utf-8") as f:
+                return f.readline().rstrip("\n")
 
+    async def state_watcher(self):
+        self.logger.info(f"starting state watcher")
+        while True:
+            new_mode = await self.session_queue.get()
+            async with self.session_lock:
+                self.aros_mode = new_mode
+                self.logger.info(f"New AROS mode: {new_mode}")
 

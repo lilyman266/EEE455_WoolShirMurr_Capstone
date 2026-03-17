@@ -25,6 +25,8 @@ class ConnectedUplink(Session):
         self.tx_lock       = asyncio.Lock()
         self.teardown_requested = asyncio.Event()
 
+
+
     #ACK, fin, fin-ack handled at layers below. Only data is passed upward. Fin triggers change in mode
     async def handle_rx(self, raw: bytes):
 
@@ -39,9 +41,13 @@ class ConnectedUplink(Session):
             )
 
             if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                self.logger.warning(
-                    f"Unexpected mode received: {frame.mode} in {self.name}"
-                )
+                self.logger.warning(f"Unexpected mode received: {frame.mode} in {self.name}")
+                await self.handle_wrong_mode(frame)
+
+            #if we get a reset
+            if frame.RST:
+                self.logger.warning(f"Received reset. Going back to connectionless downlink")
+                await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
 
             # if we get a fin ack
             if frame.FIN and frame.ACK:
@@ -50,7 +56,8 @@ class ConnectedUplink(Session):
                 return None
 
             # if we get an ack
-            if frame.ACK:
+
+            if frame.ACK and not frame.DATA:
                 self.logger.debug(f"ACK received for seq={frame.packet_number}")
                 await self.ack_queue.put(frame)
                 return None
@@ -175,7 +182,7 @@ class ConnectedUplink(Session):
                     )
 
         self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
-
+        await self.reset()
 
     async def on_enter(self):
         self.logger.info(f"{self.name} entered")
@@ -191,7 +198,8 @@ class ConnectedUplink(Session):
             packet_number=seq,
             SYN=False,
             ACK=False,
-            FIN=False
+            FIN=False,
+            DATA=False
         )
         return msg.SerializeToString()
 
@@ -201,7 +209,8 @@ class ConnectedUplink(Session):
             packet_number=seq,
             SYN=False,
             ACK=True,
-            FIN=False
+            FIN=False,
+            DATA=False
         )
         return ack.SerializeToString()
 
@@ -210,7 +219,9 @@ class ConnectedUplink(Session):
             mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             SYN=False,
             ACK=False,
-            FIN=True
+            FIN=True,
+            DATA = False
+
         )
         return fin.SerializeToString()
 
@@ -219,7 +230,8 @@ class ConnectedUplink(Session):
             mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             SYN=False,
             ACK=True,
-            FIN=True
+            FIN=True,
+            DATA = False
         )
         return fin_ack.SerializeToString()
 
@@ -235,6 +247,26 @@ class GroundStationConnectedUplink(ConnectedUplink):
         self.logger.info("GroundStation ConnectedUplink: initiating teardown")
         await super().on_exit()
 
+    # ground station messages carry an ack incase final handshake ack was dropped
+    def frame(self, presentation_message, seq) -> bytes:
+        msg = Audimus_pb2.Session_Message(
+            presentation_message=presentation_message,
+            mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
+            packet_number=seq,
+            SYN=False,
+            ACK=True,
+            FIN=False,
+            DATA=True
+        )
+
+        return msg.SerializeToString()
+
+    async def handle_wrong_mode(self, frame):
+        if frame.mode == Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
+            self.logger.warning(f"GS received connectionless downlink mode mode from Audimus while in "
+                                f"connected uplink. Switching mode to connectionless downlink.")
+            await self.layer.set_session(Audimus_pb2.ConnectionlessDownlink)
+
 
 ############################################ Audimus ##########################################
 
@@ -247,3 +279,4 @@ class AudimusConnectedUplink(ConnectedUplink):
     async def on_exit(self):
         self.logger.info("Audimus ConnectedUplink: exiting after FIN")
         await super().on_exit()
+

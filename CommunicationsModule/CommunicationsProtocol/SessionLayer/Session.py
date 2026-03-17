@@ -1,15 +1,14 @@
-from enum import Enum
-import csv
-from collections import deque
-import os
-import struct
-import asyncio
+import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 
 
 class Session:
     def __init__(self, layer):
         self.layer = layer
 
+    async def reset(self):
+        self.logger.warning(f"Received reset. Going back to connectionless downlink")
+        await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+        return
 
     async def handle_rx(self, packet):
         return packet
