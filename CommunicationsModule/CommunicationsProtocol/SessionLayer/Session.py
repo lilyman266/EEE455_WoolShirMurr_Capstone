@@ -1,4 +1,11 @@
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
+import enum
+class RadioMode(enum.Enum):
+    RX = "rx"
+    TX = "tx"
+
+
+
 
 
 class Session:

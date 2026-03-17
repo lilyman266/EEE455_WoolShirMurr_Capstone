@@ -21,10 +21,13 @@ async def run_client(host, port):
     SL_tx = asyncio.Queue()
 
     #session state change queue
-    SL_sc = asyncio.Queue()
+    session_queue = asyncio.Queue()
+
+    # raido mode state change queue
+    radio_mode_queue = asyncio.Queue()
 
     #audimus presentation layer to AROS session queue
-    ASQ = asyncio.Queue()
+    aros_sim_queue = asyncio.Queue()
 
     # data link layer queues
     DLL_rx = asyncio.Queue()
@@ -35,10 +38,10 @@ async def run_client(host, port):
     SDR_tx = asyncio.Queue()
 
     # create instances of each layer
-    al = AudimusApplicationLayer(PL_rx,PL_tx, ASQ)
+    al = AudimusApplicationLayer(PL_rx, PL_tx, aros_sim_queue)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
-    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, SL_sc, ASQ)
-    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, reader, writer)
+    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, session_queue, radio_mode_queue, aros_sim_queue)
+    dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, reader, writer, radio_mode_queue)
 
     # run application layer coroutines
     sim_handler = asyncio.create_task(al.AROS_sim())
@@ -53,9 +56,11 @@ async def run_client(host, port):
     # session layer coroutines started internally
     sl_handler = asyncio.create_task(sl.start())
 
-    # run data link layer coroutines
-    dll_tx_handler = asyncio.create_task(dll.tx_tcp())
-    dll_rx_handler = asyncio.create_task(dll.rx_tcp())
+
+    #run data link layer coroutines
+    dll_handler = asyncio.create_task(dll.start())
+
+
 
     task_handlers = [
         sim_handler,
@@ -63,8 +68,7 @@ async def run_client(host, port):
         pl_tx_handler,
         pl_rx_handler,
         sl_handler,
-        dll_tx_handler,
-        dll_rx_handler,
+        dll_handler,
     ]
 
     await asyncio.gather(*task_handlers)

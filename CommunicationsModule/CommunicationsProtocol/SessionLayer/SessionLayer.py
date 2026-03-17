@@ -1,28 +1,28 @@
 from Logger.Logger import LoggerFactory
 import asyncio
 import os
-import struct
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectionlessDownlink import GroundStationConnectionlessDownlink,AudimusConnectionlessDownlink
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectedDownlink import GroundStationConnectedDownlink,AudimusConnectedDownlink
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectedUplink import GroundStationConnectedUplink, AudimusConnectedUplink
-from CommunicationsModule.Logger.Errors import StateChangeError as SessionChangeError
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import RadioMode
 import json
 
 
 
-
 class SessionLayer:
-    def __init__(self, sl_rx, sl_tx, dll_rx, dll_tx, session_queue):
+    def __init__(self, sl_rx, sl_tx, dll_rx, dll_tx, session_queue, mode_queue):
         self.below_rx      = dll_rx
         self.below_tx      = dll_tx
         self.layer_rx      = sl_rx
         self.layer_tx      = sl_tx
+        self.session_queue = session_queue
+        self.mode_queue = mode_queue
         self.mode          = None
         self.session       = None
         self.name          = "Session Layer"
         self.logger        = LoggerFactory.get_logger(self.name)
-        self.session_queue = session_queue
+
         self._tasks        = []
         self._session_lock = asyncio.Lock()
 
@@ -94,12 +94,31 @@ class SessionLayer:
         pass
 
 
+    async def dll_radio_switch(self, new_mode):
+        await self.mode_queue.put(new_mode)
+
+    # all tx to the data link layer goes through here
+    async def swap_put(self, message):
+        self.logger.info(f"swap putting{message}")
+        await self.mode_queue.put(RadioMode.TX)
+        await asyncio.sleep(0.001)
+        await self.below_tx.put(message)
+        await asyncio.sleep(0.001)
+        await self.mode_queue.put(RadioMode.RX)
+
+    async def put(self, message):
+        self.logger.info(f"swap putting{message}")
+        await self.mode_queue.put(RadioMode.TX)
+        await asyncio.sleep(0.001)
+        await self.below_tx.put(message)
+
+
 ##################Ground Station ###############################################
 
 class GroundStationSessionLayer(SessionLayer):
 
-    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sc):
-        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, sl_sc)
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sc, rm_sq):
+        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, sl_sc, rm_sq)
         self.packet_tracker = MissingPacketIndex()  #tracks dropped packets for retransmission
         self.packet_number_path = (
             "CommunicationsModule/CommunicationsProtocol"
@@ -166,8 +185,8 @@ class GroundStationSessionLayer(SessionLayer):
 
 class AudimusSessionLayer(SessionLayer):
 
-    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sq, aros_sq):
-        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, sl_sq)
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue, aros_sq):
+        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue)
         self.packet_store = PacketStore()  # saves all packets until acked
         self.aros_session_queue = aros_sq
         self.packet_number_path = (

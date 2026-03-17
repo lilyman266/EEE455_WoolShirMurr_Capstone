@@ -5,13 +5,13 @@ import asyncio
 import random
 
 class ApplicationLayer(ProtocolLayer.ProtocolLayer):
-    def __init__(self,  PL_rx, PL_tx, sl):
+    def __init__(self,  PL_rx, PL_tx, session_queue):
         super().__init__(None, None, PL_rx, PL_tx)
         self.name = "Application Layer "
         self.logger = LoggerFactory.get_logger(self.name)
         self.below_rx = PL_rx
         self.below_tx = PL_tx
-        self.session_layer = sl
+        self.session_queue = session_queue
 
 
     def process_tx(self, message):
@@ -48,11 +48,11 @@ class GroundStationApplicationLayer(ApplicationLayer):
 
                 match message:
                     case "connected uplink mode":
-                        await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectedUplink)
+                        await self.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectedUplink)
                     case "connected downlink mode":
-                        await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
+                        await self.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectedDownlink)
                     case "connectionless downlink mode":
-                        await self.session_layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+                        await self.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
                     case _:
                         message = self.encode(message)
                         await self.below_tx.put(message)
@@ -113,12 +113,12 @@ class AudimusApplicationLayer(ApplicationLayer):
 
                     case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
                         #wait a random amount of time, then send a message burst of random length
-                        await asyncio.sleep(random.expovariate(2))
-                        for burst in range(int(random.expovariate(2))):
-                            line = self.read_one_line("CommunicationsModule/TestTXAudimus")
-                            message = self.encode(line)
+                        await asyncio.sleep(random.expovariate(0.1))
+                        #for burst in range(int(random.expovariate(2))):
+                        #    line = self.read_one_line("CommunicationsModule/TestTXAudimus")
+                        #    message = self.encode(line)
 
-                            await self.below_tx.put(message)
+                         #   await self.below_tx.put(message)
 
 
 

@@ -2,6 +2,7 @@ import asyncio
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import RadioMode
 
 MAX_TRIES = 5
 TIMEOUT   = 5
@@ -54,8 +55,6 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
         try:
             frame =  self.deframe(raw)
-            if frame.RST:
-                await self.reset()
         except Exception as e:
             self.logger.error(f"Failed to deframe packet: {e}")
             return None
@@ -80,8 +79,6 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
         self.packet_number = received_number
         self.write_packet_number(self.packet_number)
-
-
 
     async def handle_tx(self, message: bytes):
         """Ground station only sends SYN requests in this mode."""
@@ -114,7 +111,8 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
                 #send ack
                 syn = Audimus_pb2.Session_Message(SYN=True, mode=new_mode)
-                await self.layer.below_tx.put(syn.SerializeToString())
+                self.logger.info("first syn swap put")
+                await self.layer.swap_put(syn.SerializeToString())
 
                 #wait for syn-ack response
                 raw = await asyncio.wait_for(self.handshake_rx_queue.get(), timeout=TIMEOUT)
@@ -130,7 +128,7 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
                 #send ack
                 ack = Audimus_pb2.Session_Message(ACK=True, mode=new_mode)
-                await self.layer.below_tx.put(ack.SerializeToString())
+                await self.layer.put(ack.SerializeToString())
                 self.logger.info("handshake complete")
 
                 await self.layer.set_session(new_mode)
@@ -142,7 +140,7 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
                     f"Timeout waiting for SYN-ACK (attempt {attempt}/{MAX_TRIES})"
                 )
 
-        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts,  staying in connectionless downlink")
+        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts,  staying in connectionless downlink for pass")
         self.connecting = False
 
 
@@ -159,6 +157,20 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
         )
         super().__init__(layer)
 
+
+    async def on_enter(self):
+        await self.wait_for_connection()
+
+
+    async def wait_for_connection(self):
+       #put the radio into receive mode
+       await self.layer.mode_queue.put(RadioMode.RX)
+       self.logger.info("waiting for ground station to reach out")
+       await asyncio.sleep(5)
+       self.logger.info("Ground station did not reach out, remainder of pass will be done in connectionless downlink")
+       # if timer expires, switch back to send mode
+       if not self.connecting:
+            await self.layer.mode_queue.put(RadioMode.TX)
 
     async def handle_tx(self, message: bytes) -> bytes | None:
         try:
@@ -192,21 +204,14 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
         try:
             frame =  await self.deframe(raw)
 
-            if frame.RST:
-                await self.reset()
-                return None
-
             if frame.SYN:
                 self.connecting = True  # set BEFORE spawning task
                 asyncio.create_task(self.handshake(frame))
                 return None  # no payload for presentation
 
             #if GS is in wrong mode, send a reset
-            if frame.mode != Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-                self.logger.warning("Ground station send message from wrong mode, sending reset")
-                frame.RST = True
-                self.layer.below_tx.put(frame)
-
+            if frame.mode == Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectedUplink)
 
             return frame
         except Exception as e:
@@ -236,7 +241,7 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
             try:
 
                 syn_ack = Audimus_pb2.Session_Message(SYNACK=True, mode=new_mode, packet_number = self.packet_number )
-                await self.layer.below_tx.put(syn_ack.SerializeToString())
+                await self.layer.swap_put(syn_ack.SerializeToString())
 
 
                 raw = await asyncio.wait_for(self.handshake_rx_queue.get(), timeout=TIMEOUT)

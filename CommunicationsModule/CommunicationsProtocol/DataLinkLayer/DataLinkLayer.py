@@ -5,47 +5,72 @@ import zmq.asyncio
 import time
 import asyncio
 CHUNK_SIZE = 1024
-
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import RadioMode
 
 class DataLinkLayer(ProtocolLayer.ProtocolLayer):
-    def __init__(self, DLL_rx,DLL_tx, reader, writer):
-        super().__init__(DLL_rx,DLL_tx, None, None)
+    def __init__(self, DLL_rx, DLL_tx, reader, writer, radio_mode_queue):
+        super().__init__(DLL_rx, DLL_tx, None, None)
         self.name = "Data Link Layer   "
         self.logger = LoggerFactory.get_logger(self.name)
         self.reader = reader
         self.writer = writer
+        self.radio_mode_queue = radio_mode_queue
+        self.mode_lock = asyncio.Lock()
+        self.mode = RadioMode.RX
+        self.tasks = []
+
+    async def start(self):
+        self.tasks.append(asyncio.create_task(self.mode_watcher()))
+        self.tasks.append(asyncio.create_task(self.rx_tcp()))
+        self.tasks.append(asyncio.create_task(self.tx_tcp()))
+
+    async def mode_watcher(self):
+        while True:
+            new_mode = await self.radio_mode_queue.get()
+            async with self.mode_lock:
+                self.mode = new_mode
+            self.logger.info(f"switching radio mode to: {new_mode}")
 
     async def rx_tcp(self):
         while True:
-            # receive a message from tcp
-            msg = await self.reader.read(1024)
+            # Safely check the mode
+            async with self.mode_lock:
+                current_mode = self.mode
 
-
-            # Check for EOF / connection closed
-            if not msg:
-                self.logger.info("Connection closed, stopping rx")
-                break  # or handle reconnection logic hereF
-
-
-            if random.randint(1,10) > 9:
-                print("packet dropped")
-                continue
-
-
-            #put the message in the layers rx queue
-            await self.layer_rx.put(msg)
+            if current_mode == RadioMode.RX:
+                # Do the blocking network read OUTSIDE the lock
+                msg = await self.reader.read(1024)
+                if not msg:
+                    self.logger.info("Connection closed, stopping rx")
+                    break
+                await self.layer_rx.put(msg)
+            else:
+                # Sleep briefly to yield control if not in RX mode
+                await asyncio.sleep(0.001)
 
     async def tx_tcp(self):
         while True:
-            # grab the message from this layer's tx queue
-            message = await self.layer_tx.get()
+            # Safely check the mode
+            async with self.mode_lock:
+                current_mode = self.mode
 
-            #send the message over tcp
-            self.writer.write(message)
+            if current_mode == RadioMode.TX:
 
-            await asyncio.sleep(0.0001)
-            await self.writer.drain()
+                # Do the blocking queue get OUTSIDE the lock
+                message = await self.layer_tx.get()
 
+
+                self.logger.info(f"tx: {message}")
+
+                if random.randint(1,10) > 8:
+                    print("dropped packet")
+                    continue
+
+                self.writer.write(message)
+                await self.writer.drain()
+            else:
+                # Sleep briefly to yield control if not in TX mode
+                await asyncio.sleep(0.001)
 
     # sends to GNU Radio with ZMQ
     async def tx_zmq(self):
@@ -80,8 +105,8 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
 
 
 class GroundStationDataLinkLayer(DataLinkLayer):
-    def __init__(self, DLL_rx,DLL_tx, reader, writer):
-        super().__init__(DLL_rx,DLL_tx, reader,writer)
+    def __init__(self, DLL_rx,DLL_tx, reader, writer, radio_mode_queue):
+        super().__init__(DLL_rx,DLL_tx, reader,writer, radio_mode_queue)
 
     def process_rx(self, message):
         return message
@@ -94,8 +119,8 @@ class GroundStationDataLinkLayer(DataLinkLayer):
 
 
 class AudimusDataLinkLayer(DataLinkLayer):
-    def __init__(self, DLL_rx,DLL_tx, reader, writer):
-        super().__init__(DLL_rx,DLL_tx, reader, writer)
+    def __init__(self, DLL_rx,DLL_tx, reader, writer, radio_mode_queue):
+        super().__init__(DLL_rx,DLL_tx, reader, writer, radio_mode_queue)
 
     def process_rx(self, message):
         return message

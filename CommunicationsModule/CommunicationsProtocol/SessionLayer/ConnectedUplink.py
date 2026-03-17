@@ -74,7 +74,7 @@ class ConnectedUplink(Session):
 
             # if we get data
             ack = self.build_ack(frame.packet_number)
-            await self.layer.below_tx.put(ack)
+            await self.layer.swap_put(ack)
             self.logger.info(f"ACK sent for seq={frame.packet_number}")
 
             # if we get a duplicate
@@ -121,7 +121,7 @@ class ConnectedUplink(Session):
 
             for attempt in range(1, MAX_TRIES + 1):
 
-                await self.layer.below_tx.put(frame)
+                await self.layer.swap_put(frame)
                 deadline = time.monotonic() + TIMEOUT
 
                 while True:
