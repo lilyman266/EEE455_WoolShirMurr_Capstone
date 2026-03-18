@@ -23,54 +23,64 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
         self.tasks.append(asyncio.create_task(self.mode_watcher()))
         self.tasks.append(asyncio.create_task(self.rx_tcp()))
         self.tasks.append(asyncio.create_task(self.tx_tcp()))
+        self.tasks.append(asyncio.create_task(self.deadlock_checker()))
+
+
+    async def deadlock_checker(self):
+        await asyncio.sleep(10)
+        print("no deadlock ... yet ...")
+
 
     async def mode_watcher(self):
         while True:
+
             new_mode = await self.radio_mode_queue.get()
             async with self.mode_lock:
                 self.mode = new_mode
-            self.logger.info(f"switching radio mode to: {new_mode}")
+            self.logger.info(f"radio switches to: {self.mode}")
 
     async def rx_tcp(self):
         while True:
-            # Safely check the mode
+            try:
+                # 1. Wait for incoming data from the TCP stream
+                msg = await asyncio.wait_for(self.reader.read(1024), timeout = 0.01)
+
+                # If msg is empty, the TCP connection was closed
+                if not msg:
+                    self.logger.info("TCP connection closed.")
+                    break
+            except asyncio.TimeoutError:
+                break
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.logger.error(f"TCP read error: {e}")
+                break
+
             async with self.mode_lock:
                 current_mode = self.mode
 
             if current_mode == RadioMode.RX:
-                # Do the blocking network read OUTSIDE the lock
-                msg = await self.reader.read(1024)
-                if not msg:
-                    self.logger.info("Connection closed, stopping rx")
-                    break
+                self.logger.info(f"rx: {msg}")
                 await self.layer_rx.put(msg)
             else:
-                # Sleep briefly to yield control if not in RX mode
-                await asyncio.sleep(0.001)
+                self.logger.warning(f"message dropped due to being in tx when rx is incoming")
 
     async def tx_tcp(self):
         while True:
-            # Safely check the mode
+            message = await self.layer_tx.get()
+
             async with self.mode_lock:
                 current_mode = self.mode
 
             if current_mode == RadioMode.TX:
-
-                # Do the blocking queue get OUTSIDE the lock
-                message = await self.layer_tx.get()
-
-
                 self.logger.info(f"tx: {message}")
-
-                if random.randint(1,10) > 8:
-                    print("dropped packet")
-                    continue
-
                 self.writer.write(message)
                 await self.writer.drain()
             else:
-                # Sleep briefly to yield control if not in TX mode
-                await asyncio.sleep(0.001)
+                self.logger.warning(f"message dropped due to being in RX when message is sending")
+
 
     # sends to GNU Radio with ZMQ
     async def tx_zmq(self):

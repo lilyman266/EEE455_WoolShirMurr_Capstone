@@ -33,6 +33,7 @@ class ProtocolLayer:
             # do the thing to the message
             message = self.process_tx(message)
 
+
             # put message into the tx queue of the layer below
             await self.below_tx.put(message)
 

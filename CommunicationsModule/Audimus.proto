@@ -3,9 +3,11 @@ syntax = "proto3";
 package audimus;
 
 enum SESSION_MODE{
-   ConnectionlessDownlink =0;
-   ConnectedDownlink = 1;
-   ConnectedUplink = 2;
+   Idle = 0;
+   ConnectionlessDownlink = 1;
+   ConnectedDownlink = 2;
+   ConnectedUplink = 3;
+
 }
 
 enum MESSAGE_TYPE{
@@ -60,7 +62,9 @@ message Command_Response{
 
 /////////////////////////////////////////////// layer messages ///////////////////////////////////////////////
 
-
+message Application_Message{
+    string message = 1;
+}
 
 message Presentation_Message{
   int32 key_epoch = 1;

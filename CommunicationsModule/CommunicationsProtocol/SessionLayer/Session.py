@@ -1,4 +1,5 @@
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
+import asyncio
 import enum
 class RadioMode(enum.Enum):
     RX = "rx"
@@ -6,7 +7,7 @@ class RadioMode(enum.Enum):
 
 
 
-
+TIMER = 180
 
 class Session:
     def __init__(self, layer):
@@ -24,7 +25,16 @@ class Session:
         return message
 
     async def on_enter(self):
-        pass
+        self.logger.info(f"Entered {self.name} mode")
+        asyncio.create_task(self.activity_timer())
+
+    async def activity_timer(self):
+            # put the radio into receive mode
+            self.logger.info(f"starting activity timer for {TIMER}")
+            await asyncio.sleep(TIMER)
+            self.logger.info("No activity detected, switching to Connectionless Downlink Mode")
+            # if timer expires, go to connectionless downlink
+            asyncio.create_task(self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink))
 
     async def on_exit(self):
         pass

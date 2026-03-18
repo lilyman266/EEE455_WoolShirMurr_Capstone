@@ -64,6 +64,7 @@ class PresentationLayer(ProtocolLayer.ProtocolLayer):
 
     def process_rx(self, message):
         message = self.deframe(message)
+        self.logger.info(f"message: {message}")
         return message
 
     def deframe(self, message):

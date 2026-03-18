@@ -15,7 +15,9 @@ class ApplicationLayer(ProtocolLayer.ProtocolLayer):
 
 
     def process_tx(self, message):
-        return self.encode(message)
+        message= self.encode(message)
+        self.logger.info(message)
+        return message
 
     def process_rx(self, message):
         message =  self.decode(message)
@@ -47,6 +49,8 @@ class GroundStationApplicationLayer(ApplicationLayer):
             async for message in self.command_line():
 
                 match message:
+                    case "idle mode":
+                        await self.session_queue.put(Audimus_pb2.SESSION_MODE.Idle)
                     case "connected uplink mode":
                         await self.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectedUplink)
                     case "connected downlink mode":
@@ -84,7 +88,7 @@ class AudimusApplicationLayer(ApplicationLayer):
     def __init__(self, PL_rx, PL_tx, ASQ):
         super().__init__(PL_rx, PL_tx, None)
 
-        self.aros_mode = Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
+        self.aros_mode = Audimus_pb2.SESSION_MODE.Idle
         self.session_queue = ASQ
         self.session_lock = asyncio.Lock()
 
@@ -101,24 +105,35 @@ class AudimusApplicationLayer(ApplicationLayer):
     async def AROS_sim(self):
         while True:
             async with self.session_lock:
-                match self.aros_mode:
+                current_mode = self.aros_mode
 
-                    case Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                        message = await self.below_rx.get()
-                        message = self.decode(message)
-                        self.logger.info(message)
 
-                    case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
-                        await asyncio.sleep(0.1)
+            match current_mode:
 
-                    case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-                        #wait a random amount of time, then send a message burst of random length
-                        await asyncio.sleep(random.expovariate(0.1))
-                        #for burst in range(int(random.expovariate(2))):
-                        #    line = self.read_one_line("CommunicationsModule/TestTXAudimus")
-                        #    message = self.encode(line)
+                case Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                    message = await asyncio.wait_for(self.below_rx.get(), timeout=0.1)
+                    message = self.decode(message)
+                    self.logger.info(message)
 
-                         #   await self.below_tx.put(message)
+                case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
+                    await asyncio.sleep(0.1)
+
+                case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
+                    print("sending from connectionless downlink")
+                    #wait a random amount of time, then send a message burst of random length
+                    await asyncio.sleep(0.1)
+                    for burst in range(int(random.randint(0,10))):
+                        line = self.read_one_line("CommunicationsModule/TestTXAudimus")
+                        if not line:
+                            break
+
+                        message = self.encode(line)
+                        await self.below_tx.put(message)
+
+                case Audimus_pb2.SESSION_MODE.Idle:
+                    # await to prevent spinning
+                    await asyncio.sleep(random.expovariate(0.1))
+
 
 
 

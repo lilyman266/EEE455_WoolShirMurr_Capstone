@@ -5,9 +5,9 @@ from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 
 MAX_TRIES        = 5
-TIMEOUT          = 5.0
+TIMEOUT          = 10
 TEARDOWN_TIMEOUT = 3.0
-POLL_INTERVAL    = 4
+POLL_INTERVAL    = 10
 
 class ConnectedDownlink(Session):
     def __init__(self, layer):
@@ -27,6 +27,7 @@ class ConnectedDownlink(Session):
         self.tasks              = []
 
     async def on_enter(self):
+        await super().on_enter()
         self.logger.info(f"{self.name} entered")
         self.stop_event.clear()
         self.teardown_requested.clear()
@@ -56,13 +57,6 @@ class ConnectedDownlink(Session):
             frame.ParseFromString(raw)
 
 
-            if frame.RST:
-                self.logger.warning(f"Received reset. Going back to connectionless downlink")
-                await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
-
-
-            if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedDownlink:
-                self.logger.info(f"Unexpected mode {frame.mode} in {self.name}")
 
             if frame.FIN and frame.ACK:
                 self.logger.debug("FIN-ACK received → fin_ack_queue")
@@ -75,9 +69,10 @@ class ConnectedDownlink(Session):
                 return None
 
             if frame.FIN:
-                self.logger.info("FIN received – sending FIN-ACK and returning to connectionless")
-                await self.layer.below_tx.put(self.build_fin_ack())
-                await self.layer.session_queue.put(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+                self.logger.info("FIN received – sending FIN-ACK and returning to idle")
+                fin_ack = self.build_fin_ack()
+                await self.layer.swap_put(fin_ack)
+                await self.layer.session_queue.put(Audimus_pb2.SESSION_MODE.Idle)
                 return None
 
             #retransmission request
@@ -101,35 +96,36 @@ class ConnectedDownlink(Session):
         self.logger.info("TX attempted in ConnectedDownlink – message dropped.")
         return None
 
+        # Signal intent first so any concurrent handle_tx call that has not yet acquired the lock will stop.
+
     async def teardown(self):
+
         self.teardown_requested.set()
         self.logger.info("Teardown requested – waiting for tx_lock")
 
+        # Lock to protect moving data
         async with self.tx_lock:
             self.logger.info("tx_lock acquired – sending FIN")
             fin = self.build_fin()
-
             for attempt in range(1, MAX_TRIES + 1):
-                await self.layer.below_tx.put(fin)
+                await self.layer.swap_put(fin)
                 self.logger.info(f"FIN sent (attempt {attempt}/{MAX_TRIES})")
 
                 try:
-                    await asyncio.wait_for(
-                        self.fin_ack_queue.get(),
-                        timeout=TEARDOWN_TIMEOUT
-                    )
+                    await asyncio.wait_for(self.fin_ack_queue.get(),timeout=TEARDOWN_TIMEOUT)
+                    await asyncio.wait_for(self.fin_ack_queue.get(),timeout=TEARDOWN_TIMEOUT)
                     self.logger.info("FIN-ACK received – teardown complete")
-                    await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
-                    return
+                    await self.layer.set_session(Audimus_pb2.SESSION_MODE.Idle)
+                    return  # success
 
                 except asyncio.TimeoutError:
-                    self.logger.info(
+                    self.logger.warning(
                         f"Teardown timeout waiting for FIN-ACK "
                         f"(attempt {attempt}/{MAX_TRIES})"
                     )
 
         self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
-        await self.reset()
+
 
 
     def build_retransmit_request(self, missing_seqs: list[int]) -> bytes:
@@ -211,7 +207,9 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                     # ── Send empty request as final implicit-ACK flush ────────
                     self.logger.info("No missing packets – sending empty RETRANSMIT_REQUEST to let satellite flush its store then tearing down")
                     flush = self.build_retransmit_request([])
-                    await self.layer.below_tx.put(flush)
+                    await self.layer.put(flush)
+                    await self.layer.put(flush)
+                    await self.layer.put(flush)
 
                     # Give the satellite a moment to process the flush before FIN
                     await asyncio.sleep(POLL_INTERVAL)
@@ -236,7 +234,7 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
             for attempt in range(1, MAX_TRIES + 1):
 
                 request = self.build_retransmit_request(missing)
-                await self.layer.below_tx.put(request)
+                await self.layer.swap_put(request)
                 self.logger.info(
                     f"RETRANSMIT_REQUEST sent {missing} "
                     f"(attempt {attempt}/{MAX_TRIES})"
@@ -260,7 +258,7 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                         received[seq] = frame.presentation_message
                         self.logger.debug(f"Received retransmitted packet seq={seq}")
                         self.layer.packet_tracker.acknowledge(seq)
-                        await self.layer.layer_rx.put(frame.presentation_message)
+                        await self.layer.swap_put(frame.presentation_message)
                     else:
                         self.logger.info(
                             f"Unexpected seq={seq} in retransmit round "
@@ -358,18 +356,22 @@ class AudimusConnectedDownlink(ConnectedDownlink):
         sent: set[int] = set()
         async with self.tx_lock:
 
-            for seq in sorted(seqs):
+            sorted_seqs = sorted(seqs)
+
+            for i, seq in enumerate(sorted_seqs):
+                is_last = i == len(sorted_seqs) - 1
 
                 try:
                     payload = await self.layer.packet_store.get_packet(seq)
-                except Exception as e:
-                    self.logger.infp("Packet seq={seq} requested but not in store — sending emtpy packet")
-                    payload = f"Packet was dropped and unable to be recovered"
-                    continue
-
+                except Exception:
+                    self.logger.info(f"Packet seq={seq} requested but not in store — sending empty packet")
+                    payload = "Packet was dropped and unable to be recovered"
 
                 frame = self.build_data_frame(seq, payload)
-                await self.layer.below_tx.put(frame)
+                if is_last:
+                    await self.layer.swap_put(frame)
+                else:
+                    await self.layer.put(frame)
 
                 sent.add(seq)
                 self.logger.info(f"Retransmitted packet seq={seq}")

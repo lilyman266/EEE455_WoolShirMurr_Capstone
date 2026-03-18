@@ -42,12 +42,8 @@ class ConnectedUplink(Session):
 
             if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedUplink:
                 self.logger.warning(f"Unexpected mode received: {frame.mode} in {self.name}")
-                await self.handle_wrong_mode(frame)
 
-            #if we get a reset
-            if frame.RST:
-                self.logger.warning(f"Received reset. Going back to connectionless downlink")
-                await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+
 
             # if we get a fin ack
             if frame.FIN and frame.ACK:
@@ -66,10 +62,8 @@ class ConnectedUplink(Session):
             if frame.FIN:
                 self.logger.info("FIN received – sending FIN-ACK and triggering mode change")
                 fin_ack = self.build_fin_ack()
-                await self.layer.below_tx.put(fin_ack)
-                await self.layer.session_queue.put(
-                    Audimus_pb2.SESSION_MODE.ConnectionlessDownlink
-                )
+                await self.layer.swap_put(fin_ack)
+                await self.layer.set_session(Audimus_pb2.SESSION_MODE.Idle)
                 return None
 
             # if we get data
@@ -163,7 +157,7 @@ class ConnectedUplink(Session):
             self.logger.info("tx_lock acquired – sending FIN")
             fin = self.build_fin()
             for attempt in range(1, MAX_TRIES + 1):
-                await self.layer.below_tx.put(fin)
+                await self.layer.swap_put(fin)
                 self.logger.info(f"FIN sent (attempt {attempt}/{MAX_TRIES})")
 
                 try:
@@ -172,7 +166,7 @@ class ConnectedUplink(Session):
                         timeout=TEARDOWN_TIMEOUT
                     )
                     self.logger.info("FIN-ACK received – teardown complete")
-                    await self.layer.set_session(Audimus_pb2.ConnectionlessDownlink)
+                    await self.layer.set_session(Audimus_pb2.Idle)
                     return  # success
 
                 except asyncio.TimeoutError:
@@ -184,12 +178,8 @@ class ConnectedUplink(Session):
         self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
         await self.reset()
 
-    async def on_enter(self):
-        self.logger.info(f"{self.name} entered")
 
 
-    async def on_exit(self):
-        self.logger.info(f"{self.name} exiting")
 
     def frame(self, presentation_message, seq) -> bytes:
         msg = Audimus_pb2.Session_Message(
@@ -243,10 +233,6 @@ class GroundStationConnectedUplink(ConnectedUplink):
     def __init__(self, layer):
         super().__init__(layer)
 
-    async def on_exit(self):
-        self.logger.info("GroundStation ConnectedUplink: initiating teardown")
-        await super().on_exit()
-
     # ground station messages carry an ack incase final handshake ack was dropped
     def frame(self, presentation_message, seq) -> bytes:
         msg = Audimus_pb2.Session_Message(
@@ -261,12 +247,6 @@ class GroundStationConnectedUplink(ConnectedUplink):
 
         return msg.SerializeToString()
 
-    async def handle_wrong_mode(self, frame):
-        if frame.mode == Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-            self.logger.warning(f"GS received connectionless downlink mode mode from Audimus while in "
-                                f"connected uplink. Switching mode to connectionless downlink.")
-            await self.layer.set_session(Audimus_pb2.ConnectionlessDownlink)
-
 
 ############################################ Audimus ##########################################
 
@@ -276,7 +256,5 @@ class AudimusConnectedUplink(ConnectedUplink):
     def __init__(self, layer):
         super().__init__(layer)
 
-    async def on_exit(self):
-        self.logger.info("Audimus ConnectedUplink: exiting after FIN")
-        await super().on_exit()
+
 
