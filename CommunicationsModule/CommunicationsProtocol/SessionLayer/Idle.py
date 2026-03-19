@@ -31,7 +31,7 @@ class Idle(Session):
         try:
             with open(self.packet_number_path, 'r') as file:
                 line = file.readline()
-                return line.strip() if line else None
+                return int(line.strip()) if line else None
         except FileNotFoundError:
             # Handle the case where the file doesn't exist yet
             print(f"File not found: {self.packet_number_path}")
@@ -58,6 +58,7 @@ class GroundStationIdle(Idle):
             self.logger.info("could not decode frame")
         if frame.SYNACK:
             await self.handshake_rx_queue.put(message)
+
         return None
 
 
@@ -84,61 +85,21 @@ class GroundStationIdle(Idle):
         msg = Audimus_pb2.Session_Message(FIN=True)
         return msg.SerializeToString()
 
+    def frame_DWNLNK(self) -> bytes:
+        msg = Audimus_pb2.Session_Message(DWNLNK=True)
+        return msg.SerializeToString()
 
 
     # blats audimus with FINS to put it into connectionless downlink for rest of pass
     async def downlink(self):
-        fin = self.frame_fin()
-        await self.layer.put(fin)
-        await self.layer.put(fin)
-        await self.layer.swap_put(fin)
+        DWNLNK = self.frame_DWNLNK()
+        await self.layer.put(DWNLNK)
+        await self.layer.put(DWNLNK)
+        await self.layer.swap_put(DWNLNK)
         await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
 
 
-    # handshake to switch to connected mode
-    # 1. Sends syn
-    # 2. Waits for syn ack. Syn ack will include current audimus packet_number incase drop occured since last complete rx
-    # 3. sends ack then switches to new mode
-    async def handshake(self, new_mode: Audimus_pb2.SESSION_MODE):
-        self.logger.info(f"Initiating handshake for mode {new_mode}")
-        self.connecting = True
 
-        for attempt in range(1, MAX_TRIES + 1):
-            try:
-
-                #send ack
-                syn = Audimus_pb2.Session_Message(SYN=True, mode=new_mode)
-                await self.layer.swap_put(syn.SerializeToString())
-
-                #wait for syn-ack response
-                raw = await asyncio.wait_for(self.handshake_rx_queue.get(), timeout=TIMEOUT)
-
-                syn_ack = Audimus_pb2.Session_Message()
-                syn_ack.ParseFromString(raw)
-                if not syn_ack.SYNACK:
-                    self.logger.warning(
-                        f"Expected SYNACK, got unexpected frame (attempt {attempt}) – retrying"
-                    )
-                    continue
-                #log packet number in case drop occured since last complete rx
-                self.track_packet(syn_ack.packet_number)
-
-                #send ack
-                ack = Audimus_pb2.Session_Message(ACK=True, mode=new_mode)
-                await self.layer.put(ack.SerializeToString())
-                self.logger.info("handshake complete")
-
-                await self.layer.set_session(new_mode)
-                self.connecting = False
-                return  # success
-
-            except asyncio.TimeoutError:
-                self.logger.warning(
-                    f"Timeout waiting for SYN-ACK (attempt {attempt}/{MAX_TRIES})"
-                )
-
-        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts,  staying in idle")
-        self.connecting = False
 
 
 
@@ -169,7 +130,6 @@ class AudimusIdle(Idle):
         )
         self.packet_number = self.read_packet_number()
         super().__init__(layer)
-
 
 
     async def handle_tx(self, message: bytes) -> bytes | None:
@@ -204,9 +164,13 @@ class AudimusIdle(Idle):
                 asyncio.create_task(self.handshake(frame))
                 return None  # no payload for presentation
 
-            if frame.FIN:
+            if frame.DWNLNK:
                 await self.layer.mode_put(RadioMode.TX)
                 await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
+
+            if frame.FIN:
+                await self.layer.set_session(Audimus_pb2.SESSION_MODE.Idle)
+
 
             return None
         except Exception as e:

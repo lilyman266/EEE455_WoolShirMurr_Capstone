@@ -204,7 +204,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                 missing = self.layer.packet_tracker.get_missing_packets()
 
                 if not missing:
-                    # ── Send empty request as final implicit-ACK flush ────────
                     self.logger.info("No missing packets – sending empty RETRANSMIT_REQUEST to let satellite flush its store then tearing down")
                     flush = self.build_retransmit_request([])
                     await self.layer.put(flush)
@@ -234,11 +233,8 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
             for attempt in range(1, MAX_TRIES + 1):
 
                 request = self.build_retransmit_request(missing)
+                self.logger.info(f"SENDING RETRANSMISSION REQUEST {missing} (attempt {attempt}/{MAX_TRIES})")
                 await self.layer.swap_put(request)
-                self.logger.info(
-                    f"RETRANSMIT_REQUEST sent {missing} "
-                    f"(attempt {attempt}/{MAX_TRIES})"
-                )
 
                 received: dict[int, bytes] = {}
                 deadline = asyncio.get_running_loop().time() + TIMEOUT
@@ -250,15 +246,18 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                     try:
                         frame = await asyncio.wait_for(self.data_queue.get(),timeout=time_left)
                     except asyncio.TimeoutError:
+                        self.logger.info("timeout error")
                         break
 
                     seq = frame.packet_number
 
+
+                    #send packets back up to presentation layer
                     if seq in missing and seq not in received:
                         received[seq] = frame.presentation_message
                         self.logger.debug(f"Received retransmitted packet seq={seq}")
                         self.layer.packet_tracker.acknowledge(seq)
-                        await self.layer.swap_put(frame.presentation_message)
+                        await self.layer.layer_rx(frame.presentation_message)
                     else:
                         self.logger.info(
                             f"Unexpected seq={seq} in retransmit round "
@@ -267,15 +266,14 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
 
                 for seq, payload in received.items():
                     self.layer.packet_tracker.acknowledge(seq)
-                    self.logger.info(
-                        f"Packet seq={seq} stored & marked received "
-                        f"(implicit ACK will be sent next round)"
+                    self.logger.info(f"Packet seq={seq} stored & marked received implicit ACK will be sent next round)"
                     )
 
                 if len(received) == len(missing):
                     self.logger.info(
                         f"All {len(missing)} packets received in attempt {attempt}"
                     )
+                    print("ending loop")
                     return True
 
                 still_missing = [s for s in missing if s not in received]
@@ -290,6 +288,7 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                 f"_request_round failed after {MAX_TRIES} attempts; "
                 f"packets {missing} still outstanding"
             )
+            print("ending loop")
             return False
 
 

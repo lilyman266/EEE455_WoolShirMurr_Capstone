@@ -86,5 +86,6 @@ message Session_Message{
   optional bool FIN = 10;
   optional bool RET = 11;
   optional bool RST = 12;
-  repeated uint32 retransmit_request = 13;
+  optional bool DWNLNK = 13;
+  repeated uint32 retransmit_request = 14;
 }

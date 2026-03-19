@@ -29,9 +29,15 @@ class ConnectionlessDownlink(Session):
     async def on_exit(self):
         pass
 
-
-
-
+    def read_packet_number(self):
+        try:
+            with open(self.packet_number_path, 'r') as file:
+                line = file.readline()
+                return int(line.strip()) if line else None
+        except FileNotFoundError:
+            # Handle the case where the file doesn't exist yet
+            print(f"File not found: {self.packet_number_path}")
+            return None
 
 
 ############## Ground Station #####################################################
@@ -47,16 +53,6 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
         )
         self.packet_number = self.read_packet_number()
         super().__init__(layer)
-
-    def read_packet_number(self):
-        try:
-            with open(self.packet_number_path, 'r') as file:
-                line = file.readline()
-                return line.strip() if line else None
-        except FileNotFoundError:
-            # Handle the case where the file doesn't exist yet
-            print(f"File not found: {self.packet_number_path}")
-            return None
 
 
     async def handle_rx(self, raw: bytes):
@@ -77,6 +73,7 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
     def deframe(self, raw: bytes):
         frame = Audimus_pb2.Session_Message()
         frame.ParseFromString(raw)
+        print(frame.packet_number)
         self.track_packet(frame.packet_number)
         return frame
 
@@ -115,6 +112,7 @@ class AudimusConnectionlessDownlink(ConnectionlessDownlink):
             "/SessionLayer/PacketStore/AudimusCurrentPacketNumber"
         )
         super().__init__(layer)
+        self.packet_number = self.read_packet_number()
 
 
     async def handle_tx(self, message: bytes) -> bytes | None:

@@ -54,6 +54,8 @@ class SessionLayer:
                 self.logger.warning("Packet dropped - no active session")
                 continue
 
+
+
             message = await session.handle_rx(packet)
 
             if message is not None:
@@ -70,7 +72,6 @@ class SessionLayer:
             if session is None:
                 self.logger.warning("Message dropped - no active session")
                 continue
-
 
             packet = await session.handle_tx(message)
 
@@ -122,8 +123,17 @@ class SessionLayer:
 
 
 
+    # reads from state queue, evaluates if session needs to be changed.
+    async def state_watcher(self):
+        while True:
 
+            new_mode = await self.session_queue.get()
 
+            if self.mode is not None and int(self.mode) == int(new_mode):
+                self.logger.info(f"Already in mode: {new_mode}")
+                continue
+
+            self.set_session(new_mode)
 
 
 ##################Ground Station ###############################################
@@ -156,55 +166,18 @@ class GroundStationSessionLayer(SessionLayer):
     async def state_watcher(self):
         while True:
 
-
             new_mode = await self.session_queue.get()
 
-
-            # don't need to switch if you're allready in the mode
             if self.mode is not None and int(self.mode) == int(new_mode):
                 self.logger.info(f"Already in mode: {new_mode}")
                 continue
 
+            if self.mode == Audimus_pb2.SESSION_MODE.C
 
-            match self.mode:
-                ###########################switch from idle to connected uplink, connected downlink, or connectionless downlink
-                    case Audimus_pb2.SESSION_MODE.Idle:
-                        match new_mode:
-                            case Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                                await self.session.handshake(new_mode)
-                            case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
-                                await self.session.handshake(new_mode)
-                            case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-                                await self.session.downlink()
-                        continue
-
-                ###########################from connected uplink
-                    #if we are in connected uplink mode, can only switch to idle
-                    case Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                        match new_mode:
-                            case Audimus_pb2.Idle:
-                                await self.session.teardown()
-                            case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
-                                self.logger.info(f"cannot switch directly between connected downlink and connectd uplink, switch to idle first")
-                            case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-                                self.logger.info(f"cannot switch directly between connected downlink and connectionless downlink, switch to idle first")
-
-                    ###########################from connected downlink
-                    case Audimus_pb2.SESSION_MODE.ConnectedDownlink:
-                        match new_mode:
-                            case Audimus_pb2.Idle:
-                                await self.session.teardown()
-                            case Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                                self.logger.info(
-                                    f"cannot switch directly between connected downlink and connectd uplink, switch to idle first")
-                            case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-                                self.logger.info(
-                                    f"cannot switch directly between connected downlink and connectionless downlink, switch to idle first")
+            self.set_session(new_mode)
 
 
-                    ###########################from connected downlink
-                    case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
-                        self.logger.info(f"cannot switch from connectionless downlink mode. Wait for next pass")
+    async def set_session(self, new_mode):
 
 
 ################## Audimus ###############################################
@@ -235,12 +208,11 @@ class AudimusSessionLayer(SessionLayer):
                 return None
 
 
-    # reads from state queue, evaluates if session needs to be changed. send new session mode to audimus sim
-    async def state_watcher(self):
-        while True:
-            new_mode = await self.session_queue.get()
-            await self.set_session(new_mode)
-
+    # # reads from state queue, evaluates if session needs to be changed. send new session mode to audimus sim
+    # async def state_watcher(self):
+    #     while True:
+    #         new_mode = await self.session_queue.get()
+    #         await self.set_session(new_mode)
 
 
     async def set_session(self, new_mode: Audimus_pb2.SESSION_MODE):

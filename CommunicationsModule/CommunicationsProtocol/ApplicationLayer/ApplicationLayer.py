@@ -61,9 +61,6 @@ class GroundStationApplicationLayer(ApplicationLayer):
                         message = self.encode(message)
                         await self.below_tx.put(message)
 
-    async def distribute(self):
-        message= await self.command_line()
-        # send session change commands to the session layer
 
 
     async def command_line(self):
@@ -111,7 +108,11 @@ class AudimusApplicationLayer(ApplicationLayer):
             match current_mode:
 
                 case Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                    message = await asyncio.wait_for(self.below_rx.get(), timeout=0.1)
+                    try:
+                        message = await asyncio.wait_for(self.below_rx.get(), timeout=0.1)
+                    except asyncio.TimeoutError:
+                        continue
+
                     message = self.decode(message)
                     self.logger.info(message)
 
@@ -121,14 +122,14 @@ class AudimusApplicationLayer(ApplicationLayer):
                 case Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
                     print("sending from connectionless downlink")
                     #wait a random amount of time, then send a message burst of random length
-                    await asyncio.sleep(0.1)
-                    for burst in range(int(random.randint(0,10))):
-                        line = self.read_one_line("CommunicationsModule/TestTXAudimus")
-                        if not line:
-                            break
+                    await asyncio.sleep(1)
 
-                        message = self.encode(line)
-                        await self.below_tx.put(message)
+                    line = self.read_one_line("CommunicationsModule/TestTXAudimus")
+                    if not line:
+                        break
+
+                    message = self.encode(line)
+                    await self.below_tx.put(message)
 
                 case Audimus_pb2.SESSION_MODE.Idle:
                     # await to prevent spinning

@@ -23,12 +23,7 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
         self.tasks.append(asyncio.create_task(self.mode_watcher()))
         self.tasks.append(asyncio.create_task(self.rx_tcp()))
         self.tasks.append(asyncio.create_task(self.tx_tcp()))
-        self.tasks.append(asyncio.create_task(self.deadlock_checker()))
 
-
-    async def deadlock_checker(self):
-        await asyncio.sleep(10)
-        print("no deadlock ... yet ...")
 
 
     async def mode_watcher(self):
@@ -43,7 +38,7 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
         while True:
             try:
                 # 1. Wait for incoming data from the TCP stream
-                msg = await asyncio.wait_for(self.reader.read(1024), timeout = 0.01)
+                msg = await self.reader.read(1024)
 
                 # If msg is empty, the TCP connection was closed
                 if not msg:
@@ -52,11 +47,6 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
             except asyncio.TimeoutError:
                 break
 
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                self.logger.error(f"TCP read error: {e}")
-                break
 
             async with self.mode_lock:
                 current_mode = self.mode
@@ -70,6 +60,10 @@ class DataLinkLayer(ProtocolLayer.ProtocolLayer):
     async def tx_tcp(self):
         while True:
             message = await self.layer_tx.get()
+
+            if random.randint(1,10) > 7:
+                print("dropped packet")
+                continue
 
             async with self.mode_lock:
                 current_mode = self.mode
