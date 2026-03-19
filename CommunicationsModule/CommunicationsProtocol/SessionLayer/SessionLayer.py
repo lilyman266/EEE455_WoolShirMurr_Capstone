@@ -172,12 +172,30 @@ class GroundStationSessionLayer(SessionLayer):
                 self.logger.info(f"Already in mode: {new_mode}")
                 continue
 
-            if self.mode == Audimus_pb2.SESSION_MODE.C
+            if self.mode == Audimus_pb2.SESSION_MODE.ConnectionlessDownlink:
+                self.logger.info(f"can not switch from connectinoless downlink")
+                continue
 
-            self.set_session(new_mode)
+            # blast audimus with new mode, then switchces itself to new mode
+            await self.session.transmit_mode(new_mode)
+            await self.set_session(new_mode)
 
 
     async def set_session(self, new_mode):
+        # teardown the current session
+        if self.session:
+            await self.session.on_exit()
+
+        async with self._session_lock:
+            self.session = await self.get_session(new_mode)
+            self.mode = new_mode
+
+            # start the next session
+            await self.session.on_enter()
+
+
+
+
 
 
 ################## Audimus ###############################################

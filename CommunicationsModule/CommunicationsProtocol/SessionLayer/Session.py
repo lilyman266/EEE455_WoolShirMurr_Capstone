@@ -5,8 +5,6 @@ class RadioMode(enum.Enum):
     RX = "rx"
     TX = "tx"
 
-
-
 TIMER = 180
 
 class Session:
@@ -54,5 +52,17 @@ class Session:
             return 0
         except Exception as e:
             print(f"An error occurred: {e}")
+
+    #frames message for mode burst
+    def frame_mode(self, new_mode):
+        msg = Audimus_pb2.Session_Message(mode=new_mode)
+        return msg.SerializeToString()
+
+    async def transmit_mode(self, new_mode):
+        msg = self.frame_mode(new_mode)
+        print(msg)
+        await self.layer.put(msg)
+        await self.layer.put(msg)
+        await self.layer.swap_put(msg)
 
 

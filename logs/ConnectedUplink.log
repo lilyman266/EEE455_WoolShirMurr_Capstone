@@ -1,0 +1,137 @@
+2026-03-19 08:17:45 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:17:45 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:18:29 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:18:29 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:18:54 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:18:54 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:18:54 | INFO | ConnectedUplink | handle_rx self=2031350929728 queue=2031350495760 ACK=False FIN=False seq=0
+2026-03-19 08:18:54 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 08:18:54 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 08:18:54 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:18:54 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:23:20 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:23:20 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:23:20 | INFO | ConnectedUplink | handle_rx self=2195269735088 queue=2195269285968 ACK=False FIN=False seq=0
+2026-03-19 08:23:20 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 08:23:20 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 08:23:20 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:23:20 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:26:20 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 08:26:20 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 08:27:38 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:27:38 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:27:38 | INFO | ConnectedUplink | handle_rx self=2062232146608 queue=2062231582800 ACK=False FIN=False seq=0
+2026-03-19 08:27:38 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:27:38 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:27:38 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 08:27:38 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 08:28:28 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:28:28 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:28:28 | INFO | ConnectedUplink | handle_rx self=2742269661872 queue=2742268983376 ACK=False FIN=False seq=0
+2026-03-19 08:28:28 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 08:28:28 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 08:28:28 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:28:28 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:28:58 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:28:58 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:28:58 | INFO | ConnectedUplink | handle_rx self=2467550810800 queue=2467550312528 ACK=False FIN=False seq=0
+2026-03-19 08:28:58 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:28:58 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:29:33 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:29:33 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:29:33 | INFO | ConnectedUplink | handle_rx self=2063675445936 queue=2063674964048 ACK=False FIN=False seq=0
+2026-03-19 08:29:33 | INFO | ConnectedUplink | handle_rx self=2063675445936 queue=2063674964048 ACK=False FIN=False seq=0
+2026-03-19 08:29:33 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:29:33 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:29:50 | INFO | ConnectedUplink | handle_rx self=2063675445936 queue=2063674964048 ACK=True FIN=False seq=1
+2026-03-19 08:29:51 | INFO | ConnectedUplink | handle_rx self=2807358886240 queue=2807358643024 ACK=True FIN=False seq=1
+2026-03-19 08:29:51 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 08:31:01 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:31:01 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:31:01 | INFO | ConnectedUplink | handle_rx self=3191299822256 queue=3191299242064 ACK=False FIN=False seq=0
+2026-03-19 08:31:01 | INFO | ConnectedUplink | handle_rx self=3191299822256 queue=3191299242064 ACK=False FIN=False seq=0
+2026-03-19 08:31:01 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:31:01 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:32:13 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:32:13 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:32:13 | INFO | ConnectedUplink | handle_rx self=2326569128624 queue=2326568548432 ACK=False FIN=False seq=0
+2026-03-19 08:32:13 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:32:13 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:32:46 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:32:46 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:32:46 | INFO | ConnectedUplink | handle_rx self=2528269537968 queue=2528268974160 ACK=False FIN=False seq=0
+2026-03-19 08:32:46 | INFO | ConnectedUplink | handle_rx self=2528269537968 queue=2528268974160 ACK=False FIN=False seq=0
+2026-03-19 08:32:46 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:32:46 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:34:20 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:34:20 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:34:20 | INFO | ConnectedUplink | handle_rx self=2379828990976 queue=2379828492592 ACK=False FIN=False seq=0
+2026-03-19 08:34:20 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 08:34:20 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 08:37:20 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 08:37:20 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 09:20:05 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:20:05 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:20:05 | INFO | ConnectedUplink | handle_rx self=2919754207920 queue=2919753693264 ACK=False FIN=False seq=0
+2026-03-19 09:20:05 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:20:05 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:20:07 | INFO | ConnectedUplink | handle_rx self=2919754207920 queue=2919753693264 ACK=False FIN=False seq=0
+2026-03-19 09:20:07 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 09:20:07 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 09:21:30 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:21:30 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:21:30 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:21:30 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:21:38 | INFO | ConnectedUplink | handle_rx self=2919754013008 queue=2919752950096 ACK=False FIN=False seq=0
+2026-03-19 09:21:38 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 09:21:38 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 09:22:34 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:22:34 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:22:34 | INFO | ConnectedUplink | handle_rx self=2082393395888 queue=2082392750160 ACK=False FIN=False seq=0
+2026-03-19 09:22:34 | INFO | ConnectedUplink | handle_rx self=2082393395888 queue=2082392750160 ACK=False FIN=False seq=0
+2026-03-19 09:22:34 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:22:34 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:22:37 | INFO | ConnectedUplink | handle_rx self=2082393395888 queue=2082392750160 ACK=True FIN=False seq=1
+2026-03-19 09:22:37 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 09:22:39 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 1)
+2026-03-19 09:22:39 | INFO | ConnectedUplink | handle_rx self=2082393395888 queue=2082392750160 ACK=True FIN=False seq=1
+2026-03-19 09:22:39 | INFO | ConnectedUplink | handle_rx self=2716468056416 queue=2716467812944 ACK=True FIN=False seq=1
+2026-03-19 09:22:39 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 09:22:39 | WARNING | ConnectedUplink | Duplicate/old packet received seq=1, last_rx_seq=1; payload dropped after ACK
+2026-03-19 09:24:09 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:24:09 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:24:09 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 09:24:09 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 09:24:12 | INFO | ConnectedUplink | handle_rx self=2455690433536 queue=2455689935376 ACK=True FIN=False seq=1
+2026-03-19 09:24:12 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 09:24:13 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 1)
+2026-03-19 09:24:13 | INFO | ConnectedUplink | handle_rx self=2455690433536 queue=2455689935376 ACK=True FIN=False seq=1
+2026-03-19 09:24:13 | INFO | ConnectedUplink | handle_rx self=2295449915744 queue=2295449672272 ACK=True FIN=False seq=1
+2026-03-19 09:24:14 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 09:24:14 | WARNING | ConnectedUplink | Duplicate/old packet received seq=1, last_rx_seq=1; payload dropped after ACK
+2026-03-19 10:00:56 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 10:00:56 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 10:00:56 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 10:00:56 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 10:00:58 | INFO | ConnectedUplink | handle_rx self=2538732081504 queue=2538731468656 ACK=False FIN=False seq=0
+2026-03-19 10:00:58 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 10:00:58 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 10:06:22 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 10:06:22 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 10:06:22 | INFO | ConnectedUplink | handle_rx self=1867236495376 queue=1867236030320 ACK=False FIN=False seq=0
+2026-03-19 10:06:22 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 10:06:22 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 10:06:28 | INFO | ConnectedUplink | handle_rx self=1867236495376 queue=1867236030320 ACK=False FIN=False seq=0
+2026-03-19 10:06:29 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 10:06:29 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 10:09:22 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 10:09:22 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 10:25:34 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 10:25:34 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 10:25:34 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 10:25:34 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 10:25:37 | INFO | ConnectedUplink | handle_rx self=2222393266192 queue=2222392670288 ACK=False FIN=False seq=0
+2026-03-19 10:25:37 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 10:25:37 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 10:28:34 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 10:28:34 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode

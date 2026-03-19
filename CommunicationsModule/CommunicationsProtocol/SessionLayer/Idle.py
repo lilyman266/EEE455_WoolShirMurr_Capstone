@@ -52,14 +52,8 @@ class GroundStationIdle(Idle):
 
 
     async def handle_rx(self, message):
-        try:
-            frame = self.deframe(message)
-        except:
-            self.logger.info("could not decode frame")
-        if frame.SYNACK:
-            await self.handshake_rx_queue.put(message)
+        self.logger.info("GS should not recieve message in idle")
 
-        return None
 
 
     #deframe incoming packet
@@ -77,43 +71,18 @@ class GroundStationIdle(Idle):
             self.logger.error(f"Failed to frame SYN: {e}")
             return None
 
-    def frame_syn(self, mode: Audimus_pb2.SESSION_MODE) -> bytes:
-        msg = Audimus_pb2.Session_Message(SYN=True, mode=mode)
-        return msg.SerializeToString()
 
-    def frame_fin(self) -> bytes:
-        msg = Audimus_pb2.Session_Message(FIN=True)
-        return msg.SerializeToString()
-
-    def frame_DWNLNK(self) -> bytes:
-        msg = Audimus_pb2.Session_Message(DWNLNK=True)
-        return msg.SerializeToString()
-
-
-    # blats audimus with FINS to put it into connectionless downlink for rest of pass
-    async def downlink(self):
-        DWNLNK = self.frame_DWNLNK()
-        await self.layer.put(DWNLNK)
-        await self.layer.put(DWNLNK)
-        await self.layer.swap_put(DWNLNK)
-        await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
-
-
-
-
-
-
-    #tracks incoming packet numbers, if one is dropped, we record it
-    def track_packet(self, received_number: int):
-        expected = self.packet_number + 1
-
-        if received_number != expected:
-            for dropped in range(expected, received_number):
-                self.layer.packet_tracker.record_drop(dropped)
-                self.logger.warning(f"Dropped packet: {dropped}")
-
-        self.packet_number = received_number
-        self.write_packet_number(self.packet_number)
+    # #tracks incoming packet numbers, if one is dropped, we record it
+    # def track_packet(self, received_number: int):
+    #     expected = self.packet_number + 1
+    #
+    #     if received_number != expected:
+    #         for dropped in range(expected, received_number):
+    #             self.layer.packet_tracker.record_drop(dropped)
+    #             self.logger.warning(f"Dropped packet: {dropped}")
+    #
+    #     self.packet_number = received_number
+    #     self.write_packet_number(self.packet_number)
 
 
 ##############Audimus #####################################################
@@ -132,13 +101,6 @@ class AudimusIdle(Idle):
         super().__init__(layer)
 
 
-    async def handle_tx(self, message: bytes) -> bytes | None:
-        try:
-            return self.frame(message)
-        except Exception as e:
-            self.logger.error(f"Failed to frame message: {e}")
-            self.packet_number -= 1  # roll back
-            return None
 
     def frame(self, presentation_message: bytes) -> bytes:
         msg = Audimus_pb2.Session_Message(
@@ -150,27 +112,17 @@ class AudimusIdle(Idle):
         return msg.SerializeToString()
 
 
-    # if connecting, process handshake
-    async def handle_rx(self, raw: bytes):
-        if self.connecting:
-            await self.handshake_rx_queue.put(raw)
-            return None
+    # if we recieve a new mode, change to that mode
+    async def handle_rx(self, message):
 
         try:
-            frame =  await self.deframe(raw)
+            frame =  await self.deframe(message)
 
-            if frame.SYN:
-                self.connecting = True  # set BEFORE spawning task
-                asyncio.create_task(self.handshake(frame))
-                return None  # no payload for presentation
-
-            if frame.DWNLNK:
-                await self.layer.mode_put(RadioMode.TX)
-                await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
-
-            if frame.FIN:
-                await self.layer.set_session(Audimus_pb2.SESSION_MODE.Idle)
-
+            if frame.mode:
+                if frame.mode != Audimus_pb2.SESSION_MODE.Idle:
+                    await self.layer.set_session(frame.mode)
+                if frame.mode == Audimus_pb2.SESSION_MODE.Idle:
+                    return
 
             return None
         except Exception as e:
@@ -178,7 +130,6 @@ class AudimusIdle(Idle):
             return None
 
 
-    #syn will trigger handshake
     async def deframe(self, raw: bytes):
         frame = Audimus_pb2.Session_Message()
         frame.ParseFromString(raw)
@@ -186,38 +137,16 @@ class AudimusIdle(Idle):
 
 
 
-    #three way handshake, sends packet number with ack incase packets dropped since last transmission
-    async def handshake(self, syn: Audimus_pb2.Session_Message):
-
-        new_mode = syn.mode
-        self.logger.info(f"Handshake started for mode {new_mode}")
-
-        for attempt in range(1, MAX_TRIES + 1):
-            try:
-
-                syn_ack = Audimus_pb2.Session_Message(SYNACK=True, mode=new_mode, packet_number = self.packet_number )
-                await self.layer.swap_put(syn_ack.SerializeToString())
 
 
-                raw = await asyncio.wait_for(self.handshake_rx_queue.get(), timeout=TIMEOUT)
-                response = Audimus_pb2.Session_Message()
-                response.ParseFromString(raw)
+    # async def handle_tx(self, message: bytes) -> bytes | None:
+    #     try:
+    #         return self.frame(message)
+    #     except Exception as e:
+    #         self.logger.error(f"Failed to frame message: {e}")
+    #         self.packet_number -= 1  # roll back
+    #         return None
 
-                if not response.ACK:
-                    self.logger.warning(
-                        f"Expected ACK, got unexpected frame (attempt {attempt}) – retrying"
-                    )
-                    continue
 
-                self.logger.info(f"Handshake complete")
-                self.connecting = False
-                await self.layer.set_session(new_mode)
-                return  # success
 
-            except asyncio.TimeoutError:
-                self.logger.warning(
-                    f"Timeout waiting for ACK (attempt {attempt}/{MAX_TRIES})"
-                )
 
-        self.logger.error(f"Handshake failed after {MAX_TRIES} attempts,  staying in idle")
-        self.connecting = False

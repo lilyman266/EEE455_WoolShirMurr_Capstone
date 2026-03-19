@@ -31,7 +31,6 @@ class ConnectedUplink(Session):
     async def handle_rx(self, raw: bytes):
 
         try:
-
             frame = Audimus_pb2.Session_Message()
             frame.ParseFromString(raw)
 
@@ -40,31 +39,18 @@ class ConnectedUplink(Session):
                 f"ACK={frame.ACK} FIN={frame.FIN} seq={frame.packet_number}"
             )
 
-            if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                self.logger.warning(f"Unexpected mode received: {frame.mode} in {self.name}")
+            if frame.mode:
+                if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                    await self.layer.set_session(frame.mode)
+                if frame.mode == Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                    return
 
-
-
-            # if we get a fin ack
-            if frame.FIN and frame.ACK:
-                self.logger.debug("FIN-ACK received")
-                await self.fin_ack_queue.put(frame)
-                return None
-
-            # if we get an ack
 
             if frame.ACK and not frame.DATA:
                 self.logger.debug(f"ACK received for seq={frame.packet_number}")
                 await self.ack_queue.put(frame)
                 return None
 
-            # if we get a fin
-            if frame.FIN:
-                self.logger.info("FIN received – sending FIN-ACK and triggering mode change")
-                fin_ack = self.build_fin_ack()
-                await self.layer.swap_put(fin_ack)
-                await self.layer.set_session(Audimus_pb2.SESSION_MODE.Idle)
-                return None
 
             # if we get data
             ack = self.build_ack(frame.packet_number)
@@ -98,16 +84,7 @@ class ConnectedUplink(Session):
     # If teardown has been requested we will never get a useful ACK back, so refuse immediately
     async def handle_tx(self, message):
 
-        if self.teardown_requested.is_set():
-            self.logger.warning("handle_tx called during teardown – message dropped")
-            return None
-
         async with self.tx_lock:
-            # check the lock
-
-            if self.teardown_requested.is_set():
-                self.logger.warning("handle_tx: teardown started while waiting for lock – message dropped")
-                return None
 
             self.tx_seq += 1
             seq   = self.tx_seq
@@ -146,70 +123,28 @@ class ConnectedUplink(Session):
             return None
 
 
-    # Signal intent first so any concurrent handle_tx call that has not yet acquired the lock will stop.
-    async def teardown(self):
-
-        self.teardown_requested.set()
-        self.logger.info("Teardown requested – waiting for tx_lock")
-
-        # Lock to protect moving data
-        async with self.tx_lock:
-            self.logger.info("tx_lock acquired – sending FIN")
-            fin = self.build_fin()
-            for attempt in range(1, MAX_TRIES + 1):
-                await self.layer.swap_put(fin)
-                self.logger.info(f"FIN sent (attempt {attempt}/{MAX_TRIES})")
-
-                try:
-                    await asyncio.wait_for(
-                        self.fin_ack_queue.get(),
-                        timeout=TEARDOWN_TIMEOUT
-                    )
-                    self.logger.info("FIN-ACK received – teardown complete")
-                    await self.layer.set_session(Audimus_pb2.Idle)
-                    return  # success
-
-                except asyncio.TimeoutError:
-                    self.logger.warning(
-                        f"Teardown timeout waiting for FIN-ACK "
-                        f"(attempt {attempt}/{MAX_TRIES})"
-                    )
-
-        self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
-        await self.reset()
-
-
 
 
     def frame(self, presentation_message, seq) -> bytes:
         msg = Audimus_pb2.Session_Message(
             presentation_message=presentation_message,
-            mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             packet_number=seq,
-            SYN=False,
             ACK=False,
-            FIN=False,
             DATA=False
         )
         return msg.SerializeToString()
 
     def build_ack(self, seq: int) -> bytes:
         ack = Audimus_pb2.Session_Message(
-            mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             packet_number=seq,
-            SYN=False,
             ACK=True,
-            FIN=False,
             DATA=False
         )
         return ack.SerializeToString()
 
     def build_fin(self) -> bytes:
         fin = Audimus_pb2.Session_Message(
-            mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
-            SYN=False,
             ACK=False,
-            FIN=True,
             DATA = False
 
         )
@@ -217,10 +152,7 @@ class ConnectedUplink(Session):
 
     def build_fin_ack(self) -> bytes:
         fin_ack = Audimus_pb2.Session_Message(
-            mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
-            SYN=False,
             ACK=True,
-            FIN=True,
             DATA = False
         )
         return fin_ack.SerializeToString()
@@ -237,7 +169,6 @@ class GroundStationConnectedUplink(ConnectedUplink):
     def frame(self, presentation_message, seq) -> bytes:
         msg = Audimus_pb2.Session_Message(
             presentation_message=presentation_message,
-            mode=Audimus_pb2.SESSION_MODE.ConnectedUplink,
             packet_number=seq,
             SYN=False,
             ACK=True,

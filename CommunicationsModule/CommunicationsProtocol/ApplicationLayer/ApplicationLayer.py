@@ -21,6 +21,7 @@ class ApplicationLayer(ProtocolLayer.ProtocolLayer):
 
     def process_rx(self, message):
         message =  self.decode(message)
+        self.logger.info(f"tx: {message}")
         return message
 
     def encode(self, message):

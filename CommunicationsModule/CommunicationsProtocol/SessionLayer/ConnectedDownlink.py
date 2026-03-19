@@ -5,7 +5,7 @@ from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 
 MAX_TRIES        = 5
-TIMEOUT          = 10
+TIMEOUT          = 3
 TEARDOWN_TIMEOUT = 3.0
 POLL_INTERVAL    = 10
 
@@ -56,36 +56,16 @@ class ConnectedDownlink(Session):
             frame = Audimus_pb2.Session_Message()
             frame.ParseFromString(raw)
 
-
-
-            if frame.FIN and frame.ACK:
-                self.logger.debug("FIN-ACK received → fin_ack_queue")
-                await self.fin_ack_queue.put(frame)
-                return None
-
-            if frame.ACK and not frame.RET:
-                self.logger.debug(f"ACK received seq={frame.packet_number} → ack_queue")
-                await self.ack_queue.put(frame)
-                return None
-
-            if frame.FIN:
-                self.logger.info("FIN received – sending FIN-ACK and returning to idle")
-                fin_ack = self.build_fin_ack()
-                await self.layer.swap_put(fin_ack)
-                await self.layer.session_queue.put(Audimus_pb2.SESSION_MODE.Idle)
-                return None
-
             #retransmission request
             if frame.RET:
                 self.logger.info(f"RETRANSMIT_REQUEST received: {frame.retransmit_request}")
                 await self.request_queue.put(frame)
-
                 return None
 
-            # Data frame (no FIN, ACK, or retransmit_request flags)
-            self.logger.debug(f"DATA frame received seq={frame.packet_number} → data_queue")
-            await self.data_queue.put(frame)
-            return None
+            if frame.DATA:# Data frame (no RET or incorrect mode flag)
+                self.logger.info(f"DATA frame received seq={frame.packet_number} → data_queue")
+                await self.data_queue.put(frame)
+                return None
 
 
         except Exception as e:
@@ -96,35 +76,6 @@ class ConnectedDownlink(Session):
         self.logger.info("TX attempted in ConnectedDownlink – message dropped.")
         return None
 
-        # Signal intent first so any concurrent handle_tx call that has not yet acquired the lock will stop.
-
-    async def teardown(self):
-
-        self.teardown_requested.set()
-        self.logger.info("Teardown requested – waiting for tx_lock")
-
-        # Lock to protect moving data
-        async with self.tx_lock:
-            self.logger.info("tx_lock acquired – sending FIN")
-            fin = self.build_fin()
-            for attempt in range(1, MAX_TRIES + 1):
-                await self.layer.swap_put(fin)
-                self.logger.info(f"FIN sent (attempt {attempt}/{MAX_TRIES})")
-
-                try:
-                    await asyncio.wait_for(self.fin_ack_queue.get(),timeout=TEARDOWN_TIMEOUT)
-                    await asyncio.wait_for(self.fin_ack_queue.get(),timeout=TEARDOWN_TIMEOUT)
-                    self.logger.info("FIN-ACK received – teardown complete")
-                    await self.layer.set_session(Audimus_pb2.SESSION_MODE.Idle)
-                    return  # success
-
-                except asyncio.TimeoutError:
-                    self.logger.warning(
-                        f"Teardown timeout waiting for FIN-ACK "
-                        f"(attempt {attempt}/{MAX_TRIES})"
-                    )
-
-        self.logger.error(f"Teardown failed after {MAX_TRIES} attempts")
 
 
 
@@ -133,7 +84,7 @@ class ConnectedDownlink(Session):
             mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
             retransmit_request=missing_seqs,
             RET = True,
-            ACK = True,
+            DATA = False,
         )
         return msg.SerializeToString()
 
@@ -143,24 +94,12 @@ class ConnectedDownlink(Session):
             mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
             packet_number=seq,
             presentation_message=payload,
+            DATA = True,
             RET = False,
         )
         return msg.SerializeToString()
 
-    def build_fin(self) -> bytes:
-        return Audimus_pb2.Session_Message(
-            mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
-            FIN=True,
-            RET = False,
-        ).SerializeToString()
 
-    def build_fin_ack(self) -> bytes:
-        return Audimus_pb2.Session_Message(
-            mode=Audimus_pb2.SESSION_MODE.ConnectedDownlink,
-            FIN=True,
-            ACK=True,
-            RET=False,
-        ).SerializeToString()
 
 
 ####################Ground Station############################################################
@@ -212,7 +151,8 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
 
                     # Give the satellite a moment to process the flush before FIN
                     await asyncio.sleep(POLL_INTERVAL)
-                    await self.teardown()
+                    await self.transmit_mode(Audimus_pb2.SESSION_MODE.Idle)
+                    await self.layer.set_session(Audimus_pb2.SESSION_MODE.Idle)
                     return
 
                 self.logger.info(f"Requesting retransmission of {missing}")
@@ -239,31 +179,31 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                 received: dict[int, bytes] = {}
                 deadline = asyncio.get_running_loop().time() + TIMEOUT
 
+
                 while len(received) < len(missing):
                     time_left = deadline - asyncio.get_running_loop().time()
                     if time_left <= 0:
                         break
                     try:
-                        frame = await asyncio.wait_for(self.data_queue.get(),timeout=time_left)
-                    except asyncio.TimeoutError:
-                        self.logger.info("timeout error")
-                        break
+                        frame = await asyncio.wait_for(self.data_queue.get(), timeout=3)
+                        seq = frame.packet_number
 
-                    seq = frame.packet_number
+                    except asyncio.TimeoutError:
+                        break
 
 
                     #send packets back up to presentation layer
                     if seq in missing and seq not in received:
                         received[seq] = frame.presentation_message
-                        self.logger.debug(f"Received retransmitted packet seq={seq}")
                         self.layer.packet_tracker.acknowledge(seq)
-                        await self.layer.layer_rx(frame.presentation_message)
+                        await self.layer.layer_rx.put(frame.presentation_message)
                     else:
                         self.logger.info(
                             f"Unexpected seq={seq} in retransmit round "
                             f"(missing={missing}) – discarding"
                         )
 
+                print("broke the loop")
                 for seq, payload in received.items():
                     self.layer.packet_tracker.acknowledge(seq)
                     self.logger.info(f"Packet seq={seq} stored & marked received implicit ACK will be sent next round)"

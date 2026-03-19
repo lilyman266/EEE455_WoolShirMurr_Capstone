@@ -54,12 +54,12 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
         self.packet_number = self.read_packet_number()
         super().__init__(layer)
 
+    async def on_enter(self):
+        self.logger.info("Entered ConnectionlessDownlink Mode")
+        self.layer.mode_put(RadioMode.RX)
+
 
     async def handle_rx(self, raw: bytes):
-
-        if self.connecting:
-            await self.handshake_rx_queue.put(raw)
-            return None
 
         try:
             frame =  self.deframe(raw)

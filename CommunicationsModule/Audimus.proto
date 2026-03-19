@@ -3,10 +3,11 @@ syntax = "proto3";
 package audimus;
 
 enum SESSION_MODE{
-   Idle = 0;
-   ConnectionlessDownlink = 1;
-   ConnectedDownlink = 2;
-   ConnectedUplink = 3;
+   NewPass = 0;
+   Idle = 1;
+   ConnectionlessDownlink = 2;
+   ConnectedDownlink = 3;
+   ConnectedUplink = 4;
 
 }
 
