@@ -56,7 +56,7 @@ class GroundStationConnectionlessDownlink(ConnectionlessDownlink):
 
     async def on_enter(self):
         self.logger.info("Entered ConnectionlessDownlink Mode")
-        self.layer.mode_put(RadioMode.RX)
+        self.layer.mode_switch(RadioMode.RX)
 
 
     async def handle_rx(self, raw: bytes):

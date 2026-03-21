@@ -48,7 +48,7 @@ class GroundStationApplicationLayer(ApplicationLayer):
     async def tx(self):
         while True:
             async for message in self.command_line():
-
+                print("message")
                 match message:
                     case "idle mode":
                         await self.session_queue.put(Audimus_pb2.SESSION_MODE.Idle)
@@ -61,6 +61,7 @@ class GroundStationApplicationLayer(ApplicationLayer):
                     case _:
                         message = self.encode(message)
                         await self.below_tx.put(message)
+
 
 
 

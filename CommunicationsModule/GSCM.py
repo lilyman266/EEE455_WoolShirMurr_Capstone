@@ -27,8 +27,8 @@ async def handle_client(reader, writer):
     #create instances of each layer, pass each layer its own queue and the queue of the level beneath it
     al = GroundStationApplicationLayer(PL_rx, PL_tx, session_queue)
     pl = GroundStationPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
-    sl = GroundStationSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, session_queue, radio_mode_queue)
-    dll = GroundStationDataLinkLayer(DLL_rx, DLL_tx, reader, writer, radio_mode_queue)
+    dll = GroundStationDataLinkLayer(DLL_rx, DLL_tx, reader, writer)
+    sl = GroundStationSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, dll, session_queue)
 
     #run application layer coroutines
     al_tx_handler = asyncio.create_task(al.tx())

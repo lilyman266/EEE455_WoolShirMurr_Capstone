@@ -24,8 +24,6 @@ async def run_client(reader =1, writer =2):
     DLL_rx = asyncio.Queue()
     DLL_tx = asyncio.Queue()
 
-
-
     # create instances of each layer
     al = AudimusApplicationLayer(PL_rx, PL_tx)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)

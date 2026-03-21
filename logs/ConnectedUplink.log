@@ -135,3 +135,184 @@
 2026-03-19 10:25:37 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
 2026-03-19 10:28:34 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
 2026-03-19 10:28:34 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 15:16:42 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:16:42 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:16:42 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:16:42 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:17:00 | INFO | ConnectedUplink | handle_rx self=2641810263408 queue=2641810556528 ACK=False FIN=False seq=0
+2026-03-19 15:17:00 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:17:00 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:17:03 | INFO | ConnectedUplink | handle_rx self=2641810263408 queue=2641810556528 ACK=False FIN=False seq=0
+2026-03-19 15:17:03 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 15:17:03 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 15:25:22 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:25:22 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:25:27 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:25:27 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:26:02 | INFO | ConnectedUplink | handle_rx self=2620780809248 queue=2620781052880 ACK=False FIN=False seq=0
+2026-03-19 15:26:02 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 15:26:02 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=0; payload dropped after ACK
+2026-03-19 15:28:50 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:28:50 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:28:55 | INFO | ConnectedUplink | handle_rx self=1568916671520 queue=1568916915152 ACK=False FIN=False seq=0
+2026-03-19 15:29:00 | INFO | ConnectedUplink | handle_rx self=1568916671520 queue=1568916915152 ACK=False FIN=False seq=0
+2026-03-19 15:29:10 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:29:10 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:29:31 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 1)
+2026-03-19 15:29:36 | INFO | ConnectedUplink | handle_rx self=1568916671520 queue=1568916915152 ACK=True FIN=False seq=1
+2026-03-19 15:29:46 | INFO | ConnectedUplink | handle_rx self=2248795606720 queue=2248795281488 ACK=True FIN=False seq=1
+2026-03-19 15:29:51 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 15:32:13 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:32:13 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:32:18 | INFO | ConnectedUplink | handle_rx self=1921999408160 queue=1921999635408 ACK=False FIN=False seq=0
+2026-03-19 15:32:23 | INFO | ConnectedUplink | handle_rx self=1921999408160 queue=1921999635408 ACK=False FIN=False seq=0
+2026-03-19 15:32:33 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 15:32:33 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 15:32:45 | INFO | ConnectedUplink | handle_rx self=1921999408160 queue=1921999635408 ACK=True FIN=False seq=1
+2026-03-19 15:32:57 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 1)
+2026-03-19 15:33:00 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 15:33:02 | INFO | ConnectedUplink | handle_rx self=1921999408160 queue=1921999635408 ACK=True FIN=False seq=1
+2026-03-19 15:33:12 | INFO | ConnectedUplink | handle_rx self=2252264738496 queue=2252264495184 ACK=True FIN=False seq=1
+2026-03-19 15:33:17 | INFO | ConnectedUplink | ACK sent for seq=1
+2026-03-19 15:33:17 | WARNING | ConnectedUplink | Duplicate/old packet received seq=1, last_rx_seq=1; payload dropped after ACK
+2026-03-19 15:33:21 | INFO | ConnectedUplink | handle_rx self=1921999408160 queue=1921999635408 ACK=False FIN=False seq=0
+2026-03-19 15:33:36 | INFO | ConnectedUplink | ACK sent for seq=0
+2026-03-19 15:33:36 | WARNING | ConnectedUplink | Duplicate/old packet received seq=0, last_rx_seq=1; payload dropped after ACK
+2026-03-19 17:22:49 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 17:22:49 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 17:34:23 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 17:34:23 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 17:39:24 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 17:39:24 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:15:25 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:15:25 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:15:30 | INFO | ConnectedUplink | handle_rx self=2327811141136 queue=2327811140048 ACK=False FIN=False seq=0
+2026-03-19 19:15:35 | INFO | ConnectedUplink | handle_rx self=2327811141136 queue=2327811140048 ACK=False FIN=False seq=0
+2026-03-19 19:15:45 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:15:45 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:18:25 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 19:18:45 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-19 19:19:12 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:19:12 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:19:17 | INFO | ConnectedUplink | handle_rx self=2990871309328 queue=2990871592464 ACK=False FIN=False seq=0
+2026-03-19 19:19:32 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:19:32 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:20:20 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:20:20 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:20:25 | INFO | ConnectedUplink | handle_rx self=2335152827408 queue=2335153110288 ACK=False FIN=False seq=0
+2026-03-19 19:20:35 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:20:35 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:28:40 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:28:40 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:28:50 | INFO | ConnectedUplink | handle_rx self=2232900283664 queue=2232900282448 ACK=False FIN=False seq=0
+2026-03-19 19:29:00 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:29:00 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:42:04 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:42:04 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:42:09 | INFO | ConnectedUplink | handle_rx self=2929988501328 queue=2929988500368 ACK=False FIN=False seq=0
+2026-03-19 19:42:14 | INFO | ConnectedUplink | handle_rx self=2929988501328 queue=2929988500368 ACK=False FIN=False seq=0
+2026-03-19 19:42:24 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:42:24 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:44:02 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:44:02 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:44:07 | INFO | ConnectedUplink | handle_rx self=1752599609168 queue=1752599608272 ACK=False FIN=False seq=0
+2026-03-19 19:44:12 | INFO | ConnectedUplink | handle_rx self=1752599609168 queue=1752599608272 ACK=False FIN=False seq=0
+2026-03-19 19:45:09 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:45:09 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:45:14 | INFO | ConnectedUplink | handle_rx self=2549148335952 queue=2549148335056 ACK=False FIN=False seq=0
+2026-03-19 19:45:24 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:45:24 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:47:11 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:47:11 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:47:31 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:47:31 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:49:44 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:49:44 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:52:19 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:52:19 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:52:55 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:52:55 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:53:00 | INFO | ConnectedUplink | handle_rx self=2043670216528 queue=2043670215632 ACK=False FIN=False seq=0
+2026-03-19 19:53:05 | INFO | ConnectedUplink | handle_rx self=2043670216528 queue=2043670215632 ACK=False FIN=False seq=0
+2026-03-19 19:53:15 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:53:15 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:56:27 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:56:27 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 19:56:32 | INFO | ConnectedUplink | handle_rx self=2745910607696 queue=2745910606800 ACK=False FIN=False seq=0
+2026-03-19 19:56:47 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 19:56:47 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 20:27:12 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 20:27:12 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 21:34:05 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 21:34:56 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 21:35:34 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-19 21:35:54 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-19 21:37:18 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 14:40:49 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 14:40:49 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:09:01 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:09:01 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:24:38 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:24:38 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:25:11 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:25:11 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:27:08 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:27:08 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:29:51 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:29:51 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:30:35 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:30:35 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:33:30 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:33:30 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:35:14 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:35:14 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:35:49 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:35:49 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:36:43 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:36:43 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:40:13 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:40:13 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:43:13 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-20 15:44:15 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:44:15 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:45:01 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:45:01 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:48:01 | INFO | ConnectedUplink | No activity detected, switching to Connectionless Downlink Mode
+2026-03-20 15:50:53 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:50:53 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:52:27 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:52:27 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 15:54:04 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 15:54:04 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 19:47:30 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 19:47:30 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 19:47:59 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 19:47:59 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:03:49 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:03:49 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:04:02 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:04:02 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:05:09 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:05:09 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:06:03 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:06:03 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:06:47 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:06:47 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:06:56 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 1)
+2026-03-20 20:06:57 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 2)
+2026-03-20 20:06:59 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 3)
+2026-03-20 20:07:00 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 4)
+2026-03-20 20:07:02 | WARNING | ConnectedUplink | Timeout waiting for ACK (seq=1, attempt 5)
+2026-03-20 20:07:02 | ERROR | ConnectedUplink | Packet seq=1 failed after 5 attempts
+2026-03-20 20:07:39 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:07:39 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:08:56 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:08:56 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:10:36 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:10:36 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:11:10 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:11:10 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:11:39 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:11:39 | INFO | ConnectedUplink | starting activity timer for 180
+2026-03-20 20:12:19 | INFO | ConnectedUplink | Entered ConnectedUplink mode
+2026-03-20 20:12:19 | INFO | ConnectedUplink | starting activity timer for 180

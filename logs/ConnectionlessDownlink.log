@@ -1675,3 +1675,30 @@
 2026-03-19 10:51:46 | WARNING | ConnectionlessDownlink | Dropped packet: 9609
 2026-03-19 10:51:49 | WARNING | ConnectionlessDownlink | Dropped packet: 9611
 2026-03-19 10:51:49 | WARNING | ConnectionlessDownlink | Dropped packet: 9612
+2026-03-19 19:17:40 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-19 19:17:40 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-19 19:18:11 | WARNING | ConnectionlessDownlink | Dropped packet: 9615
+2026-03-19 19:18:11 | WARNING | ConnectionlessDownlink | Dropped packet: 9616
+2026-03-19 19:18:11 | WARNING | ConnectionlessDownlink | Dropped packet: 9617
+2026-03-19 19:18:11 | WARNING | ConnectionlessDownlink | Dropped packet: 9618
+2026-03-19 19:18:25 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-19 19:18:31 | ERROR | ConnectionlessDownlink | Failed to frame message: Packet with seq_number 9622 already exists in the store.
+2026-03-19 19:18:36 | ERROR | ConnectionlessDownlink | Failed to frame message: Packet with seq_number 9622 already exists in the store.
+2026-03-19 19:18:41 | ERROR | ConnectionlessDownlink | Failed to frame message: Packet with seq_number 9622 already exists in the store.
+2026-03-19 19:18:45 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-19 19:18:46 | ERROR | ConnectionlessDownlink | Failed to frame message: Packet with seq_number 9622 already exists in the store.
+2026-03-19 19:18:51 | ERROR | ConnectionlessDownlink | Failed to frame message: Packet with seq_number 9622 already exists in the store.
+2026-03-19 19:18:56 | ERROR | ConnectionlessDownlink | Failed to frame message: Packet with seq_number 9622 already exists in the store.
+2026-03-19 20:08:11 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-19 20:21:00 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-19 20:26:11 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-19 20:34:48 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 10:38:50 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 10:46:38 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 11:39:36 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 13:22:35 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 13:48:50 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 15:42:54 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 15:43:13 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 15:47:50 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode
+2026-03-20 15:48:01 | INFO | ConnectionlessDownlink | Entered ConnectionlessDownlink Mode

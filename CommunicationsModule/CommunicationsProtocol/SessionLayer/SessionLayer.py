@@ -1,4 +1,3 @@
-
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Idle import GroundStationIdle, AudimusIdle
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectionlessDownlink import GroundStationConnectionlessDownlink,AudimusConnectionlessDownlink
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.ConnectedDownlink import GroundStationConnectedDownlink,AudimusConnectedDownlink
@@ -35,6 +34,7 @@ class SessionLayer:
             asyncio.create_task(self.rx(),             name="session_rx"),
             asyncio.create_task(self.tx(),            name="session_tx"),
         ]
+        await self.mode_put(RadioMode.TX)
         await self.set_session(Audimus_pb2.SESSION_MODE.Idle)
 
     async def stop(self):
@@ -74,8 +74,6 @@ class SessionLayer:
                 continue
 
             packet = await session.handle_tx(message)
-
-
             if packet is not None:
                 await self.below_tx.put(packet)
 
@@ -97,9 +95,6 @@ class SessionLayer:
     async def get_session(self, new_mode):
         pass
 
-
-    async def dll_radio_switch(self, new_mode):
-        await self.mode_queue.put(new_mode)
 
     # all tx to the data link layer goes through here
     async def swap_put(self, message):
@@ -133,15 +128,15 @@ class SessionLayer:
                 self.logger.info(f"Already in mode: {new_mode}")
                 continue
 
-            self.set_session(new_mode)
+            await self.set_session(new_mode)
 
 
 ##################Ground Station ###############################################
 
 class GroundStationSessionLayer(SessionLayer):
 
-    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, sl_sc, rm_sq):
-        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, sl_sc, rm_sq)
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue):
+        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue)
         self.packet_tracker = MissingPacketIndex()  #tracks dropped packets for retransmission
         self.packet_number_path = (
             "CommunicationsModule/CommunicationsProtocol"
@@ -183,6 +178,7 @@ class GroundStationSessionLayer(SessionLayer):
 
     async def set_session(self, new_mode):
         # teardown the current session
+        print("starting next session")
         if self.session:
             await self.session.on_exit()
 
@@ -190,12 +186,9 @@ class GroundStationSessionLayer(SessionLayer):
             self.session = await self.get_session(new_mode)
             self.mode = new_mode
 
-            # start the next session
-            await self.session.on_enter()
-
-
-
-
+        # start the next session
+        await self.session.on_enter()
+        print("started next session")
 
 
 ################## Audimus ###############################################
@@ -226,18 +219,13 @@ class AudimusSessionLayer(SessionLayer):
                 return None
 
 
-    # # reads from state queue, evaluates if session needs to be changed. send new session mode to audimus sim
-    # async def state_watcher(self):
-    #     while True:
-    #         new_mode = await self.session_queue.get()
-    #         await self.set_session(new_mode)
-
-
     async def set_session(self, new_mode: Audimus_pb2.SESSION_MODE):
 
         # teardown the current session
         if self.session:
             await self.session.on_exit()
+
+        await self.mode_put(RadioMode.RX)
 
         async with self._session_lock:
             self.session = await self.get_session(new_mode)
@@ -360,6 +348,3 @@ class PacketStore:
 
         del self._store[seq_number]
         self._write_store(self._store)
-
-
-

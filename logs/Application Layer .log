@@ -2488,3 +2488,80 @@
 2026-03-19 10:51:44 | INFO | Application Layer  | rx: Satellite Data 1
 2026-03-19 10:51:46 | INFO | Application Layer  | rx: Satellite Data 1
 2026-03-19 10:51:49 | INFO | Application Layer  | rx: Satellite Data 1
+2026-03-19 15:16:34 | INFO | Application Layer  | starting state watcher
+2026-03-19 15:16:34 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 15:16:42 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 15:17:03 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 15:25:16 | INFO | Application Layer  | starting state watcher
+2026-03-19 15:25:16 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 15:25:27 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 15:26:02 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 15:26:28 | INFO | Application Layer  | New AROS mode: 3
+2026-03-19 15:28:40 | INFO | Application Layer  | starting state watcher
+2026-03-19 15:28:40 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 15:28:50 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 15:29:51 | INFO | Application Layer  | burn 10
+2026-03-19 15:32:05 | INFO | Application Layer  | starting state watcher
+2026-03-19 15:32:05 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 15:32:13 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 15:33:00 | INFO | Application Layer  | burn 10
+2026-03-19 15:33:21 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:14:40 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:14:40 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:15:25 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:17:40 | INFO | Application Layer  | New AROS mode: 2
+2026-03-19 19:17:46 | INFO | Application Layer  | rx: Satellite Data 1
+2026-03-19 19:18:11 | INFO | Application Layer  | rx: Satellite Data 1
+2026-03-19 19:18:16 | INFO | Application Layer  | rx: Satellite Data 1
+2026-03-19 19:18:25 | INFO | Application Layer  | New AROS mode: 2
+2026-03-19 19:19:00 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:19:00 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:19:12 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:20:00 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:20:00 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:20:20 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:28:25 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:28:25 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:28:40 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:34:22 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:34:22 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:41:53 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:41:53 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:42:04 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:43:47 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:43:47 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:44:02 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:44:52 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:44:52 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:45:09 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:46:51 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:46:51 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:47:11 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:52:40 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:52:40 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:52:55 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 19:54:45 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:54:45 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:56:02 | INFO | Application Layer  | starting state watcher
+2026-03-19 19:56:02 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 19:56:27 | INFO | Application Layer  | New AROS mode: 4
+2026-03-19 20:04:02 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:04:02 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:04:23 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:04:23 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:05:10 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:05:11 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:08:11 | INFO | Application Layer  | New AROS mode: 2
+2026-03-19 20:17:37 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:17:37 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:18:00 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:18:00 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:21:00 | INFO | Application Layer  | New AROS mode: 2
+2026-03-19 20:22:37 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:22:37 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:23:11 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:23:11 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:26:31 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:26:31 | INFO | Application Layer  | New AROS mode: 1
+2026-03-19 20:27:44 | INFO | Application Layer  | starting state watcher
+2026-03-19 20:27:44 | INFO | Application Layer  | New AROS mode: 1

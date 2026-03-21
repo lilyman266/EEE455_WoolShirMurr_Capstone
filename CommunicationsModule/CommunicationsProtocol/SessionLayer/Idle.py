@@ -4,8 +4,7 @@ from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import RadioMode
 
-MAX_TRIES = 5
-TIMEOUT   = 5
+
 
 
 class Idle(Session):
@@ -15,10 +14,6 @@ class Idle(Session):
         self.layer               = layer
         self.name                = "Idle"
         self.logger              = LoggerFactory.get_logger(self.name)
-
-        self.packet_number       = self.read_packet_number()
-        self.handshake_rx_queue  = asyncio.Queue()
-        self.connecting          = False
 
     async def handle_rx(self, packet: bytes):
         pass
@@ -38,8 +33,6 @@ class Idle(Session):
             return None
 
 
-
-
 ############## Ground Station #####################################################
 class GroundStationIdle(Idle):
     def __init__(self, layer):
@@ -52,37 +45,14 @@ class GroundStationIdle(Idle):
 
 
     async def handle_rx(self, message):
-        self.logger.info("GS should not recieve message in idle")
+        self.logger.info("GS should not rx in idle")
 
 
-
-    #deframe incoming packet
-    def deframe(self, raw: bytes):
-        frame = Audimus_pb2.Session_Message()
-        frame.ParseFromString(raw)
-        return frame
 
 
     async def handle_tx(self, message: bytes):
-        try:
-            frame = self.frame_syn(message)
-            return frame
-        except Exception as e:
-            self.logger.error(f"Failed to frame SYN: {e}")
-            return None
+        self.logger.info("GS should not send tx in idle")
 
-
-    # #tracks incoming packet numbers, if one is dropped, we record it
-    # def track_packet(self, received_number: int):
-    #     expected = self.packet_number + 1
-    #
-    #     if received_number != expected:
-    #         for dropped in range(expected, received_number):
-    #             self.layer.packet_tracker.record_drop(dropped)
-    #             self.logger.warning(f"Dropped packet: {dropped}")
-    #
-    #     self.packet_number = received_number
-    #     self.write_packet_number(self.packet_number)
 
 
 ##############Audimus #####################################################

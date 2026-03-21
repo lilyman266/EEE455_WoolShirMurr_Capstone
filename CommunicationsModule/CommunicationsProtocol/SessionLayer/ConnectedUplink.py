@@ -81,7 +81,7 @@ class ConnectedUplink(Session):
             return None
 
 
-    # If teardown has been requested we will never get a useful ACK back, so refuse immediately
+
     async def handle_tx(self, message):
 
         async with self.tx_lock:
@@ -91,7 +91,6 @@ class ConnectedUplink(Session):
             frame = self.frame(message, seq)
 
             for attempt in range(1, MAX_TRIES + 1):
-
                 await self.layer.swap_put(frame)
                 deadline = time.monotonic() + TIMEOUT
 
