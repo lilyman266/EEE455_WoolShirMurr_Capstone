@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package audimus;
+
+enum SESSION_MODE{
+   NewPass = 0;
+   Idle = 1;
+   ConnectionlessDownlink = 2;
+   ConnectedDownlink = 3;
+   ConnectedUplink = 4;
+
+}
+
+enum MESSAGE_TYPE{
+   Command = 0;
+   Command_response = 1;
+   Sonobuoy_data = 2;
+   Mission_data = 3;
+}
+
+
+
+//////////////////////////////////////////// command types and response  //////////////////////////////
+
+
+message Test_Data{
+    bool text = 1;
+    bool audio = 2;
+}
+
+message Debug{
+    bool mem = 1;
+    bool sd = 2;
+    string start = 3;
+    string end =4;
+}
+
+message Chute{
+    bool deploy_now = 1;
+    int32 delay = 2;
+}
+
+message Burn{
+    int32 burn_time = 1;
+    int32 delay = 2;
+}
+
+message Health{
+    int32 recent = 1;
+    int32 start_time =2;
+    int32 end_time = 3;
+}
+
+message Audio_Command{
+    int32 number = 1;
+    int32 start_time = 2;
+    int32 end_time =3;
+}
+
+message Command_Response{
+    string response = 1;
+}
+
+/////////////////////////////////////////////// layer messages ///////////////////////////////////////////////
+
+message Application_Message{
+    string message = 1;
+}
+
+message Presentation_Message{
+  int32 key_epoch = 1;
+  int32 session_number = 2;
+  bytes application_message = 3;
+  bytes authentication_tag = 4;
+}
+
+message Session_Message{
+  SESSION_MODE mode = 1;
+  int32 packet_number = 2;
+  bytes presentation_message = 3;
+  bool SYN = 4 ;
+  bool SYNACK = 5;
+  bool ACK = 6;
+  bool DATA = 7;
+  bool DATAREQ= 8;
+  bool NACK = 9;
+  bool FIN = 10;
+  bool RET = 11;
+  bool RST = 12;
+  bool DWNLNK = 13;
+  repeated uint32 retransmit_request = 14;
+}

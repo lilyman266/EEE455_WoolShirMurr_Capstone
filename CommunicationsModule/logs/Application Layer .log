@@ -1,0 +1,130 @@
+2026-01-10 18:07:54 | INFO | Application Layer  | hi
+2026-01-10 18:07:54 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 18:07:55 | INFO | Application Layer  | send health data
+2026-01-10 18:07:55 | INFO | Application Layer  | my
+2026-01-10 18:07:56 | INFO | Application Layer  | state change!
+2026-01-10 18:07:57 | INFO | Application Layer  | is
+2026-01-10 18:07:57 | INFO | Application Layer  | state change!
+2026-01-10 18:07:58 | INFO | Application Layer  | ben
+2026-01-10 18:07:58 | INFO | Application Layer  | state change!
+2026-01-10 20:29:59 | INFO | Application Layer  | hi
+2026-01-10 20:30:00 | INFO | Application Layer  | my
+2026-01-10 20:30:01 | INFO | Application Layer  | name
+2026-01-10 20:30:02 | INFO | Application Layer  | is
+2026-01-10 20:30:03 | INFO | Application Layer  | ben
+2026-01-10 20:30:06 | INFO | Application Layer  | hi
+2026-01-10 20:30:07 | INFO | Application Layer  | my
+2026-01-10 20:30:08 | INFO | Application Layer  | name
+2026-01-10 20:30:09 | INFO | Application Layer  | is
+2026-01-10 20:30:10 | INFO | Application Layer  | ben
+2026-01-10 20:30:43 | INFO | Application Layer  | hi
+2026-01-10 20:30:43 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:30:44 | INFO | Application Layer  | send health data
+2026-01-10 20:30:45 | INFO | Application Layer  | name
+2026-01-10 20:30:45 | INFO | Application Layer  | state change!
+2026-01-10 20:30:46 | INFO | Application Layer  | is
+e change!
+2026-01-10 20:30:47 | INFO | Application Layer  | state change!
+2026-01-10 20:30:47 | INFO | Application Layer  | ben
+2026-01-10 20:31:07 | INFO | Application Layer  | hi
+2026-01-10 20:31:07 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:31:08 | INFO | Application Layer  | my
+2026-01-10 20:31:08 | INFO | Application Layer  | send health data
+2026-01-10 20:31:09 | INFO | Application Layer  | name
+2026-01-10 20:31:09 | INFO | Application Layer  | state change!
+2026-01-10 20:31:10 | INFO | Application Layer  | is
+2026-01-10 20:31:10 | INFO | Application Layer  | state change!
+2026-01-10 20:31:11 | INFO | Application Layer  | ben
+2026-01-10 20:31:11 | INFO | Application Layer  | state change!
+2026-01-10 20:32:59 | INFO | Application Layer  | hi
+2026-01-10 20:32:59 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:33:00 | INFO | Application Layer  | my
+ health data
+2026-01-10 20:33:01 | INFO | Application Layer  | name
+2026-01-10 20:33:02 | INFO | Application Layer  | is
+2026-01-10 20:33:03 | INFO | Application Layer  | ben
+2026-01-10 20:41:11 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:41:12 | INFO | Application Layer  | send health data
+2026-01-10 20:41:16 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:41:17 | INFO | Application Layer  | send health data
+2026-01-10 20:41:18 | INFO | Application Layer  | exit orbit
+2026-01-10 20:42:06 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:42:06 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:42:06 | INFO | Application Layer  | send health data
+2026-01-10 20:42:06 | INFO | Application Layer  | connected uplink mode
+2026-01-10 20:42:06 | INFO | Application Layer  | connected downlink mode
+2026-01-10 20:42:06 | INFO | Application Layer  | connectionless downlink mode
+2026-01-10 20:42:06 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:42:06 | INFO | Application Layer  | send health data
+2026-01-10 20:42:06 | INFO | Application Layer  | exit orbit
+2026-01-10 20:42:07 | INFO | Application Layer  | send health data
+2026-01-10 20:42:11 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:42:12 | INFO | Application Layer  | send health data
+2026-01-10 20:42:13 | INFO | Application Layer  | exit orbit
+2026-01-10 20:42:36 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:42:36 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:42:37 | INFO | Application Layer  | send health data
+2026-01-10 20:42:37 | INFO | Application Layer  | send health data
+2026-01-10 20:42:38 | INFO | Application Layer  | connected uplink mode
+2026-01-10 20:42:39 | INFO | Application Layer  | connected downlink mode
+2026-01-10 20:42:40 | INFO | Application Layer  | connectionless downlink mode
+2026-01-10 20:42:41 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:42:41 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:42:42 | INFO | Application Layer  | send health data
+2026-01-10 20:42:42 | INFO | Application Layer  | send health data
+2026-01-10 20:42:43 | INFO | Application Layer  | exit orbit
+2026-01-10 20:42:43 | INFO | Application Layer  | exit orbit
+2026-01-10 20:43:46 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:43:47 | INFO | Application Layer  | send health data
+2026-01-10 20:43:48 | INFO | Application Layer  | connected uplink mode
+2026-01-10 20:43:49 | INFO | Application Layer  | connected downlink mode
+2026-01-10 20:43:50 | INFO | Application Layer  | connectionless downlink mode
+2026-01-10 20:43:51 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:43:52 | INFO | Application Layer  | send health data
+2026-01-10 20:43:52 | INFO | Application Layer  | send health data
+2026-01-10 20:43:53 | INFO | Application Layer  | exit orbit
+2026-01-10 20:44:23 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:44:23 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:44:24 | INFO | Application Layer  | send health data
+2026-01-10 20:44:24 | INFO | Application Layer  | send health data
+2026-01-10 20:44:25 | INFO | Application Layer  | connected uplink mode
+2026-01-10 20:44:26 | INFO | Application Layer  | connected downlink mode
+2026-01-10 20:44:27 | INFO | Application Layer  | connectionless downlink mode
+2026-01-10 20:44:28 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:44:29 | INFO | Application Layer  | send health data
+2026-01-10 20:44:31 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:44:31 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:44:32 | INFO | Application Layer  | send health data
+2026-01-10 20:44:33 | INFO | Application Layer  | connected uplink mode
+2026-01-10 20:44:34 | INFO | Application Layer  | connected downlink mode
+2026-01-10 20:44:35 | INFO | Application Layer  | connectionless downlink mode
+2026-01-10 20:44:36 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:44:37 | INFO | Application Layer  | send health data
+2026-01-10 20:44:38 | INFO | Application Layer  | exit orbit
+2026-01-10 20:44:38 | INFO | Application Layer  | exit orbit
+2026-01-10 20:45:29 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:45:29 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:45:30 | INFO | Application Layer  | send health data
+2026-01-10 20:45:31 | INFO | Application Layer  | connected uplink mode
+2026-01-10 20:45:32 | INFO | Application Layer  | connected downlink mode
+2026-01-10 20:45:33 | INFO | Application Layer  | connectionless downlink mode
+2026-01-10 20:45:34 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:45:35 | INFO | Application Layer  | send health data
+2026-01-10 20:45:35 | INFO | Application Layer  | send health data
+2026-01-10 20:45:36 | INFO | Application Layer  | exit orbit
+2026-01-10 20:46:40 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-10 20:46:41 | INFO | Application Layer  | send health data
+2026-01-10 20:46:42 | INFO | Application Layer  | connected uplink mode
+2026-01-10 20:46:43 | INFO | Application Layer  | connected downlink mode
+2026-01-10 20:46:44 | INFO | Application Layer  | connectionless downlink mode
+2026-01-10 20:46:45 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-10 20:46:46 | INFO | Application Layer  | send health data
+2026-01-10 20:46:47 | INFO | Application Layer  | exit orbit
+2026-01-11 14:37:49 | INFO | Application Layer  | burn x = 200 y = 200
+2026-01-11 14:37:50 | INFO | Application Layer  | send health data
+2026-01-11 14:37:51 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-11 14:37:52 | INFO | Application Layer  | send health data
+2026-01-11 14:37:53 | INFO | Application Layer  | exit orbit
+2026-01-11 14:37:54 | INFO | Application Layer  | burn x = 300 y = 400
+2026-01-11 14:37:55 | INFO | Application Layer  | send health data
+2026-01-11 14:37:56 | INFO | Application Layer  | exit orbit

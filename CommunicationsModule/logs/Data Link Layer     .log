@@ -1,0 +1,4 @@
+2026-01-10 20:44:23 | INFO | Data Link Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 200 y = 200'
+2026-01-10 20:44:24 | INFO | Data Link Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
+2026-01-10 20:44:28 | INFO | Data Link Layer      | b'\x10\x13\x1a\x16\n\x14burn x = 300 y = 400'
+2026-01-10 20:44:29 | INFO | Data Link Layer      | b'\x10\x13\x1a\x12\n\x10send health data'
