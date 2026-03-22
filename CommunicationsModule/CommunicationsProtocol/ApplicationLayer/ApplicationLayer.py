@@ -1,5 +1,6 @@
 from CommunicationsModule.CommunicationsProtocol import ProtocolLayer
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
+from DatabaseModule.Database.database_stub import CommsModDatabaseStub
 from Logger.Logger import LoggerFactory
 import asyncio
 import random
@@ -12,6 +13,7 @@ class ApplicationLayer(ProtocolLayer.ProtocolLayer):
         self.below_rx = PL_rx
         self.below_tx = PL_tx
         self.session_queue = session_queue
+        self.db_stub = CommsModDatabaseStub()
 
 
     def process_tx(self, message):
@@ -43,7 +45,12 @@ class GroundStationApplicationLayer(ApplicationLayer):
             message = await self.below_rx.get()
             message = self.decode(message)
             self.logger.info(f"rx: {message}")
+            await self.distribute(message)
 
+    #distributes data to necessary parties
+    async def distribute(self, message):
+        value = self.db_stub.add_acoustic_data(message)
+        self.logger.info(f"database result:{value}")
 
     async def tx(self):
         while True:

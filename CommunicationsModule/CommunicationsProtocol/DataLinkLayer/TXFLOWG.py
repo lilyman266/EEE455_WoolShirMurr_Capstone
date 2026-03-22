@@ -259,16 +259,17 @@ class transceiver_bpsk(gr.top_block, Qt.QWidget):
     def set_mode(self, mode):
         self.mode = mode
         if mode == 1:
+            # TX mode: real signal to sink, RX chain blocked, antenna switched
             self.uhd_usrp_sink.set_antenna('TX/RX', 0)
             self.uhd_usrp_source.set_antenna('RX2', 0)
             self.blocks_selector_tx.set_input_index(0)
             self.blocks_selector_rx.set_output_index(1)
         else:
+            # RX mode: null to sink, RX chain active, antenna switched
             self.uhd_usrp_sink.set_antenna('RX2', 0)
             self.uhd_usrp_source.set_antenna('TX/RX', 0)
-            self.blocks_selector_rx.set_output_index(0)
             self.blocks_selector_tx.set_input_index(1)
-            time.sleep(0.5)  # give antenna switch time to settle
+            self.blocks_selector_rx.set_output_index(0)
         print(f"Mode switched to: {'TX' if mode == 1 else 'RX'}", flush=True)
 
     def get_samp_rate(self):

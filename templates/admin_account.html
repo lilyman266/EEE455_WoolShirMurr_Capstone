@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Audimus Ground Station</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
+<link rel="icon" href="/static/audimus_logo.png">
+<script>
+    let clicked_id = null;
+    let clicked_user = null;
+    let clicked_req_id = null;
+    /*function to reach out to the database:
+    params:
+        key: the local key
+        page: the page requesting
+        datalist: the list they are requesting from*/
+    async function admin_populate_databox({id=null} = {}) {
+        const box = document.getElementById(id);
+        let response;
+        try { response = await fetch("/get_all_data", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                page: "admin",
+                datalist: "acoustic_data"
+            })
+        });} catch (error) {
+            box.textContent = "Error: Could not reach server.";
+            return;
+        }
+        const data = await response.json();
+        data.forEach((item) => {
+            //create new thing
+            const new_set = document.createElement("div");
+            new_set.classList.add("dataset-row");
+            new_set.textContent = "Id : " + item["id"]
+            + "; Timestamp : " + (item["timestamp"] ?? "No timestamp")
+            + "; Restricted : " + (item["restricted"] ?? "Unknown")
+            + "; Datatype : " +  (item["content_type"] ?? "No Data");
+
+
+            //new_set.dataset.datasetId = item.id;
+            const my_id = item["id"];
+
+
+            new_set.addEventListener("click", () => {
+                const currentlyActive = document.querySelector(".dataset-row.active");
+
+
+                if (currentlyActive && currentlyActive !== new_set) {
+                    currentlyActive.classList.remove("active");
+                }
+
+
+                new_set.classList.add("active");
+                clicked_id = my_id;
+            });
+            //append it to the list
+            box.appendChild(new_set);
+        })
+    }
+
+
+    
+    async function get_requests() {
+    const box = document.getElementById("requests");
+    let response;
+    try { response = await fetch("/get_user_requests", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+    });} catch (error) {
+        box.textContent = "Error: Could not reach server.";
+        return;
+    }
+    const data = await response.json();
+    data.forEach((item) => {
+        //create new thing
+        const new_set = document.createElement("div");
+        new_set.classList.add("dataset-row-requests");
+        //TODO: figure out how to get the CORRESPONDING ROW, not just the ID
+        new_set.textContent = "user " + item['username'] + " with id " + item["acoustic_id"]
+
+
+        //new_set.dataset.datasetId = item.id;
+        const my_id = item["acoustic_id"];
+
+
+        new_set.addEventListener("click", () => {
+            const currentlyActive = document.querySelector(".dataset-row-requests.active");
+
+
+            if (currentlyActive && currentlyActive !== new_set) {
+                currentlyActive.classList.remove("active");
+            }
+
+
+            new_set.classList.add("active");
+            clicked_user = item['username']
+            clicked_req_id = my_id;
+        });
+        //append it to the list
+        box.appendChild(new_set);
+        })
+    }
+</script>
+
+
+<body>
+
+
+<div id="app-root">
+
+
+<!-- Top Bar -->
+<header id="top-bar">
+
+
+    <!-- Logo -->
+    <div id="logo-container">
+        <!-- Replace src with your static path -->
+        <img src="/static/audimus_logo.png" alt="Audimus Logo">
+    </div>
+
+
+    <!-- Buttons -->
+    <nav id="nav-controls">
+        <button class="nav-button" id="logout-button">Logout</button>
+        <button class="nav-button" id="data-accept-button">Accept Data Request</button>
+        <button class="nav-button" id="download-button">Download</button>
+    </nav>
+
+
+</header>
+
+
+<!-- Dataset List -->
+<main class="content-section">
+    <div class="content-box fixed-height" id="data">
+        <div class="dataset-header">
+            <div>Ground Station Datasets:</div>
+        </div>
+    <script>
+        admin_populate_databox({id:"data"});
+    </script>
+    </div>
+
+
+    <br>
+    <br>
+
+
+
+
+        <div class="content-box fixed-height" id="requests">
+        <div class="dataset-header">
+            <div>Dataset Requests</div>
+        </div>
+            <script>
+            get_requests();
+            </script>
+        </div>
+</main>
+
+
+</div>
+<!-- Download Button: -->
+<script defer>
+const download_button = document.getElementById("download-button");
+
+download_button.addEventListener("click", async () => {
+if (clicked_id !== null) {
+    const response = await fetch("/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: clicked_id })
+    });
+
+
+    const data = await response.json();
+
+
+    if (!data || !data[0]) {
+        console.warn("No data returned from server!");
+        return;
+    }
+    const row = data[0];
+    const b64_string = atob(row.raw_data);
+    const len = b64_string.length;
+    const bytes = new Uint8Array(len);
+
+    for (let i = 0; i < len; i++) {
+        bytes[i] = b64_string.charCodeAt(i)
+    }
+
+    const blob = new Blob([bytes], { type: row.content_type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    let filename = 'server_data';
+        if (row.content_type === 'audio/mpeg') {
+            filename += '.mp3';
+        } else if (row.content_type === 'text/plain') {
+            filename += '.txt';
+        } else {
+            filename += '.bin';
+        }
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } else {
+        console.warn("Please select a dataset!");
+    }
+});
+</script>
+
+
+<!-- User Home Button: -->
+<script defer>
+    const data_accept_button = document.getElementById("data-accept-button");
+    //TODO: Make this accept user request! Should be layer 3 in process.
+    data_accept_button.addEventListener("click", async () => {
+        const response = await fetch("/accept_data_request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user: clicked_user,
+                    request_id: clicked_req_id
+                })
+            });
+        const status = await response.json()
+        if (status == 1) {
+            alert("Request accepted!");
+            //TODO: Reload page after this (to get most up-to-date info)
+        } else {
+            alert("Something went wrong.");
+        }
+        location.reload()
+    })
+</script>
+
+<!-- Logout Button: -->
+<script defer>
+    const logout_button = document.getElementById("logout-button");
+
+
+    logout_button.addEventListener("click", async () => {
+        window.location.href = "/logout";
+    })
+</script>
+</body>
+</html>

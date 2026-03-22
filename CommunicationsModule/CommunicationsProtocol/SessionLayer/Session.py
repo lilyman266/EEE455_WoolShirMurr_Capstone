@@ -5,7 +5,7 @@ class RadioMode(enum.Enum):
     RX = "rx"
     TX = "tx"
 
-TIMER = 180
+TIMER = 2
 
 class Session:
     def __init__(self, layer):
@@ -60,9 +60,8 @@ class Session:
 
     async def transmit_mode(self, new_mode):
         msg = self.frame_mode(new_mode)
-        print(msg)
         await self.layer.put(msg)
         await self.layer.put(msg)
-        await self.layer.swap_put(msg)
+        await self.layer.put(msg)
 
 

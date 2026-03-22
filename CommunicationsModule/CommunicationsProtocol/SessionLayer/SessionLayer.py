@@ -12,23 +12,24 @@ import os
 
 
 class SessionLayer:
-    def __init__(self, sl_rx, sl_tx, dll_rx, dll_tx, session_queue, mode_queue):
+    def __init__(self, sl_rx, sl_tx, dll_rx, dll_tx, session_queue, dll):
         self.below_rx      = dll_rx
         self.below_tx      = dll_tx
         self.layer_rx      = sl_rx
         self.layer_tx      = sl_tx
         self.session_queue = session_queue
-        self.mode_queue = mode_queue
         self.mode          = None
         self.session       = None
         self.name          = "Session Layer"
         self.logger        = LoggerFactory.get_logger(self.name)
         self._tasks        = []
         self._session_lock = asyncio.Lock()
+        self.data_link_layer = dll
 
 
     async def start(self):
         """Spawn the three worker tasks."""
+        await asyncio.sleep(12)
         self._tasks = [
             asyncio.create_task(self.state_watcher(), name="state_watcher"),
             asyncio.create_task(self.rx(),             name="session_rx"),
@@ -98,23 +99,18 @@ class SessionLayer:
 
     # all tx to the data link layer goes through here
     async def swap_put(self, message):
-        await self.mode_queue.put(RadioMode.TX)
-        await asyncio.sleep(0.001)
+        await self.data_link_layer.mode_switch(RadioMode.TX)
         await self.below_tx.put(message)
-        await asyncio.sleep(0.001)
-        await self.mode_queue.put(RadioMode.RX)
-        await asyncio.sleep(0.001)
-
-
+        await asyncio.sleep(2)
+        await self.data_link_layer.mode_switch(RadioMode.RX)
 
     async def put(self, message):
-        await self.mode_queue.put(RadioMode.TX)
-        await asyncio.sleep(0.001)
+        await self.data_link_layer.mode_switch(RadioMode.TX)
         await self.below_tx.put(message)
 
 
     async def mode_put(self, mode: RadioMode):
-        await self.mode_queue.put(mode)
+        await self.data_link_layer.mode_switch(mode)
 
 
 
@@ -135,8 +131,8 @@ class SessionLayer:
 
 class GroundStationSessionLayer(SessionLayer):
 
-    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue):
-        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue)
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, session_queue, dll):
+        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, session_queue, dll)
         self.packet_tracker = MissingPacketIndex()  #tracks dropped packets for retransmission
         self.packet_number_path = (
             "CommunicationsModule/CommunicationsProtocol"
@@ -173,12 +169,13 @@ class GroundStationSessionLayer(SessionLayer):
 
             # blast audimus with new mode, then switchces itself to new mode
             await self.session.transmit_mode(new_mode)
+            await asyncio.sleep(5)
             await self.set_session(new_mode)
 
 
     async def set_session(self, new_mode):
         # teardown the current session
-        print("starting next session")
+
         if self.session:
             await self.session.on_exit()
 
@@ -186,17 +183,18 @@ class GroundStationSessionLayer(SessionLayer):
             self.session = await self.get_session(new_mode)
             self.mode = new_mode
 
+
         # start the next session
         await self.session.on_enter()
-        print("started next session")
+
 
 
 ################## Audimus ###############################################
 
 class AudimusSessionLayer(SessionLayer):
 
-    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue, aros_sq):
-        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, session_queue, mode_queue)
+    def __init__(self, layer_rx, layer_tx, dll_rx, dll_tx, session_queue, dll, aros_sq):
+        super().__init__(layer_rx, layer_tx, dll_rx, dll_tx, session_queue, dll)
         self.packet_store = PacketStore()  # saves all packets until acked
         self.aros_session_queue = aros_sq
         self.packet_number_path = (
