@@ -1,20 +1,22 @@
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 import asyncio
 import enum
+
 class RadioMode(enum.Enum):
     RX = "rx"
     TX = "tx"
 
-TIMER = 180
+
+SESSION_TIMER = 30
 
 class Session:
     def __init__(self, layer):
         self.layer = layer
+        self.activity_timer = ActivityTimer(timeout = SESSION_TIMER, callback = self.on_timeout)
 
-    async def reset(self):
-        self.logger.warning(f"Received reset. Going back to connectionless downlink")
+    async def on_timeout(self):
+        self.logger.warning("No RX in 2 minutes — switching to ConnectionlessDownlink")
         await self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink)
-        return
 
     async def handle_rx(self, packet):
         return packet
@@ -24,18 +26,11 @@ class Session:
 
     async def on_enter(self):
         self.logger.info(f"Entered {self.name} mode")
-        asyncio.create_task(self.activity_timer())
+        self.activity_timer.start()
 
-    async def activity_timer(self):
-            # put the radio into receive mode
-            self.logger.info(f"starting activity timer for {TIMER}")
-            await asyncio.sleep(TIMER)
-            self.logger.info("No activity detected, switching to Connectionless Downlink Mode")
-            # if timer expires, go to connectionless downlink
-            asyncio.create_task(self.layer.set_session(Audimus_pb2.SESSION_MODE.ConnectionlessDownlink))
 
     async def on_exit(self):
-        pass
+        await self.activity_timer.stop()
 
     def write_packet_number(self, packet_number):
         with open(self.packet_number_path, "w", encoding="utf-8") as f: f.write(str(packet_number))
@@ -60,9 +55,49 @@ class Session:
 
     async def transmit_mode(self, new_mode):
         msg = self.frame_mode(new_mode)
-        print(msg)
         await self.layer.put(msg)
         await self.layer.put(msg)
-        await self.layer.swap_put(msg)
+        await self.layer.put(msg)
 
 
+############################### timer class #########################################################
+
+class ActivityTimer:
+    def __init__(self, timeout: float, callback):
+        self.timeout  = timeout
+        self.callback = callback
+        self._task    = None
+        self._event   = asyncio.Event()
+
+    def start(self):
+        self._event.clear()
+        self._task = asyncio.create_task(self.run(), name="activity_timer")
+
+    def reset(self):
+        """Call this on every RX."""
+        self._event.set()
+
+    async def stop(self):
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+
+    async def run(self):
+        try:
+            while True:
+                self._event.clear()
+                try:
+                    await asyncio.wait_for(
+                        self._event.wait(),
+                        timeout=self.timeout
+                    )
+                    # event was set → RX occurred → reset and wait again
+                except asyncio.TimeoutError:
+                    # no RX in `timeout` seconds → fire callback
+                    await self.callback()
+                    return
+        except asyncio.CancelledError:
+            pass

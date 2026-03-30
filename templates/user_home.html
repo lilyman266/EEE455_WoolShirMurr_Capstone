@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audimus Ground Station</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
+    <link rel="icon" href="/static/audimus_logo.png">
+    <script>
+        //establish the id of the log they clicked (for downloading later)
+        let clicked_id = null;
+    </script>
+
+<body>
+
+<div id="app-root">
+
+    <!-- Top Bar -->
+    <header id="top-bar">
+
+        <!-- Logo -->
+        <div id="logo-container">
+            <!-- Replace src with your static path -->
+            <img src="/static/audimus_logo.png" alt="Audimus Logo">
+        </div>
+        <div>
+        <h1>User Home</h1>
+    </div>
+        <!-- Buttons -->
+        <nav id="nav-controls">
+            <button class="nav-button" id="logout-button">Logout</button>
+            <button class="nav-button" id="user-home-button">Back To My Data</button>
+        </nav>
+
+    </header>
+
+    <!-- Dataset List -->
+    <main class="content-section">
+        <div class="content-box">
+            <label for="start-time">Start time</label>
+            <input class="timestamp_input" id="start-time" type="datetime-local" />
+
+            <label for="end-time">End time</label>
+            <input class="timestamp_input" id="end-time" type="datetime-local" />
+            <button id="submit" type="button">Submit</button>
+            <script>
+                //TODO: Make this provide popups (invalid, received, error)
+                const submit_button = document.getElementById("submit")
+                submit_button.addEventListener("click", async () => {
+                    const start_time = document.getElementById("start-time").value;
+                    const end_time = document.getElementById("end-time").value;
+
+                    if (!start_time || !end_time) {
+                        return;
+                    }
+
+                    try { const response = await fetch("/request_data_auth", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            start_time: start_time,
+                            end_time: end_time
+                        })
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (response.ok && data.ok){
+                            alert(data.message);
+                        }
+                    } catch (error) {}
+                    })
+            </script>
+        </div>
+    </main>
+
+    </div>
+    </script>
+    <!-- User Home Button: -->
+    <script defer>
+        const user_home_button = document.getElementById("user-home-button");
+
+        user_home_button.addEventListener("click", async () => {
+            window.location.href = "/user_account";
+        })
+    </script>
+
+    <!-- Logout Button: -->
+    <script defer>
+        const logout_button = document.getElementById("logout-button");
+
+        logout_button.addEventListener("click", async () => {
+            window.location.href = "/logout";
+        })
+    </script>
+</body>
+</html>

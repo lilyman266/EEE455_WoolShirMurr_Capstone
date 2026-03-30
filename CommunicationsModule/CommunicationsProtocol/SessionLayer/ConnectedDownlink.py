@@ -3,6 +3,7 @@ import asyncio
 import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
+from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import RadioMode
 
 MAX_TRIES        = 5
 TIMEOUT          = 3
@@ -21,7 +22,6 @@ class ConnectedDownlink(Session):
         self.data_queue         = asyncio.Queue()
 
         self.tx_lock            = asyncio.Lock()
-        self.teardown_requested = asyncio.Event()
         self.stop_event         = asyncio.Event()
         self.layer              = layer
         self.tasks              = []
@@ -30,7 +30,7 @@ class ConnectedDownlink(Session):
         await super().on_enter()
         self.logger.info(f"{self.name} entered")
         self.stop_event.clear()
-        self.teardown_requested.clear()
+
 
     async def on_exit(self):
         self.stop_event.set()
@@ -51,10 +51,12 @@ class ConnectedDownlink(Session):
         return task
 
     async def handle_rx(self, raw: bytes):
+        self.activity_timer.reset()
         try:
 
             frame = Audimus_pb2.Session_Message()
             frame.ParseFromString(raw)
+
 
             #retransmission request
             if frame.RET:
@@ -62,10 +64,12 @@ class ConnectedDownlink(Session):
                 await self.request_queue.put(frame)
                 return None
 
-            if frame.DATA:# Data frame (no RET or incorrect mode flag)
+            if frame.DATA: # Data frame (no RET or incorrect mode flag)
                 self.logger.info(f"DATA frame received seq={frame.packet_number} → data_queue")
                 await self.data_queue.put(frame)
                 return None
+
+            return None
 
 
         except Exception as e:
@@ -203,7 +207,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                             f"(missing={missing}) – discarding"
                         )
 
-                print("broke the loop")
                 for seq, payload in received.items():
                     self.layer.packet_tracker.acknowledge(seq)
                     self.logger.info(f"Packet seq={seq} stored & marked received implicit ACK will be sent next round)"
@@ -213,7 +216,6 @@ class GroundStationConnectedDownlink(ConnectedDownlink):
                     self.logger.info(
                         f"All {len(missing)} packets received in attempt {attempt}"
                     )
-                    print("ending loop")
                     return True
 
                 still_missing = [s for s in missing if s not in received]
@@ -298,22 +300,25 @@ class AudimusConnectedDownlink(ConnectedDownlink):
             sorted_seqs = sorted(seqs)
 
             for i, seq in enumerate(sorted_seqs):
-                is_last = i == len(sorted_seqs) - 1
+
 
                 try:
                     payload = await self.layer.packet_store.get_packet(seq)
+
                 except Exception:
                     self.logger.info(f"Packet seq={seq} requested but not in store — sending empty packet")
-                    payload = "Packet was dropped and unable to be recovered"
+                    payload = b"Packet is missing and unable to be recovered"
+
+                if payload is None:
+                    payload = b"Packet is missing and unable to be recovered"
 
                 frame = self.build_data_frame(seq, payload)
-                if is_last:
-                    await self.layer.swap_put(frame)
-                else:
-                    await self.layer.put(frame)
+                await asyncio.sleep(0.01)
+                await self.layer.put(frame)
 
                 sent.add(seq)
                 self.logger.info(f"Retransmitted packet seq={seq}")
+                await self.layer.mode_put(RadioMode.RX)
 
         return sent
 

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Audimus Ground Station</title>
+   <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet/styles.css') }}">
+   <link rel="icon" href="/static/audimus_logo.png">
+   <!-- Establish global variables needed to make the data functionality work -->
+   <script>
+       let clicked_id = null;
+       /*function to reach out to the database:
+       params:
+           key: the local key
+           page: the page requesting
+           datalist: the list they are requesting from*/
+       async function populate_databox({page=null, datalist=null} = {}) {
+           const box = document.getElementById("content-capture");
+           let response;
+           try { response = await fetch("/populate_databox", {
+               method: "POST",
+               headers: {
+                   "Content-Type": "application/json"
+               },
+               body: JSON.stringify({
+                   page: page,
+                   datalist: datalist
+               })
+           });} catch (error) {
+               box.textContent = "Error: Could not reach server.";
+               return;
+           }
+           const data = await response.json();
+           data.forEach((item) => {
+               //create new thing
+               const new_set = document.createElement("div");
+               new_set.classList.add("dataset-row");
+               //TODO:add the timestamp as words in the div
+               new_set.textContent = item["timestamp"] ?? "No timestamp";
+               //TODO:add vriable local to this div
+              
+               //new_set.dataset.datasetId = item.id;
+               const my_id = item["id"];
+              
+               new_set.addEventListener("click", () => {
+                   const currentlyActive = document.querySelector(".dataset-row.active");
+
+
+                   if (currentlyActive && currentlyActive !== new_set) {
+                       currentlyActive.classList.remove("active");
+                   }
+
+
+                   new_set.classList.add("active");
+                   clicked_id = my_id;
+               });
+               //append it to the list
+               box.appendChild(new_set);
+               })
+           }
+   </script>
+</head>
+
+
+<body>
+
+
+<div id="app-root">
+
+
+   <!-- Top Bar -->
+   <header id="top-bar">
+
+
+       <!-- Logo -->
+       <div id="logo-container">
+           <!-- Replace src with your static path -->
+           <img src="/static/audimus_logo.png" alt="Audimus Logo">
+       </div>
+
+
+       <!-- Buttons -->
+       <nav id="nav-controls">
+               <button class="nav-button" id="about-button">About</button>
+               <button class="nav-button" id="login-button">Login</button>
+           <button class="nav-button" id="download-button">Download</button>
+       </nav>
+
+
+   </header>
+
+
+   <!-- Dataset List -->
+   <main class="content-section">
+       <div class="content-box fixed-height" id="content-capture">
+
+
+           <div class="dataset-header">
+               <div>Timestamp</div>
+           </div>
+           <!-- TODO: make a function which gets all acoustic datasets which have the flag "restricted" set to 0 -->
+       <script>
+           populate_databox({page : "guest", datalist : "guest"});
+       </script>
+       </div>
+   </main>
+
+
+</div>
+   <!-- Download Button: -->
+   <script defer>
+const download_button = document.getElementById("download-button");
+
+
+download_button.addEventListener("click", async () => {
+if (clicked_id !== null) {
+    const response = await fetch("/guest_data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: clicked_id })
+    });
+
+
+    const data = await response.json();
+
+
+    if (!data || !data[0]) {
+        console.warn("No data returned from server!");
+        return;
+    }
+    const row = data[0];
+    const b64_string = atob(row.raw_data);
+    const len = b64_string.length;
+    const bytes = new Uint8Array(len);
+
+    for (let i = 0; i < len; i++) {
+        bytes[i] = b64_string.charCodeAt(i)
+    }
+
+    const blob = new Blob([bytes], { type: row.content_type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    let filename = 'server_data';
+        if (row.content_type === 'audio/mpeg') {
+            filename += '.mp3';
+        } else if (row.content_type === 'text/plain') {
+            filename += '.txt';
+        } else {
+            filename += '.bin';
+        }
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } else {
+        console.warn("Please select a dataset!");
+    }
+});
+</script>
+   <!-- Login Button: -->
+   <script defer>
+       const login_button = document.getElementById("login-button");
+
+
+       login_button.addEventListener("click", async () => {
+           window.location.href = "/login";
+       })
+   </script>
+   <!-- About Button: -->
+   <script defer>
+       const about_button = document.getElementById("about-button");
+
+
+       about_button.addEventListener("click", async () => {
+           window.location.href = "/about";
+       })
+   </script>
+</body>
+</html>

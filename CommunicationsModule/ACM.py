@@ -40,8 +40,9 @@ async def run_client(host, port):
     # create instances of each layer
     al = AudimusApplicationLayer(PL_rx, PL_tx, aros_sim_queue)
     pl = AudimusPresentationLayer(PL_rx, PL_tx, SL_rx, SL_tx)
-    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, session_queue, aros_sim_queue)
     dll = AudimusDataLinkLayer(DLL_rx, DLL_tx, reader, writer)
+    sl = AudimusSessionLayer(SL_rx, SL_tx, DLL_rx, DLL_tx, dll, session_queue, aros_sim_queue)
+
 
     # run application layer coroutines
     sim_handler = asyncio.create_task(al.AROS_sim())
@@ -58,7 +59,8 @@ async def run_client(host, port):
 
 
     #run data link layer coroutines
-    dll_handler = asyncio.create_task(dll.start())
+    dll_handler = asyncio.create_task(dll.tx_tcp())
+    dll_handler = asyncio.create_task(dll.rx_tcp())
 
 
 

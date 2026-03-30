@@ -5,9 +5,9 @@ import CommunicationsModule.Audimus_pb2 as Audimus_pb2
 from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 
-MAX_TRIES        = 5
-TIMEOUT          = 1.5
-TEARDOWN_TIMEOUT = 3.0
+
+ATTEMPTS = 5
+TIMEOUT = 1
 
 
 class ConnectedUplink(Session):
@@ -20,17 +20,16 @@ class ConnectedUplink(Session):
         self.logger        = LoggerFactory.get_logger(self.name)
         self.ack_queue     = asyncio.Queue()
         self.fin_ack_queue = asyncio.Queue()
+        self.fin_queue     = asyncio.Queue()
         self.tx_seq        = 0
         self.last_rx_seq   = 0
-        self.tx_lock       = asyncio.Lock()
-        self.teardown_requested = asyncio.Event()
-
 
 
     #ACK, fin, fin-ack handled at layers below. Only data is passed upward. Fin triggers change in mode
-    async def handle_rx(self, raw: bytes):
-
+    async def handle_rx(self, raw):
+        self.activity_timer.reset()
         try:
+
             frame = Audimus_pb2.Session_Message()
             frame.ParseFromString(raw)
 
@@ -39,18 +38,42 @@ class ConnectedUplink(Session):
                 f"ACK={frame.ACK} FIN={frame.FIN} seq={frame.packet_number}"
             )
 
-            if frame.mode:
-                if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                    await self.layer.set_session(frame.mode)
-                if frame.mode == Audimus_pb2.SESSION_MODE.ConnectedUplink:
-                    return
 
 
+            # if we get a syn message for this mode, respond with a SYNACK.
+            if frame.SYN:
+                ack = self.build_syn_ack()
+                await self.layer.swap_put(ack)
+                return None
+
+
+            # if fin ack, put it in the queue
+            if frame.FIN and frame.ACK:
+                await self.fin_ack_queue.put(frame)
+                return None
+
+            # if FIN, send a fin ack and switch to idle mode
+            if frame.FIN:
+                print("got fin")
+                print(frame)
+                fin_ack = self.build_fin_ack(frame.mode)
+                await self.layer.swap_put(fin_ack)
+
+                await self.layer.set_session(frame.mode)
+                return None
+
+            # if we get a data ack
             if frame.ACK and not frame.DATA:
                 self.logger.debug(f"ACK received for seq={frame.packet_number}")
                 await self.ack_queue.put(frame)
                 return None
 
+            if frame.mode:
+                if frame.mode != Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                    await self.layer.set_session(frame.mode)
+                    return None
+                if frame.mode == Audimus_pb2.SESSION_MODE.ConnectedUplink:
+                    return None
 
             # if we get data
             ack = self.build_ack(frame.packet_number)
@@ -84,13 +107,11 @@ class ConnectedUplink(Session):
 
     async def handle_tx(self, message):
 
-        async with self.tx_lock:
-
             self.tx_seq += 1
             seq   = self.tx_seq
             frame = self.frame(message, seq)
 
-            for attempt in range(1, MAX_TRIES + 1):
+            for attempt in range(ATTEMPTS):
                 await self.layer.swap_put(frame)
                 deadline = time.monotonic() + TIMEOUT
 
@@ -118,7 +139,7 @@ class ConnectedUplink(Session):
                     f"Timeout waiting for ACK (seq={seq}, attempt {attempt})"
                 )
 
-            self.logger.error(f"Packet seq={seq} failed after {MAX_TRIES} attempts")
+            self.logger.error(f"Packet seq={seq} failed after {ATTEMPTS} attempts")
             return None
 
 
@@ -128,8 +149,6 @@ class ConnectedUplink(Session):
         msg = Audimus_pb2.Session_Message(
             presentation_message=presentation_message,
             packet_number=seq,
-            ACK=False,
-            DATA=False
         )
         return msg.SerializeToString()
 
@@ -137,24 +156,30 @@ class ConnectedUplink(Session):
         ack = Audimus_pb2.Session_Message(
             packet_number=seq,
             ACK=True,
-            DATA=False
         )
         return ack.SerializeToString()
 
-    def build_fin(self) -> bytes:
+    def build_fin(self, new_mode):
         fin = Audimus_pb2.Session_Message(
-            ACK=False,
-            DATA = False
-
+            FIN = True,
+            mode = new_mode
         )
         return fin.SerializeToString()
 
-    def build_fin_ack(self) -> bytes:
+    def build_fin_ack(self, mode) -> bytes:
         fin_ack = Audimus_pb2.Session_Message(
+            FIN = True,
             ACK=True,
-            DATA = False
+            mode = mode
         )
         return fin_ack.SerializeToString()
+
+    def build_syn_ack(self):
+        syn_ack = Audimus_pb2.Session_Message(
+            SYN=True,
+            ACK=True,
+        )
+        return syn_ack.SerializeToString()
 
 
 ############################################ Ground Station ##########################################
@@ -164,18 +189,22 @@ class GroundStationConnectedUplink(ConnectedUplink):
     def __init__(self, layer):
         super().__init__(layer)
 
-    # ground station messages carry an ack incase final handshake ack was dropped
-    def frame(self, presentation_message, seq) -> bytes:
-        msg = Audimus_pb2.Session_Message(
-            presentation_message=presentation_message,
-            packet_number=seq,
-            SYN=False,
-            ACK=True,
-            FIN=False,
-            DATA=True
-        )
+    async def switch_mode(self, new_mode):
+        """teardown connection"""
+        fin = self.build_fin(new_mode)
+        for attempt in range(ATTEMPTS):
+            await self.layer.swap_put(fin)
+            try:
+                await asyncio.wait_for(self.fin_ack_queue.get(), timeout=TIMEOUT)
+                print("got from fin_ack_queue")
+                await self.layer.set_session(new_mode)
+                return
 
-        return msg.SerializeToString()
+            except asyncio.TimeoutError:
+                self.logger.warning(f"ACK timeout, retrying FIN for {new_mode}...")
+        self.logger.info(f"Attempts exhausted, no response from Satellite, switching to {new_mode}")
+        self.layer.set_session(new_mode)
+
 
 
 ############################################ Audimus ##########################################

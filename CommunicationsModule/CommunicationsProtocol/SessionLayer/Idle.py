@@ -4,7 +4,8 @@ from Logger.Logger import LoggerFactory
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import Session
 from CommunicationsModule.CommunicationsProtocol.SessionLayer.Session import RadioMode
 
-
+ATTEMPTS = 5
+TIMEOUT = 1
 
 
 class Idle(Session):
@@ -32,6 +33,11 @@ class Idle(Session):
             print(f"File not found: {self.packet_number_path}")
             return None
 
+    async def deframe(self, msg):
+        message = Audimus_pb2.Session_Message()
+        message.ParseFromString(msg)
+        return message
+
 
 ############## Ground Station #####################################################
 class GroundStationIdle(Idle):
@@ -42,12 +48,35 @@ class GroundStationIdle(Idle):
         )
         self.packet_number = self.read_packet_number()
         super().__init__(layer)
+        self.SYNACK_queue = asyncio.Queue()
+
+
+
+    async def switch_mode(self, new_mode):
+        syn = await self.frame_SYN(new_mode)
+        for attempt in range(ATTEMPTS):
+            await self.layer.swap_put(syn)
+            try:
+                await asyncio.wait_for(self.SYNACK_queue.get(), timeout=TIMEOUT)
+                await self.layer.set_session(new_mode)
+                return
+
+            except asyncio.TimeoutError:
+                self.logger.warning(f"ACK timeout, retrying SYN for mode {new_mode}...")
+        self.logger.info(f"Attempts exhausted, failed to switch to {new_mode}, staying in idle")
+
+    async def frame_SYN(self, new_mode):
+        msg = Audimus_pb2.Session_Message(
+            mode=new_mode,
+            SYN=True
+        )
+        return msg.SerializeToString()
 
 
     async def handle_rx(self, message):
-        self.logger.info("GS should not rx in idle")
-
-
+        message = await self.deframe(message)
+        if message.SYN and message.ACK:
+            await self.SYNACK_queue.put(message)
 
 
     async def handle_tx(self, message: bytes):
@@ -72,38 +101,47 @@ class AudimusIdle(Idle):
 
 
 
-    def frame(self, presentation_message: bytes) -> bytes:
+    def frame_SYNACK(self, new_mode):
         msg = Audimus_pb2.Session_Message(
-            presentation_message = presentation_message,
-            mode = Audimus_pb2.SESSION_MODE.Idle,
-            packet_number = self.packet_number,
-            SYN = False,
+            mode=new_mode,
+            SYN=True,
+            ACK=True
         )
         return msg.SerializeToString()
 
+    def frame_FINACK(self, new_mode):
+        msg = Audimus_pb2.Session_Message(
+            mode=new_mode,
+            FIN=True,
+            ACK=True,
+        )
+        return msg.SerializeToString()
 
-    # if we recieve a new mode, change to that mode
-    async def handle_rx(self, message):
+    async def handle_rx(self, msg):
+        """# if we recieve a new mode, change to that mode, put a SYNACK in the queue."""
 
-        try:
-            frame =  await self.deframe(message)
+        self.activity_timer.reset()
+        message = await self.deframe(msg)
 
-            if frame.mode:
-                if frame.mode != Audimus_pb2.SESSION_MODE.Idle:
-                    await self.layer.set_session(frame.mode)
-                if frame.mode == Audimus_pb2.SESSION_MODE.Idle:
-                    return
-
+        if message.SYN:
+            ack = self.frame_SYNACK(message.mode)
+            await self.layer.swap_put(ack)
+            await self.layer.set_session(message.mode)
             return None
-        except Exception as e:
-            self.logger.error(f"Failed to deframe message: {e}")
+
+        if message.FIN:
+            fin_ack = self.frame_FINACK(message.mode)
+            await self.layer.swap_put(fin_ack)
+            await self.layer.set_session(message.mode)
             return None
 
+        return None
 
-    async def deframe(self, raw: bytes):
-        frame = Audimus_pb2.Session_Message()
-        frame.ParseFromString(raw)
-        return frame
+
+
+
+
+
 
 
 
